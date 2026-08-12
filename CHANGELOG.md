@@ -7,6 +7,14 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 ## [0.2.0](2026-08-12)
 
+### App
+
+#### Features
+
+- adds NotFound function and adds Link, Shell, translator import
+- updates icon, layout
+
+
 ### Lib
 
 #### Features
@@ -18,11 +26,11 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - removes baseUrl import and adds appBaseUrl, explicit and removes appBaseUrl in oauth
 
 
-### App
+### CHANGELOG
 
-#### Features
+#### Documentation
 
-- updates icon, layout
+- adds and import
 
 
 ### Components
@@ -36,6 +44,8 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 #### Features
 
+- adds Image, type import
+- adds useState, AXES, type import
 - adds searchUsers, useRef, UserSearchInput import and removes useState import and adds dynamic, GET and removes target and adds useState, useRef, useId
 - adds checkCardRateLimit, type, getRedisClient import and adds discoverPool, pool and removes authHeaders, token
 - o site passa a falar a lingua da carta
@@ -100,6 +110,10 @@ Thank you to 2 community contributors:
 - docs: plano do revamp visual e as decisoes que o travam
 
 @benogoulart
+- feat: adds Image, type import
+- feat: adds useState, AXES, type import
+- feat(app): adds NotFound function and adds Link, Shell, translator import
+- docs(CHANGELOG): adds and import
 - feat(app): updates icon, layout
 - feat(components): adds useRef, UserSearchInput import and removes useState import and adds inputRef, resolved and removes target
 - feat: adds searchUsers, useRef, UserSearchInput import and removes useState import and adds dynamic, GET and removes target and adds useState, useRef, useId

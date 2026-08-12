@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { BattleResult, Side } from "@/lib/battle/types";
 import { ELEMENT_COLORS } from "@/lib/cards/elements";
 import type { Card, Element } from "@/lib/cards/types";
@@ -27,12 +27,21 @@ export function BattleReplay({
 }) {
   const t = translator(locale);
   const [played, setPlayed] = useState(0);
+  const logRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => {
     if (played >= battle.turns.length) return;
     const timer = setTimeout(() => setPlayed((n) => n + 1), TURN_MS);
     return () => clearTimeout(timer);
   }, [played, battle.turns.length]);
+
+  /** Auto-scroll para o último turno visível. */
+  useEffect(() => {
+    const log = logRef.current;
+    if (!log) return;
+    const last = log.lastElementChild;
+    if (last) last.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [played]);
 
   /** HP de cada lado depois dos turnos já tocados. */
   const hp = useMemo(() => {
