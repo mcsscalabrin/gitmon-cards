@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   },
   description:
     "Cartas de trading card game geradas a partir de dados reais do GitHub. Uma URL de imagem, sem login, embutível em qualquer README.",
+  icons: {
+    icon: "/icon.svg",
+  },
   openGraph: {
     type: "website",
     siteName: "Gitmon Cards",
