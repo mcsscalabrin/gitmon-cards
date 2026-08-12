@@ -7,6 +7,7 @@ import {
   fetchUserRepos,
 } from "../github/client";
 import { GitmonError } from "../github/errors";
+import { checkCardRateLimit } from "../rateLimit";
 import { buildProfileCard } from "./profile";
 import { buildRepoCard } from "./repo";
 import { withSerial } from "./serial";
@@ -55,6 +56,12 @@ export async function getProfileCard(login: string): Promise<Card> {
     throw new GitmonError("not_found", `Login inválido: ${login}`, login);
   }
 
+  // Orçamento por IP antes do cache: toda busca de carta — cacheada ou não —
+  // conta contra a janela, protegendo o pool de tokens de scripts (ver
+  // lib/rateLimit.ts). Memoizado por requisição, então o generateMetadata e o
+  // render da mesma página compartilham UMA checagem.
+  await checkCardRateLimit();
+
   const card = await cached(
     `card:${CARD_VERSION}:profile:${login.toLowerCase()}`,
     CARD_DATA_TTL_SECONDS,
@@ -77,6 +84,8 @@ export async function getRepoCard(owner: string, name: string): Promise<Card> {
   if (!isValidLogin(owner) || !isValidRepoName(name)) {
     throw new GitmonError("not_found", `Repositório inválido: ${owner}/${name}`);
   }
+
+  await checkCardRateLimit();
 
   const card = await cached(
     `card:${CARD_VERSION}:repo:${owner.toLowerCase()}/${name.toLowerCase()}`,
@@ -110,6 +119,8 @@ export async function getProfileRepos(
   limit = 12,
 ): Promise<RepoSummary[]> {
   if (!isValidLogin(login)) return [];
+
+  await checkCardRateLimit();
 
   return cached(
     `repos:${CARD_VERSION}:${login.toLowerCase()}:${limit}`,
