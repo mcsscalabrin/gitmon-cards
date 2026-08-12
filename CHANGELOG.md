@@ -7,6 +7,14 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 ## [0.2.0](2026-08-12)
 
+### Components
+
+#### Features
+
+- adds useEffect import and adds useEffect
+- adds useRef, UserSearchInput import and removes useState import and adds inputRef, resolved and removes target
+
+
 ### App
 
 #### Features
@@ -31,13 +39,6 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 #### Documentation
 
 - adds and import
-
-
-### Components
-
-#### Features
-
-- adds useRef, UserSearchInput import and removes useState import and adds inputRef, resolved and removes target
 
 
 ### General
@@ -110,6 +111,7 @@ Thank you to 2 community contributors:
 - docs: plano do revamp visual e as decisoes que o travam
 
 @benogoulart
+- feat(components): adds useEffect import and adds useEffect
 - feat: adds Image, type import
 - feat: adds useState, AXES, type import
 - feat(app): adds NotFound function and adds Link, Shell, translator import
