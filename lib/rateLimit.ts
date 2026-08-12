@@ -20,9 +20,18 @@ export interface RateLimitDecision {
   retryAfterSeconds: number;
 }
 
-export const ALLOWED_PER_WINDOW = 20;
-export const WINDOW_SECONDS = 10 * 60;
+// Defaults: 20 buscas por IP a cada 10 min. Tuning por env para produção ajustar
+// sem tocar em código — e o valor default continua o mesmo de sempre.
+export const ALLOWED_PER_WINDOW = readLimit("CARD_RATE_LIMIT_PER_WINDOW", 20);
+export const WINDOW_SECONDS = readLimit("CARD_RATE_LIMIT_WINDOW_SECONDS", 10 * 60);
 const KEY_PREFIX = "gitmon:rl:";
+
+function readLimit(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 // O Vercel entrega o IP real em x-forwarded-for (primeiro hop) / x-real-ip; o que
 // estiver à frente pode prefixar seus próprios hops, então só o primeiro valor é
@@ -76,6 +85,10 @@ async function allowFromRedis(redis: Redis, ip: string): Promise<RateLimitDecisi
 // compartilham UMA checagem (e um incremento) — o mesmo padrão de single-flight
 // do loadProfile. Lança GitmonError("rate_limit") quando bloqueado.
 export const checkCardRateLimit = cache(async (): Promise<void> => {
+  // Em dev a única "ameaça" é o próprio desenvolvedor recarregando a carta —
+  // puni-lo com o orçamento anti-scraper é sabotar o fluxo que a janela existe
+  // para proteger. Produção continua bloqueando IP (ver lib/rateLimit.ts).
+  if (process.env.NODE_ENV === "development") return;
   let ip = "unknown";
   try {
     ip = clientIp(await headers());
