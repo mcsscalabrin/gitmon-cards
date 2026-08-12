@@ -1,11 +1,22 @@
 {
-  "_comment": "Cor de identidade de cada elemento. Fonte única — lida pelo gerador de arte (scripts/) e pelo runtime (lib/cards/elements.ts). A paleta segue os 7 elementos, não a marca pessoal do autor (RFC 9.3).",
+  "_comment": "Cor de identidade de cada tipo. Fonte única — lida pelo gerador de arte (scripts/) e pelo runtime (lib/cards/elements.ts). O `base` de cada tipo foi EXTRAÍDO do disco colorido do respectivo ícone em scripts/assets/types/, não escolhido à mão: assim o ícone e a moldura nunca divergem. `dark`, `light` e `ink` são derivados do base por mistura fixa (45% preto, 78% branco, 80% preto).",
 
-  "neutral": { "base": "#B8AE9C", "dark": "#6E6659", "light": "#EDE7DA", "ink": "#2B2721" },
-  "fire": { "base": "#E2622F", "dark": "#8C3312", "light": "#FBD9C4", "ink": "#3A1508" },
-  "water": { "base": "#2F86C4", "dark": "#12456E", "light": "#C8E4F7", "ink": "#08202F" },
-  "grass": { "base": "#3F9E52", "dark": "#1B5227", "light": "#CDECD2", "ink": "#0B2412" },
-  "electric": { "base": "#D9A81C", "dark": "#8A6403", "light": "#FAEEBF", "ink": "#33260A" },
-  "psychic": { "base": "#9B54B5", "dark": "#54216A", "light": "#E9D2F2", "ink": "#2A0F35" },
-  "fighting": { "base": "#B4522F", "dark": "#6B2611", "light": "#F0D2C5", "ink": "#301207" }
+  "normal": { "base": "#828282", "dark": "#484848", "light": "#E4E4E4", "ink": "#1A1A1A" },
+  "fire": { "base": "#E4613E", "dark": "#7D3522", "light": "#F9DCD5", "ink": "#2E130C" },
+  "water": { "base": "#3099E1", "dark": "#1A547C", "light": "#D1E9F8", "ink": "#0A1F2D" },
+  "grass": { "base": "#439837", "dark": "#25541E", "light": "#D6E8D3", "ink": "#0D1E0B" },
+  "electric": { "base": "#DFBC28", "dark": "#7B6716", "light": "#F8F0D0", "ink": "#2D2608" },
+  "ice": { "base": "#47C8C8", "dark": "#276E6E", "light": "#D7F3F3", "ink": "#0E2828" },
+  "fighting": { "base": "#E49021", "dark": "#7D4F12", "light": "#F9E7CE", "ink": "#2E1D07" },
+  "poison": { "base": "#9354CB", "dark": "#512E70", "light": "#E7D9F4", "ink": "#1D1129" },
+  "ground": { "base": "#A4733C", "dark": "#5A3F21", "light": "#EBE0D4", "ink": "#21170C" },
+  "flying": { "base": "#74AAD0", "dark": "#405E72", "light": "#E0ECF5", "ink": "#17222A" },
+  "psychic": { "base": "#E96C8C", "dark": "#803B4D", "light": "#FADFE6", "ink": "#2F161C" },
+  "bug": { "base": "#9F9F28", "dark": "#575716", "light": "#EAEAD0", "ink": "#202008" },
+  "rock": { "base": "#A9A481", "dark": "#5D5A47", "light": "#ECEBE3", "ink": "#22211A" },
+  "ghost": { "base": "#6F4570", "dark": "#3D263E", "light": "#DFD6E0", "ink": "#160E16" },
+  "dragon": { "base": "#576FBC", "dark": "#303D67", "light": "#DADFF0", "ink": "#111626" },
+  "dark": { "base": "#4F4747", "dark": "#2B2727", "light": "#D8D7D7", "ink": "#100E0E" },
+  "steel": { "base": "#74B0CB", "dark": "#406170", "light": "#E0EEF4", "ink": "#172329" },
+  "fairy": { "base": "#E18CE1", "dark": "#7C4D7C", "light": "#F8E6F8", "ink": "#2D1C2D" }
 }

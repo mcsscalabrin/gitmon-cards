@@ -99,10 +99,10 @@ describe("elemento e fraqueza", () => {
     expect(card.weakness).toBe("electric");
   });
 
-  it("usa neutral para linguagem desconhecida ou ausente", () => {
-    expect(buildProfileCard(user(), [repo({ language: null })], NOW).element).toBe("neutral");
+  it("usa normal para linguagem desconhecida ou ausente", () => {
+    expect(buildProfileCard(user(), [repo({ language: null })], NOW).element).toBe("normal");
     expect(buildProfileCard(user(), [repo({ language: "Brainfuck" })], NOW).element).toBe(
-      "neutral",
+      "normal",
     );
   });
 
@@ -183,7 +183,10 @@ describe("recuo e raridade", () => {
       [repo({ stargazers_count: 2000 })],
       NOW,
     );
-    expect(notavel.rarity).toBe("holo");
+    // 7160 pontos. Parecia muito quando a escada era estimada; contra perfis
+    // reais medidos é um dev sólido, não uma figura pública — o `defunkt` faz
+    // 142.566. Ver a tabela de calibração em lib/cards/rarity.ts.
+    expect(notavel.rarity).toBe("double_rare");
   });
 });
 

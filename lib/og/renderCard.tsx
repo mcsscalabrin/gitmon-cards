@@ -1,7 +1,14 @@
 import { ImageResponse } from "next/og";
 import { ELEMENT_COLORS } from "../cards/elements";
+import { formatCount } from "../cards/format";
 import layout from "../cards/layout.json";
-import { hasFoil, raritySymbol, raritySymbolSize } from "../cards/rarity";
+import {
+  cardTreatment,
+  hasFoil,
+  raritySymbol,
+  raritySymbolColor,
+  raritySymbolSize,
+} from "../cards/rarity";
 import type { Attack, Card } from "../cards/types";
 import { elementKey, rarityKey, translator, type Locale } from "../i18n/dictionaries";
 import {
@@ -11,6 +18,7 @@ import {
   foilUri,
   frameUri,
   loadFonts,
+  metalUri,
   retreatUri,
 } from "./assets";
 
@@ -23,19 +31,26 @@ import {
  */
 
 const HP_RED = "#C0392B";
+/** Mesmo vermelho clareado, para sobreviver ao scrim escuro do full-art. */
+const HP_RED_ON_ART = "#FF7A66";
 
 export async function renderCard(card: Card, locale: Locale): Promise<ImageResponse> {
   const t = translator(locale);
   const colors = ELEMENT_COLORS[card.element];
 
-  const [fonts, frame, avatar, energy, retreat, foil, weaknessIcon, resistanceIcon] =
+  const treatment = cardTreatment(card.rarity);
+  const art = treatment.fullArt ? layout.fullArt.art : layout.art;
+  const artWindow = treatment.fullArt ? layout.fullArt.window : layout.window;
+
+  const [fonts, frame, avatar, energy, retreat, foil, metal, weaknessIcon, resistanceIcon] =
     await Promise.all([
       loadFonts(),
-      frameUri(card.element),
-      avatarUri(card.artUrl),
+      frameUri(card.element, treatment.fullArt),
+      avatarUri(card.artUrl, art.width),
       energyUri(card.element),
       retreatUri(),
       hasFoil(card.rarity) ? foilUri(card.rarity) : Promise.resolve(null),
+      treatment.metal ? metalUri(treatment.metal) : Promise.resolve(null),
       card.weakness ? energyUri(card.weakness) : Promise.resolve(null),
       card.resistance ? energyUri(card.resistance) : Promise.resolve(null),
     ]);
@@ -58,22 +73,22 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
         {avatar ? (
           <img
             src={avatar}
-            width={layout.art.width}
-            height={layout.art.width}
+            width={art.width}
+            height={art.width}
             style={{
               position: "absolute",
-              left: layout.art.centerX - layout.art.width / 2,
-              top: layout.art.centerY - layout.art.width / 2,
+              left: art.centerX - art.width / 2,
+              top: art.centerY - art.width / 2,
             }}
           />
         ) : (
           <div
             style={{
               position: "absolute",
-              left: layout.window.x,
-              top: layout.window.y,
-              width: layout.window.width,
-              height: layout.window.height,
+              left: artWindow.x,
+              top: artWindow.y,
+              width: artWindow.width,
+              height: artWindow.height,
               background: colors.dark,
             }}
           />
@@ -95,6 +110,19 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
           />
         ) : null}
 
+        {/*
+          Metal por cima do foil, não por baixo: o folheado é a superfície mais
+          externa da carta, e o brilho holográfico vem de dentro dela.
+        */}
+        {metal ? (
+          <img
+            src={metal}
+            width={layout.width}
+            height={layout.height}
+            style={{ position: "absolute", left: 0, top: 0 }}
+          />
+        ) : null}
+
         {/* Nome */}
         <div
           style={{
@@ -110,6 +138,8 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
             letterSpacing: -0.5,
             whiteSpace: "nowrap",
             overflow: "hidden",
+            // No full-art o nome se apoia no scrim escuro, não na faixa clara.
+            ...(treatment.fullArt ? { color: "#FFFFFF" } : {}),
           }}
         >
           {card.name}
@@ -125,7 +155,8 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
             display: "flex",
             alignItems: "center",
             gap: 4,
-            color: HP_RED,
+            // O vermelho de contraste com face clara some sobre o scrim.
+            color: treatment.fullArt ? HP_RED_ON_ART : HP_RED,
           }}
         >
           <span style={{ fontSize: layout.hp.labelSize, fontWeight: 700, paddingTop: 8 }}>
@@ -249,9 +280,27 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
               element: t(elementKey(card.element)),
             })}
           </span>
-          <span style={{ fontSize: raritySymbolSize(card.rarity), fontWeight: 900 }}>
-            {raritySymbol(card.rarity)}
-          </span>
+          {/*
+            Serial e símbolo andam juntos no canto direito, como no TCG. O serial
+            só aparece quando existe: sem store durável a carta sai sem número
+            (ver lib/cards/serial.ts), e um espaço vazio é melhor que um "#----".
+          */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {card.serial !== null && (
+              <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.7 }}>
+                {`#${String(card.serial).padStart(4, "0")}`}
+              </span>
+            )}
+            <span
+              style={{
+                fontSize: raritySymbolSize(card.rarity),
+                fontWeight: 900,
+                color: raritySymbolColor(card.rarity),
+              }}
+            >
+              {raritySymbol(card.rarity)}
+            </span>
+          </div>
         </div>
 
         {/* Linha factual: bio/descrição truncada + o número que mais importa */}
@@ -296,6 +345,21 @@ function AttackRow({
 }) {
   const top = layout.attacks.top + index * (layout.attacks.boxHeight + layout.attacks.gap);
 
+  /*
+   * As três colunas são dimensionadas explicitamente, não por flex.
+   *
+   * O Satori não implementa `min-width: auto`, então `flexGrow: 1` +
+   * `overflow: hidden` na coluna do meio não a impedia de crescer até o tamanho
+   * do texto: uma descrição longa esticava a linha e empurrava o dano para fora
+   * dela. `flexShrink: 0` protegia o dano de encolher, não de ser expulso pelo
+   * irmão. Largura fixa remove a ambiguidade — o dano é a informação mais
+   * importante da linha e não pode depender do tamanho da descrição.
+   */
+  const rowInner =
+    layout.attacks.right - layout.attacks.left - layout.attacks.rowPadding * 2;
+  const textColumnWidth =
+    rowInner - layout.attacks.energyColumnWidth - layout.attacks.damageColumnWidth;
+
   return (
     <div
       style={{
@@ -306,7 +370,7 @@ function AttackRow({
         height: layout.attacks.boxHeight,
         display: "flex",
         alignItems: "center",
-        padding: "0 14px",
+        padding: `0 ${layout.attacks.rowPadding}px`,
       }}
     >
       <EnergyCost cost={attack.cost} icon={energy} />
@@ -316,7 +380,8 @@ function AttackRow({
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          flexGrow: 1,
+          flexShrink: 0,
+          width: textColumnWidth,
           overflow: "hidden",
         }}
       >
@@ -326,6 +391,12 @@ function AttackRow({
             fontWeight: 900,
             whiteSpace: "nowrap",
             overflow: "hidden",
+            // `textOverflow` fica declarado por correção, mas o Satori não o
+            // implementa: o corte sai seco, sem reticências. Quem garante o
+            // "…" é o `truncate` da camada de dados, calibrado para caber
+            // nesta largura. Ver `attacksFromRepos` em lib/cards/profile.ts.
+            textOverflow: "ellipsis",
+            width: textColumnWidth,
           }}
         >
           {attack.name}
@@ -344,19 +415,19 @@ function AttackRow({
         ) : null}
       </div>
 
-      {/* flexShrink 0: sem isto um nome de ataque longo espreme o dano até
-          sumir, e o número é a informação mais importante da linha. */}
-      <span
+      <div
         style={{
           flexShrink: 0,
+          width: layout.attacks.damageColumnWidth,
+          display: "flex",
+          justifyContent: "flex-end",
           fontSize: layout.attacks.damageSize,
           fontWeight: 900,
           color: ink,
-          paddingLeft: 10,
         }}
       >
         {attack.damage}
-      </span>
+      </div>
     </div>
   );
 }
@@ -438,13 +509,6 @@ function nameSize(name: string): number {
   if (name.length <= 14) return layout.name.size;
   if (name.length <= 20) return layout.name.size - 5;
   return layout.name.size - 9;
-}
-
-function formatCount(value: number): string {
-  if (!Number.isFinite(value)) return "0";
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
-  return String(value);
 }
 
 export { layout as cardLayout };

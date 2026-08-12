@@ -9,6 +9,7 @@ import {
 import { GitmonError } from "../github/errors";
 import { buildProfileCard } from "./profile";
 import { buildRepoCard } from "./repo";
+import { withSerial } from "./serial";
 import type { Card } from "./types";
 
 export * from "./types";
@@ -19,8 +20,24 @@ export { buildRepoCard } from "./repo";
  * Versão do formato da carta. Entra na chave de cache: mudou fórmula ou campo,
  * incrementa aqui e o cache antigo simplesmente deixa de ser lido — mais seguro
  * do que invalidar chave por chave.
+ *
+ * v2: escada de raridade de 5 para 8 tiers e campo `serial`. A subida não foi
+ * higiene, foi obrigatória — uma carta v1 em cache carrega `rarity: "holo"`, que
+ * não existe mais, e cairia fora de todos os `switch` de `./rarity.ts`.
+ *
+ * v3: 7 elementos viraram os 18 tipos, e `neutral` virou `normal`. Mesma
+ * armadilha da v2, em outro campo: uma carta v2 em cache carrega
+ * `element: "neutral"`, e `ELEMENT_COLORS["neutral"]` agora é `undefined` —
+ * a carta quebraria ao renderizar, não ao compilar. Em desenvolvimento o cache é
+ * em memória e some no restart, então isso passaria despercebido até produção,
+ * onde o Redis guarda por uma hora.
+ *
+ * v4: carta de repositório passou a trazer `derivations`. Ao contrário das duas
+ * anteriores, esta não quebra nada — carta v3 em cache só sai sem o painel de
+ * explicação. Subiu mesmo assim porque uma hora de repositório sem as laterais
+ * seria indistinguível do bug que este trabalho fecha.
  */
-const CARD_VERSION = "v1";
+const CARD_VERSION = "v4";
 
 const LOGIN = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
 const REPO_NAME = /^[a-zA-Z0-9._-]{1,100}$/;
@@ -38,7 +55,7 @@ export async function getProfileCard(login: string): Promise<Card> {
     throw new GitmonError("not_found", `Login inválido: ${login}`, login);
   }
 
-  return cached(
+  const card = await cached(
     `card:${CARD_VERSION}:profile:${login.toLowerCase()}`,
     CARD_DATA_TTL_SECONDS,
     async () => {
@@ -52,6 +69,8 @@ export async function getProfileCard(login: string): Promise<Card> {
       return buildProfileCard(user, repos);
     },
   );
+
+  return withSerial(card);
 }
 
 export async function getRepoCard(owner: string, name: string): Promise<Card> {
@@ -59,7 +78,7 @@ export async function getRepoCard(owner: string, name: string): Promise<Card> {
     throw new GitmonError("not_found", `Repositório inválido: ${owner}/${name}`);
   }
 
-  return cached(
+  const card = await cached(
     `card:${CARD_VERSION}:repo:${owner.toLowerCase()}/${name.toLowerCase()}`,
     CARD_DATA_TTL_SECONDS,
     async () => {
@@ -68,6 +87,8 @@ export async function getRepoCard(owner: string, name: string): Promise<Card> {
       return buildRepoCard(repo, contributors);
     },
   );
+
+  return withSerial(card);
 }
 
 export interface RepoSummary {

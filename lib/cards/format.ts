@@ -1,5 +1,18 @@
 /** Utilitários numéricos e de texto usados pelas fórmulas de scoring. */
 
+/**
+ * `1234` → `1.2k`. Compacto porque o espaço é apertado nos dois lugares onde
+ * aparece: o rodapé da carta e o contador da faixa de apoio. Não usa
+ * `toLocaleString` de propósito — o sufixo precisa ser o mesmo nos dois idiomas
+ * para a largura não mudar entre PT e EN.
+ */
+export function formatCount(value: number): string {
+  if (!Number.isFinite(value)) return "0";
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return String(value);
+}
+
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }

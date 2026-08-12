@@ -32,6 +32,24 @@ export const CARD_IMAGE_CACHE_CONTROL =
 export const BATTLE_IMAGE_CACHE_CONTROL =
   "public, max-age=31536000, s-maxage=31536000, immutable";
 
+/**
+ * Identidade do próprio projeto. Estes são destinos externos, não o domínio do
+ * produto — a RFC 11 proíbe hardcodar o segundo, não os primeiros. Ficam aqui
+ * porque estavam espalhados pelo `Shell` e agora também alimentam a contagem de
+ * estrelas da faixa de apoio.
+ */
+export const PROJECT_REPO = { owner: "mcsscalabrin", name: "gitmon-cards" } as const;
+export const PROJECT_REPO_URL = `https://github.com/${PROJECT_REPO.owner}/${PROJECT_REPO.name}`;
+export const SPONSOR_URL = `https://github.com/sponsors/${PROJECT_REPO.owner}`;
+export const AUTHOR = { handle: "@scalabrin.dev", url: "https://scalabrin.dev" } as const;
+
+/**
+ * A contagem de estrelas do próprio repositório envelhece devagar e não vale uma
+ * chamada à API por visita. Uma hora é folgado o bastante para não pesar e curto
+ * o bastante para o número não parecer mentira.
+ */
+export const PROJECT_STARS_TTL_SECONDS = readInt("PROJECT_STARS_TTL_SECONDS", 3600);
+
 export const CARD_DATA_TTL_SECONDS = readInt("CARD_DATA_TTL_SECONDS", 3600);
 export const BATTLE_TTL_SECONDS = readInt("BATTLE_TTL_SECONDS", 2592000);
 

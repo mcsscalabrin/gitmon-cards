@@ -90,6 +90,32 @@ Este repositório confirma a mesma técnica da seção 4.2 (arte estática + com
 
 Essa cadeia triangular simples (não o quadro completo de 18 tipos do Pokémon oficial) é suficiente pra gerar a mecânica de "fraqueza/resistência" da carta sem precisar mapear 18 tipos a partir de linguagens de programação — mapear as ~15-20 linguagens mais comuns do GitHub para esses 7 elementos é mais tratável do que para um sistema de tipos completo.
 
+> **Adendo — a tabela de elementos desta seção foi substituída.** São **18
+> tipos**, não 7, e `neutral` virou `normal` (para casar com o nome do ícone).
+>
+> O argumento acima — "mapear ~20 linguagens para 18 tipos não é tratável" —
+> não se sustentou na prática: o mapa é trabalho de tabela, não de arquitetura,
+> e cabe em `lib/cards/elements.ts` sem estrutura nova. O que os 7 elementos
+> custavam era leitura: infraestrutura declarativa, shell, verificação formal,
+> funcional, legado e contratos caíam todos em `neutral`, e a maior parte das
+> cartas saía do mesmo tipo.
+>
+> A cadeia de fraqueza/resistência continua com **um** slot de cada por carta,
+> como esta seção previu — o que mudou foi de onde os valores vêm (o quadro
+> oficial reduzido a uma fraqueza e uma resistência por tipo), não a mecânica.
+> Duas leituras exigiram decisão: `normal` e `dark` resistem a `ghost` porque no
+> jogo são imunes a ele, e `ice` fica sem resistência porque no quadro oficial
+> só resiste ao próprio tipo.
+>
+> A paleta dos 18 tipos **não** foi escolhida à mão: cada cor base foi extraída
+> do disco colorido do respectivo ícone, para ícone e moldura não divergirem.
+> Vive em `lib/cards/palette.json`, lida tanto pelo gerador de arte quanto pelo
+> runtime.
+>
+> Ver `lib/cards/elements.ts`, `lib/cards/palette.json` e
+> `tests/unit/elements.test.ts`, que prova que todo tipo tem pelo menos uma
+> linguagem — tipo inalcançável seria ícone que nunca aparece.
+
 **Ressalva de direitos autorais, mesma categoria da seção 11:** o template de carta em branco usado no repositório é creditado no README deles a uma artista do DeviantArt (`TheDuckTamerBlanks`), e os ícones de elemento também aparentam ser assets de fã. Não redistribuir esses arquivos PNG em produção. O valor extraído aqui é a especificação de posição/tamanho (todos os números acima), não os arquivos — a arte final (moldura por tipo) ainda precisa ser original, conforme a questão em aberto da seção 8.
 
 ## 5. Decisões travadas
@@ -126,6 +152,21 @@ Dados de origem: `GET /users/{username}` + `GET /users/{username}/repos?per_page
 | Rodapé | bio truncada + ano de criação da conta |
 
 O mapa linguagem→tipo completo e as faixas de raridade exatas estão implementados no protótipo anexo (`github-card-prototype.html`) e podem ser copiados diretamente.
+
+> **Adendo — a escada de raridade desta seção foi substituída.** A fórmula do
+> `score` continua valendo exatamente como está acima. O que mudou foram os
+> tiers: de 5 (`common / uncommon / rare / holo / secret`) para **8**, no padrão
+> do TCG Pokémon (`common / uncommon / rare / double_rare / illustration_rare /
+> ultra_rare / special_illustration_rare / hyper_rare`), com número de série por
+> carta.
+>
+> As faixas **não** vieram do protótipo. A primeira tentativa de escada usou
+> limiares escolhidos como se fossem contagem de estrelas e colocou seis de sete
+> perfis notáveis no tier mais raro — o topo virou o padrão. Os limiares atuais
+> foram calibrados contra perfis reais medidos pela API e estão travados por
+> teste de regressão.
+>
+> Ver `docs/design-system.md`, `lib/cards/rarity.ts` e `tests/unit/rarity.test.ts`.
 
 ### 6.2 Carta de repositório (novo — não existe equivalente no gitfut nem no protótipo)
 
@@ -211,7 +252,7 @@ Esta seção registra expectativas de produto levantadas numa segunda rodada de 
 ### 9.3 Identidade de marca
 
 - **Marca pessoal discreta**: crédito no rodapé do site (ex: "feito por @scalabrin.dev"), mas o produto tem **identidade visual própria**, não herda Coral/Cream/Dark diretamente. Trate como um produto autônomo, não como conteúdo de marca pessoal.
-- Isso implica que a paleta de cores das cartas segue a lógica dos 7 elementos (seção 4.4), não a paleta pessoal do autor — são sistemas visuais separados que convivem no mesmo site.
+- Isso implica que a paleta de cores das cartas segue a lógica dos tipos (seção 4.4 — hoje 18, ver o adendo lá), não a paleta pessoal do autor — são sistemas visuais separados que convivem no mesmo site.
 
 ### 9.4 Fluxos de UX principais
 

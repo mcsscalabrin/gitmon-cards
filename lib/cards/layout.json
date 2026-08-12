@@ -10,6 +10,13 @@
   "art": { "width": 390, "centerX": 250, "centerY": 250 },
   "window": { "x": 55, "y": 100, "width": 390, "height": 300, "radius": 8 },
 
+  "_fullArtComment": "Variante full-art dos tiers de ilustração. A janela sobe até a borda e desce até onde os ataques começam (448), então a arte passa por trás do nome e da faixa de tipo — que viram scrim por cima dela. Abaixo de 448 a face continua opaca: os ataques e o status precisam de fundo sólido para serem legíveis. A arte é quadrada, então o lado é o maior dos dois eixos da janela.",
+  "fullArt": {
+    "window": { "x": 14, "y": 14, "width": 472, "height": 434, "radius": 16 },
+    "art": { "width": 472, "centerX": 250, "centerY": 231 },
+    "scrimHeight": 118
+  },
+
   "name": { "x": 48, "top": 32, "boxHeight": 46, "size": 30, "maxWidth": 300 },
   "hp": { "right": 40, "top": 30, "boxHeight": 48, "size": 34, "labelSize": 15 },
 
@@ -23,6 +30,9 @@
     "gap": 6,
     "energySize": 26,
     "energyColumnWidth": 92,
+    "_damageColumnComment": "Largura reservada ao dano. Existe porque o Satori não implementa `min-width: auto` como o CSS: sem largura explícita, uma descrição longa estica a coluna do meio e expulsa o número da linha. As três colunas somam a largura útil da linha.",
+    "damageColumnWidth": 78,
+    "rowPadding": 14,
     "nameSize": 20,
     "textSize": 12,
     "damageSize": 26

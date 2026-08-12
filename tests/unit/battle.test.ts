@@ -1,19 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { MAX_TURNS, simulate } from "@/lib/battle/engine";
-import type { Card, Element } from "@/lib/cards/types";
+import { ELEMENTS, type Card } from "@/lib/cards/types";
 
 function card(overrides: Partial<Card> = {}): Card {
   return {
     kind: "profile",
     id: "dev",
     name: "dev",
-    element: "neutral",
+    element: "normal",
     hp: 100,
     attacks: [{ name: "golpe", cost: 1, damage: 30, text: "" }],
     weakness: null,
     resistance: null,
     retreat: 1,
     rarity: "common",
+    serial: null,
     artUrl: "",
     footer: "",
     stats: [],
@@ -191,17 +192,9 @@ describe("sorteio de quem começa (Q7)", () => {
 });
 
 describe("cadeia de elementos", () => {
-  it("cobre os 7 elementos sem quebrar", () => {
-    const elements: Element[] = [
-      "neutral",
-      "fire",
-      "water",
-      "grass",
-      "electric",
-      "psychic",
-      "fighting",
-    ];
-    for (const element of elements) {
+  // Deriva de `ELEMENTS`: tipo novo entra sozinho, sem lista para esquecer.
+  it("cobre todos os tipos sem quebrar", () => {
+    for (const element of ELEMENTS) {
       const resultado = simulate(
         card({ id: "a", element }),
         card({ id: "b", element, weakness: element }),

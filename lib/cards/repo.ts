@@ -1,5 +1,5 @@
 import type { GitHubContributor, GitHubRepo } from "../github/types";
-import { ELEMENT_CHAIN, elementForLanguage } from "./elements";
+import { ELEMENT_CHAIN, LANGUAGE_ELEMENTS, elementForLanguage } from "./elements";
 import {
   clamp,
   costForDamage,
@@ -9,8 +9,9 @@ import {
   truncate,
   year,
 } from "./format";
+import { elementKey, rarityKey } from "../i18n/dictionaries";
 import { rarityForScore } from "./rarity";
-import type { Attack, Card } from "./types";
+import type { Attack, Card, Derivation, Element } from "./types";
 
 /**
  * Carta de repositório. A RFC 6.2 deixou as fórmulas em aberto (questão Q2); o
@@ -43,8 +44,14 @@ export function buildRepoCard(
     ),
   );
 
-  const score =
-    repo.stargazers_count * 2 + repo.forks_count * 3 + freshnessBonus(repo, now);
+  const freshness = freshnessBonus(repo, now);
+  const score = repo.stargazers_count * 2 + repo.forks_count * 3 + freshness;
+
+  const weakness = ELEMENT_CHAIN[element].weakTo;
+  const resistance = ELEMENT_CHAIN[element].resists;
+  const retreat = clamp(1 + Math.floor(repo.open_issues_count / 50), 1, 4);
+  const rarity = rarityForScore(score);
+  const { attacks, fromContributors } = attacksFrom(repo, contributors);
 
   return {
     kind: "repo",
@@ -52,12 +59,14 @@ export function buildRepoCard(
     name: truncate(repo.name, 24),
     element,
     hp,
-    attacks: attacksFrom(repo, contributors),
-    weakness: ELEMENT_CHAIN[element].weakTo,
-    resistance: ELEMENT_CHAIN[element].resists,
+    attacks,
+    weakness,
+    resistance,
     // 1 pip por 50 issues abertas, teto de 4. Ver justificativa (2) acima.
-    retreat: clamp(1 + Math.floor(repo.open_issues_count / 50), 1, 4),
-    rarity: rarityForScore(score),
+    retreat,
+    rarity,
+    // Atribuído fora daqui — ver `withSerial` em `./serial.ts`.
+    serial: null,
     artUrl: repo.owner.avatar_url,
     footer: repoFooter(repo),
     stats: [
@@ -67,7 +76,134 @@ export function buildRepoCard(
       // String, não número: ano formatado como número vira "2.013".
       { labelKey: "stat.since", value: String(year(repo.created_at)) },
     ],
+    derivations: repoDerivations({
+      repo,
+      element,
+      hp,
+      attacks,
+      fromContributors,
+      weakness,
+      resistance,
+      retreat,
+      rarity,
+      score,
+      freshness,
+    }),
     sourceUrl: repo.html_url,
+  };
+}
+
+/**
+ * De onde saiu cada número da carta de repositório.
+ *
+ * Espelha `derivations` de `./profile.ts` no formato, mas **não** reusa as
+ * frases: as do perfil falam na segunda pessoa ("sua linguagem dominante"), e
+ * aqui o sujeito é o repositório, não quem está lendo. Chaves próprias, sob
+ * `why.repo.*`.
+ *
+ * Não há radar do lado do repositório — os cinco eixos de `./ratings.ts` são de
+ * perfil (seguidores, anos de conta) e não têm equivalente óbvio aqui. A coluna
+ * esquerda fica com a primeira metade das derivações, e é o suficiente para a
+ * página parar de sair com as duas laterais vazias.
+ */
+function repoDerivations(input: {
+  repo: GitHubRepo;
+  element: Element;
+  hp: number;
+  attacks: Attack[];
+  fromContributors: boolean;
+  weakness: Element | null;
+  resistance: Element | null;
+  retreat: number;
+  rarity: Card["rarity"];
+  score: number;
+  freshness: number;
+}): Derivation[] {
+  const { repo, attacks } = input;
+  const language = repo.language;
+
+  return [
+    {
+      labelKey: "card.type",
+      value: elementKey(input.element),
+      ...elementReason(language),
+    },
+    {
+      labelKey: "card.hp",
+      value: String(input.hp),
+      reasonKey: "why.repo.hp",
+      reasonParams: { stars: repo.stargazers_count, forks: repo.forks_count },
+    },
+    {
+      labelKey: "card.attacks",
+      value: String(attacks.length),
+      // O fallback de `attacksFrom` devolve um ataque com o nome do repositório;
+      // dizer "maiores contribuidores: projeto" ali seria falso.
+      ...(input.fromContributors
+        ? {
+            reasonKey: "why.repo.attacks",
+            reasonParams: { names: attacks.map((attack) => attack.name).join(", ") },
+          }
+        : { reasonKey: "why.repo.attacks.self" }),
+    },
+    {
+      labelKey: "card.weakness",
+      value: input.weakness ? elementKey(input.weakness) : "card.none",
+      // Repositório não tem segunda linguagem — a fraqueza vem sempre da cadeia,
+      // ao contrário do perfil.
+      reasonKey: input.weakness ? "why.repo.weakness" : "why.repo.weakness.none",
+    },
+    {
+      labelKey: "card.resistance",
+      value: input.resistance ? elementKey(input.resistance) : "card.none",
+      reasonKey: input.resistance ? "why.repo.resistance" : "why.repo.resistance.none",
+    },
+    {
+      labelKey: "card.retreat",
+      value: String(input.retreat),
+      reasonKey: "why.repo.retreat",
+      reasonParams: { issues: repo.open_issues_count },
+    },
+    {
+      labelKey: "card.rarityLabel",
+      value: rarityKey(input.rarity),
+      // O bônus de atividade é a parte não óbvia do score, e a única que pode
+      // cair com o tempo — some da frase quando é zero, e o motivo aparece.
+      ...rarityReason(input),
+    },
+  ];
+}
+
+function elementReason(language: string | null): Pick<Derivation, "reasonKey" | "reasonParams"> {
+  if (!language) return { reasonKey: "why.repo.element.none" };
+  // Linguagem fora do mapa cai em `normal` (ver `elementForLanguage`). Dizer só
+  // "a linguagem é Brainfuck" deixaria o tipo Normal sem explicação.
+  const mapped = language.toLowerCase() in LANGUAGE_ELEMENTS;
+  return {
+    reasonKey: mapped ? "why.repo.element" : "why.repo.element.unmapped",
+    reasonParams: { language },
+  };
+}
+
+function rarityReason(input: {
+  repo: GitHubRepo;
+  score: number;
+  freshness: number;
+}): Pick<Derivation, "reasonKey" | "reasonParams"> {
+  const params = {
+    score: Math.round(input.score),
+    stars: input.repo.stargazers_count,
+    forks: input.repo.forks_count,
+  };
+  if (input.freshness > 0) {
+    return {
+      reasonKey: "why.repo.rarity",
+      reasonParams: { ...params, bonus: input.freshness },
+    };
+  }
+  return {
+    reasonKey: input.repo.archived ? "why.repo.rarity.archived" : "why.repo.rarity.stale",
+    reasonParams: params,
   };
 }
 
@@ -89,8 +225,16 @@ function freshnessBonus(repo: GitHubRepo, now: Date): number {
  * Top 2 contribuidores viram ataques (RFC 6.2). Sem contribuidores — repo novo,
  * ou o GitHub ainda calculando a lista — o próprio repositório vira o ataque, em
  * vez de devolver uma carta sem nada no meio.
+ *
+ * `fromContributors` distingue os dois casos para a derivação, que precisa dizer
+ * frases diferentes. Sai daqui como bandeira e não é reconstituído por
+ * comparação de nome: repositório chamado igual ao seu maior contribuidor não é
+ * impossível, e o palpite erraria.
  */
-function attacksFrom(repo: GitHubRepo, contributors: GitHubContributor[]): Attack[] {
+function attacksFrom(
+  repo: GitHubRepo,
+  contributors: GitHubContributor[],
+): { attacks: Attack[]; fromContributors: boolean } {
   const humans = contributors
     .filter((person) => person.type !== "Bot" && !person.login.endsWith("[bot]"))
     .sort((a, b) => b.contributions - a.contributions || a.login.localeCompare(b.login))
@@ -98,17 +242,22 @@ function attacksFrom(repo: GitHubRepo, contributors: GitHubContributor[]): Attac
 
   if (humans.length === 0) {
     const damage = roundDamage(clamp(repo.stargazers_count * 2, 10, 300));
-    return [
-      {
-        name: truncate(repo.name, 22),
-        cost: costForDamage(damage),
-        damage,
-        text: repo.description ? truncate(repo.description, 64) : "",
-      },
-    ];
+    return {
+      fromContributors: false,
+      attacks: [
+        {
+          name: truncate(repo.name, 22),
+          cost: costForDamage(damage),
+          damage,
+          // 38 pelo mesmo motivo de `profile.ts`: é o que cabe na coluna de texto
+          // do ataque sem o renderizador cortar a seco por cima.
+          text: repo.description ? truncate(repo.description, 38) : "",
+        },
+      ],
+    };
   }
 
-  return humans.map((person) => {
+  const attacks = humans.map((person) => {
     // Log, e não `contribuições × 2`: com escala linear qualquer repositório
     // sério satura os 300 nos dois ataques, e as duas linhas ficam idênticas.
     // No log, 10 commits dão 50, 1.000 dão 140 e 10.000 dão 180.
@@ -123,6 +272,8 @@ function attacksFrom(repo: GitHubRepo, contributors: GitHubContributor[]): Attac
       text: `${person.contributions.toLocaleString("en-US")} commits`,
     };
   });
+
+  return { attacks, fromContributors: true };
 }
 
 /**

@@ -198,6 +198,477 @@ select {
   font-weight: 700;
 }
 
+/* ------------------------------------------------ assinatura do perfil */
+
+.radar {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.radar figcaption h2 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-faint);
+}
+
+.radar figcaption p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.radar-svg {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  align-self: center;
+  overflow: visible;
+}
+
+/* Grade e raios recuam: são estrutura, não dado. */
+.radar-grid {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.radar-spoke {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+/*
+ * A cor do elemento preenche a forma. Uma série só, então a identidade não
+ * depende de distinguir cores entre si — o risco de daltonismo que a validação
+ * de paleta cobre não se aplica aqui.
+ */
+.radar-shape {
+  fill: var(--element, var(--accent));
+  fill-opacity: 0.28;
+  stroke: var(--element, var(--accent));
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.radar-vertex {
+  fill: var(--element, var(--accent));
+}
+
+/* Rótulo em token de texto, nunca na cor da série. */
+.radar-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* -------------------------------------------- de onde saem estes números */
+
+.why ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/*
+ * Rótulo e valor na primeira linha, motivo embaixo ocupando a largura toda: o
+ * motivo é frase, não dado tabular, e espremê-lo numa coluna o tornaria ilegível
+ * exatamente nos casos mais interessantes (nomes longos de repositório).
+ */
+.why li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.why-label {
+  color: var(--text-faint);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  align-self: center;
+}
+
+.why-value {
+  color: var(--element, var(--text));
+  font-size: 15px;
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  /*
+   * Flex à direita em vez de `text-align`: com o disco do tipo dentro, alinhar
+   * texto não alinharia a imagem, e o ícone descia da linha de base. Só as três
+   * linhas de elemento têm ícone, e as outras quatro continuam onde estavam
+   * porque `justify-content: flex-end` faz o mesmo que `text-align: right` para
+   * um filho só.
+   */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/*
+ * Os SVGs são discos redondos com glifo branco (o mesmo arquivo de onde a cor
+ * base do tipo foi extraída). `flex: none` porque num nome longo — "Rara
+ * Ilustrada Especial" ao lado de um tipo — o flex do pai espremeria o disco em
+ * elipse antes de quebrar a linha.
+ */
+.type-icon {
+  flex: none;
+  display: inline-block;
+  vertical-align: -0.15em;
+}
+
+/*
+ * O tipo, na linha sob o nome da carta. `inline-flex` mantém o disco colado ao
+ * nome do tipo quando a linha quebra: sem ele, o ícone pode terminar sozinho no
+ * fim de uma linha e o nome começar na seguinte.
+ */
+.headline-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.why-reason {
+  grid-column: 1 / -1;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------ abertura de pacote */
+
+/*
+ * O visitante rasga a tira serrilhada e a carta aparece atrás. Toda a
+ * coreografia é `clip-path` + `transform`; o React só troca `data-stage`.
+ */
+
+.pack {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: rgb(9 11 15 / 0.92);
+  animation: pack-in 220ms ease both;
+}
+
+/* Sinaliza o fim da sequência para o React desmontar o overlay. */
+.pack[data-stage="opening"] {
+  animation: pack-finish 320ms ease 620ms both;
+}
+
+@keyframes pack-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pack-finish {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.pack-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.pack-wrapper {
+  position: relative;
+  width: 280px;
+  height: 392px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/*
+ * Camada que respira. Separada do botão de propósito: o alvo de clique precisa
+ * ficar imóvel — elemento em movimento perpétuo nunca assenta para automação
+ * nem para quem tem dificuldade motora.
+ */
+.pack-float {
+  position: absolute;
+  inset: 0;
+  display: block;
+  animation: pack-idle 3.4s ease-in-out infinite;
+}
+
+.pack-wrapper:disabled {
+  cursor: default;
+}
+
+.pack-wrapper:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 8px;
+}
+
+/* Respiração de espera: sinaliza que o objeto é interativo sem pedir nada. */
+@keyframes pack-idle {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.pack-body {
+  position: absolute;
+  inset: 34px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border-radius: 0 0 14px 14px;
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-sunken) 62%, var(--bg-raised) 100%);
+  border: 1px solid var(--border-strong);
+  border-top: 0;
+  /* Dentes complementares aos da tira, para a costura fechar. */
+  clip-path: polygon(
+    0% 6%, 6% 0%, 14% 6%, 22% 0%, 30% 6%, 38% 0%, 46% 6%, 54% 0%,
+    62% 6%, 70% 0%, 78% 6%, 86% 0%, 94% 6%, 100% 0%, 100% 100%, 0% 100%
+  );
+}
+
+.pack-mark {
+  width: 34px;
+  height: 44px;
+  border-radius: 6px;
+  border: 3px solid var(--accent);
+  background: linear-gradient(160deg, var(--accent) 0 42%, transparent 42%);
+}
+
+.pack-brand {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.pack-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 46px;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(120deg, var(--accent) 0%, #ffe08a 48%, var(--accent) 100%);
+  clip-path: polygon(
+    0% 0%, 100% 0%, 100% 58%, 94% 100%, 86% 58%, 78% 100%, 70% 58%,
+    62% 100%, 54% 58%, 46% 100%, 38% 58%, 30% 100%, 22% 58%, 14% 100%,
+    6% 58%, 0% 100%
+  );
+  transform-origin: 0% 50%;
+}
+
+/* Luz vazando pela costura, só depois que a tira começa a sair. */
+.pack-glow {
+  position: absolute;
+  top: 26px;
+  left: 8%;
+  right: 8%;
+  height: 120px;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgb(255 255 255 / 0.85),
+    rgb(255 236 170 / 0.35) 42%,
+    transparent 72%
+  );
+}
+
+.pack[data-stage="opening"] .pack-float {
+  animation: none;
+}
+
+.pack[data-stage="opening"] .pack-strip {
+  animation: pack-tear 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pack[data-stage="opening"] .pack-glow {
+  animation: pack-leak 620ms ease-out both;
+}
+
+.pack[data-stage="opening"] .pack-body {
+  animation: pack-fall 560ms cubic-bezier(0.5, 0, 0.75, 0) 180ms both;
+}
+
+@keyframes pack-tear {
+  to {
+    transform: translate(46%, -128%) rotate(19deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pack-leak {
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(2.1);
+  }
+}
+
+@keyframes pack-fall {
+  to {
+    transform: translateY(58%) rotate(-4deg);
+    opacity: 0;
+  }
+}
+
+.pack-hint {
+  color: var(--text-faint);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.pack[data-stage="opening"] .pack-hint {
+  opacity: 0;
+}
+
+/* Visível desde o primeiro quadro: a animação toca em toda visita (RFC 7.2). */
+.pack-skip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 20px;
+  cursor: pointer;
+}
+
+.pack-skip:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+/*
+ * A regra global de reduced-motion zera `animation-duration`, mas não o
+ * `animation-delay` — sem isto o overlay ficaria parado esperando um atraso que
+ * já não tem animação nenhuma para cobrir.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .pack,
+  .pack * {
+    animation-delay: 0s !important;
+  }
+}
+
+/* --------------------------------------------------------- faixa de apoio */
+
+/*
+ * Fica acima do rodapé, com peso de bloco em vez de link de texto. Nunca entra
+ * na imagem exportada (RFC 9.6) — vive só no site.
+ */
+.support-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 8px 0 24px;
+  padding: 24px 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+}
+
+.support-copy h2 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.3px;
+}
+
+.support-copy p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  max-width: 46ch;
+}
+
+.support-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.support-star {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.support-star:hover {
+  border-color: var(--accent);
+}
+
+.support-star-glyph {
+  color: var(--accent);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.support-star-label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+/* O número só existe quando a API respondeu; sem ele o rótulo fica sozinho. */
+.support-star-label b {
+  color: var(--text-faint);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 /* -------------------------------------------------------------------- home */
 
 .hero {
@@ -284,22 +755,45 @@ select {
 .tilt-card {
   position: relative;
   border-radius: 16px;
-  transform-style: preserve-3d;
-  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
-  animation: reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: transform;
-}
 
-.tilt-card[data-active] {
-  transition: transform 80ms linear;
+  /*
+   * `--active` vai de 0 a 1 no laço de rAF do TiltCard e é o dimmer de toda a
+   * pilha: inclinação, elevação, brilho e espectro leem daqui. Uma variável só
+   * garante que tudo acenda e apague junto, sem transição de CSS competindo com
+   * a interpolação do JS.
+   */
+  --active: 0;
+  --foil: 0;
+
+  transform: translateZ(calc(var(--active) * 26px)) rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+
+  /*
+   * `backwards` e nao `both`.
+   *
+   * Com `both`, o quadro 100% desta animacao (`transform: none`) continua valendo
+   * depois que ela termina, e animacao vence declaracao normal na cascata — o
+   * `transform` acima nunca chegava a ser aplicado. A carta ficava permanentemente
+   * chapada por mais que o JS escrevesse `--tilt-x`. `backwards` cobre so o que o
+   * `both` existia para cobrir (o estado inicial antes do primeiro quadro) e
+   * devolve o controle do transform assim que a revelacao acaba.
+   */
+  animation: reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  will-change: transform;
 }
 
 .tilt-card img {
   width: 100%;
   height: auto;
   border-radius: 16px;
-  filter: drop-shadow(0 18px 34px rgb(0 0 0 / 0.45));
+  /*
+   * A sombra cresce com a elevação: carta levantada projeta sombra maior e mais
+   * difusa. Sem isso o `translateZ` lê como zoom, não como altura.
+   */
+  filter: drop-shadow(
+    0 calc(18px + var(--active) * 16px) calc(34px + var(--active) * 26px)
+      rgb(0 0 0 / calc(0.45 + var(--active) * 0.2))
+  );
 }
 
 .tilt-glare {
@@ -307,17 +801,183 @@ select {
   inset: 0;
   border-radius: 16px;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 240ms ease;
+  opacity: var(--active);
+  /*
+   * Bem mais discreto do que era quando esta camada estava sozinha. Com a pilha
+   * holo por cima, um borrão branco largo só soma névoa: as três camadas de foil
+   * já clareiam a região do ponteiro, e o brilho da fonte de luz vira um ponto
+   * quente pequeno em vez do reflexo inteiro.
+   */
   background: radial-gradient(
     circle at var(--glare-x, 50%) var(--glare-y, 50%),
-    rgb(255 255 255 / 0.34),
-    transparent 46%
+    rgb(255 255 255 / 0.2),
+    transparent 38%
   );
 }
 
-.tilt-card[data-active] .tilt-glare {
-  opacity: 1;
+/*
+ * ---------------------------------------------------------------- foil holo
+ *
+ * Camadas por cima do PNG, nunca dentro dele — a imagem exportada já carrega o
+ * seu próprio foil, gerado na build (RFC 7.1, 9.6).
+ *
+ * Todas herdam a mesma conta de opacidade: `--foil` (a raridade, fixa) × uma
+ * base em repouso + o que o ponteiro acrescenta. A carta nunca fica morta
+ * parada, mas só chega ao brilho cheio quando alguém a toca.
+ */
+.tilt-holo {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tilt-holo > * {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * Relevo especular: o grão de metal que reflete a luz do ponteiro.
+ *
+ * Mascarado em volta do ponteiro, e não espalhado pela carta inteira. Sem a
+ * máscara o relevo cobre os 500×700 num véu leitoso uniforme e o avatar
+ * desaparece atrás dele — o que é fisicamente errado, além de feio: relevo só
+ * acende onde a luz bate. A máscara é bem mais larga que a do espectro porque o
+ * reflexo difuso do metal se espalha mais que a refração.
+ */
+.tilt-foil {
+  mix-blend-mode: screen;
+  opacity: calc(var(--foil) * (0.07 + var(--active) * 0.25));
+  -webkit-mask-image: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    #000 0%,
+    rgb(0 0 0 / 0.45) 38%,
+    transparent 74%
+  );
+  mask-image: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    #000 0%,
+    rgb(0 0 0 / 0.45) 38%,
+    transparent 74%
+  );
+}
+
+.tilt-foil-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * Faixas de espectro — a camada que faz a carta ler como holográfica em vez de
+ * apenas brilhante.
+ *
+ * `mix-blend-mode: color`, e não `color-dodge` nem `hard-light`. Os dois foram
+ * tentados e falham pelo mesmo motivo: a arte destas cartas é clara (moldura
+ * pastel, avatar sobre fundo claro), então qualquer modo que some luz satura
+ * para branco e enevoa o nome, os stats e o rosto — foi exatamente o que a
+ * primeira versão desta camada fazia.
+ *
+ * `color` troca **só** matiz e saturação e mantém a luminosidade do que está
+ * embaixo. O texto preto continua preto, o contraste da arte não se move, e
+ * ainda assim a carta ganha as faixas de arco-íris de verdade. O brilho que o
+ * holo também precisa vem de outra camada (`.tilt-foil`), que é onde ele deve
+ * estar: cor e luz separadas, cada uma controlável sem estragar a outra.
+ *
+ * A máscara radial prende o espectro a um halo em volta do ponteiro. Espectro
+ * cobrindo a carta inteira lê como filtro de foto; concentrado num ponto que se
+ * move, lê como reflexo.
+ */
+.tilt-spectral {
+  mix-blend-mode: color;
+  opacity: calc(var(--foil) * var(--active) * 0.85);
+  background: repeating-linear-gradient(
+    112deg,
+    hsl(348 92% 58%) 0%,
+    hsl(45 96% 58%) 5%,
+    hsl(140 82% 54%) 10%,
+    hsl(192 94% 56%) 15%,
+    hsl(268 90% 62%) 20%,
+    hsl(320 92% 60%) 25%,
+    hsl(348 92% 58%) 30%
+  );
+  background-size: 220% 220%;
+  background-position: var(--holo-shift, 50%) var(--holo-drift, 50%);
+  -webkit-mask-image: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    #000 0%,
+    rgb(0 0 0 / 0.45) 28%,
+    transparent 58%
+  );
+  mask-image: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    #000 0%,
+    rgb(0 0 0 / 0.45) 28%,
+    transparent 58%
+  );
+}
+
+/* Lâmina diagonal: o reflexo duro da fonte de luz varrendo a superfície. */
+.tilt-sheen {
+  mix-blend-mode: overlay;
+  opacity: calc(var(--foil) * (0.08 + var(--active) * 0.24));
+  background: linear-gradient(
+    108deg,
+    transparent 36%,
+    rgb(255 255 255 / 0.72) 47%,
+    rgb(255 255 255 / 0.22) 53%,
+    transparent 64%
+  );
+  background-size: 260% 100%;
+  background-position: var(--sheen-shift, 50%) center;
+}
+
+/*
+ * Granulado fixo. Não se move e não reage — existe só para quebrar a lisura dos
+ * gradientes acima, que sem ele denunciam CSS à primeira vista. Data URI porque
+ * um request de rede para 400 bytes de ruído não se justifica.
+ */
+.tilt-grain {
+  mix-blend-mode: overlay;
+  opacity: calc(var(--foil) * 0.16);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='0.55'/></svg>");
+}
+
+/*
+ * Metal do tier tinge o espectro. `ultra_rare` é prata e
+ * `special_illustration_rare`/`hyper_rare` são ouro na moldura impressa
+ * (`cardTreatment`); sem isto o reflexo ao vivo sai igual nos três e desmente a
+ * moldura que está logo embaixo.
+ */
+.tilt-holo[data-metal="gold"] .tilt-spectral {
+  filter: hue-rotate(-18deg) saturate(1.15);
+}
+
+.tilt-holo[data-metal="silver"] .tilt-spectral {
+  filter: saturate(0.55) brightness(1.12);
+}
+
+/* Fio de luz na borda, como o corte metálico de uma carta de verdade. */
+.tilt-card[data-foil]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  padding: 1px;
+  opacity: calc(var(--foil) * (0.25 + var(--active) * 0.6));
+  background: linear-gradient(
+    calc(120deg + var(--tilt-y, 0deg)),
+    rgb(255 255 255 / 0.9),
+    rgb(255 255 255 / 0.1) 45%,
+    rgb(255 255 255 / 0.75)
+  );
+  /* Máscara xor: pinta só a moldura de 1px, e não o miolo. */
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
 }
 
 /*
@@ -340,21 +1000,168 @@ select {
   }
 }
 
+/*
+ * Sem movimento, o foil vira brilho estático em vez de sumir (docs/foil-especular.md).
+ * A regra global já zera durações; o que falta é impedir que a carta fique
+ * apagada esperando um ponteiro cujo efeito foi desligado.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card {
+    --active: 0.5;
+    transform: none;
+  }
+
+  .tilt-spectral,
+  .tilt-glare {
+    opacity: 0;
+  }
+}
+
 /* --------------------------------------------------------- painel da carta */
 
+/*
+ * Três colunas com a carta ao centro: ela é o eixo da página, não um item
+ * encostado na margem. As laterais têm a mesma largura para o equilíbrio não
+ * depender de quanto texto cada lado recebeu.
+ */
 .card-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+
+  /*
+   * Escapa da largura do shell. Três colunas em 1080px espremem as laterais até
+   * o texto vazar; a carta sozinha já ocupa 340px do meio. O `100vw` com margem
+   * negativa alarga só esta página, sem mexer no shell das outras.
+   */
+  width: min(1360px, 100vw - 40px);
+  margin-inline: calc(50% - min(680px, 50vw - 20px));
+}
+
+/*
+ * Auréola do elemento atrás da carta.
+ *
+ * A cor do tipo já existe em `--element` (o `CardPanel` a define no painel
+ * inteiro), mas até aqui ela só aparecia em texto de 13px — a página ficava
+ * idêntica para uma carta de Fogo e uma de Água, com o fundo cinza-azulado do
+ * produto valendo para as dezoito. A auréola dá o ambiente sem tocar na carta:
+ * é luz **atrás** dela, não em cima, e por isso não briga com o PNG exportado
+ * nem com o foil.
+ *
+ * `position: absolute` num pseudo-elemento em vez de `box-shadow` no `img`:
+ * sombra colorida acompanharia a inclinação da carta e a auréola tem que ficar
+ * parada, senão vira brilho grudado e denuncia que a carta é uma imagem plana.
+ */
+.card-center {
+  position: relative;
   display: flex;
-  gap: 44px;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.card-center::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  /* Larga o suficiente para vazar da carta sem alcançar as colunas de texto. */
+  left: 50%;
+  top: 40px;
+  width: 620px;
+  height: 620px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--element, #f2c94c) 34%, transparent) 0%,
+    color-mix(in srgb, var(--element, #f2c94c) 12%, transparent) 34%,
+    transparent 68%
+  );
+}
+
+.card-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  min-width: 0;
+}
+
+/* A coluna esquerda alinha à direita, mirando a carta. */
+.card-aside-left {
+  text-align: right;
+}
+
+.card-aside-left .why li {
+  text-align: right;
+}
+
+.card-aside-left .why-label {
+  order: 2;
+}
+
+.card-aside-left .why-value {
+  order: 1;
+  text-align: left;
+  /*
+   * A coluna esquerda é espelhada: o valor vai para a borda de fora, longe do
+   * rótulo. Desde que `.why-value` virou flex (para o disco do tipo assentar na
+   * linha), `text-align` sozinho não move mais nada — sem esta linha o valor
+   * cola no rótulo e o espelho se desfaz.
+   */
+  justify-content: flex-start;
+}
+
+/* `order` reordena todos os itens do grid: sem isto o motivo sobe para cima do
+   valor, porque o padrão 0 vem antes do 1 e do 2 acima. */
+.card-aside-left .why-reason {
+  order: 3;
+}
+
+/* Embed e batalha voltam a ocupar a largura toda, abaixo das três colunas. */
+.card-panel > .card-side {
+  grid-column: 1 / -1;
+}
+
+/*
+ * Abaixo de 900px não há largura para três colunas: a carta sobe para o topo e
+ * as laterais viram uma pilha só. Simetria em coluna única é ruído.
+ */
+@media (max-width: 900px) {
+  .card-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .card-center {
+    order: -1;
+  }
+
+  .card-aside-left,
+  .card-aside-left .why li {
+    text-align: left;
+  }
+
+  .card-aside-left .why-label {
+    order: 0;
+  }
+
+  .card-aside-left .why-value {
+    order: 0;
+    text-align: right;
+    justify-content: flex-end;
+  }
 }
 
 .card-side {
   display: flex;
   flex-direction: column;
   gap: 26px;
-  flex: 1 1 320px;
   min-width: 0;
+}
+
+.card-headline {
+  text-align: center;
 }
 
 .card-headline h1 {

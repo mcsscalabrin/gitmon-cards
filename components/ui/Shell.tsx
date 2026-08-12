@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { AUTHOR, PROJECT_REPO_URL } from "@/lib/config";
 import { translator, type Locale } from "@/lib/i18n/dictionaries";
+import { getProjectStars } from "@/lib/project";
 import { LocaleToggle } from "./LocaleToggle";
+import { SupportBand } from "./SupportBand";
 
 /**
  * Cabeçalho e rodapé do site.
@@ -9,7 +12,7 @@ import { LocaleToggle } from "./LocaleToggle";
  * viaja para dentro do README de outra pessoa fica limpo. A marca pessoal é
  * discreta, um crédito no rodapé — o produto tem identidade própria (RFC 9.3).
  */
-export function Shell({
+export async function Shell({
   locale,
   children,
 }: {
@@ -17,6 +20,7 @@ export function Shell({
   children: React.ReactNode;
 }) {
   const t = translator(locale);
+  const stars = await getProjectStars();
 
   return (
     <div className="shell">
@@ -28,7 +32,7 @@ export function Shell({
         <div className="shell-actions">
           <a
             className="ghost-link"
-            href="https://github.com/mcsscalabrin/gitmon-cards"
+            href={PROJECT_REPO_URL}
             target="_blank"
             rel="noreferrer noopener"
           >
@@ -40,21 +44,20 @@ export function Shell({
 
       <main className="shell-main">{children}</main>
 
+      <SupportBand locale={locale} stars={stars} />
+
+      {/*
+        O sponsor saiu daqui e foi para a faixa acima: no rodapé ele era um link
+        de texto, ignorável por construção. O crédito ao autor fica — é atribuição,
+        não chamada para ação, e o lugar dele é discreto mesmo (RFC 9.3).
+      */}
       <footer className="shell-footer">
         <span>
           {t("home.madeBy")}{" "}
-          <a href="https://scalabrin.dev" target="_blank" rel="noreferrer noopener">
-            @scalabrin.dev
+          <a href={AUTHOR.url} target="_blank" rel="noreferrer noopener">
+            {AUTHOR.handle}
           </a>
         </span>
-        <a
-          className="sponsor"
-          href="https://github.com/sponsors/mcsscalabrin"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          {t("home.sponsor")}
-        </a>
       </footer>
     </div>
   );

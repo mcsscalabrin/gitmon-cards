@@ -28,6 +28,18 @@ store.__gitmonCache ??= { client: null, clientPromise: null, memory: new Map() }
 const state = store.__gitmonCache;
 const memory = state.memory;
 
+/**
+ * Cliente cru, para quem precisa de operação atômica em vez de get/set com TTL.
+ *
+ * Único consumidor hoje: `lib/cards/serial.ts`, que grava chave sem expiração —
+ * algo que o `write()` daqui não sabe fazer e deliberadamente não deve aprender,
+ * porque tudo neste módulo é cache descartável. Quem usa isto assume a
+ * responsabilidade que o resto do arquivo abre mão: durabilidade.
+ */
+export async function getRedisClient(): Promise<Redis | null> {
+  return getClient();
+}
+
 async function getClient(): Promise<Redis | null> {
   const url = process.env.REDIS_URL?.trim();
   if (!url) return null;

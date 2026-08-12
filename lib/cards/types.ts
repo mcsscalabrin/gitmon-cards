@@ -4,24 +4,63 @@
  * GitHub diretamente.
  */
 
+/**
+ * Os 18 tipos do TCG Pokémon.
+ *
+ * A RFC 4.4 e o cabeçalho antigo de `./elements.ts` defendiam 7 elementos, com o
+ * argumento de que mapear ~20 linguagens para 18 tipos não era tratável. A
+ * decisão foi revertida: com 18 tipos há espaço para separar infraestrutura de
+ * shell, funcional de verificação formal, e legado de moderno — coisas que antes
+ * caíam todas em `neutral`. O custo é um mapa de linguagens maior, que é
+ * trabalho de tabela, não de arquitetura.
+ *
+ * `normal` substitui o antigo `neutral`, para casar com o nome do ícone.
+ */
 export const ELEMENTS = [
-  "neutral",
+  "normal",
   "fire",
   "water",
   "grass",
   "electric",
-  "psychic",
+  "ice",
   "fighting",
+  "poison",
+  "ground",
+  "flying",
+  "psychic",
+  "bug",
+  "rock",
+  "ghost",
+  "dragon",
+  "dark",
+  "steel",
+  "fairy",
 ] as const;
 
 export type Element = (typeof ELEMENTS)[number];
 
 /**
- * 5 tiers no scoring (RFC 6.1) contra 3 símbolos no layout (RFC 4.4). Conciliado
- * assim: `holo` e `secret` reusam a estrela e se diferenciam pela moldura/foil.
- * Ver `raritySymbol` em `./rarity.ts`.
+ * Oito tiers, espelhando a escada do TCG Pokémon em vez dos 5 originais da RFC
+ * 6.1. A distinção entre os tiers altos é feita por **quantidade e cor** do
+ * símbolo, não só por tamanho — ver `raritySymbol`/`raritySymbolColor` em
+ * `./rarity.ts`.
+ *
+ * Ressalva conhecida: no TCG, `illustration_rare`, `ultra_rare` e
+ * `special_illustration_rare` se distinguem por tratamento de arte (arte
+ * alternativa, full-art texturizada). Aqui a arte é sempre o avatar do GitHub
+ * dentro da mesma moldura, então esses três hoje diferem só pelo símbolo. Só um
+ * segundo tratamento de arte no pipeline resolve isso de verdade.
  */
-export const RARITIES = ["common", "uncommon", "rare", "holo", "secret"] as const;
+export const RARITIES = [
+  "common",
+  "uncommon",
+  "rare",
+  "double_rare",
+  "illustration_rare",
+  "ultra_rare",
+  "special_illustration_rare",
+  "hyper_rare",
+] as const;
 
 export type Rarity = (typeof RARITIES)[number];
 
@@ -52,15 +91,53 @@ export interface Card {
   /** Pips de custo de recuo, 1 a 4. */
   retreat: number;
   rarity: Rarity;
+  /**
+   * Número de série sequencial, atribuído na primeira vez que a carta é gerada e
+   * imutável depois disso. `null` quando o store durável não respondeu — carta
+   * sem número é honesta, carta com número errado não é (ver `./serial.ts`).
+   */
+  serial: number | null;
   /** URL da arte central (avatar do GitHub). */
   artUrl: string;
   /** Linha de rodapé. Factual, gerada por template a partir dos números. */
   footer: string;
   /** Números crus, para a UI web mostrar de onde cada stat saiu. */
   stats: CardStat[];
+  /** Explicação de cada valor derivado. Só o site usa; a imagem, não. */
+  derivations?: Derivation[];
+  /**
+   * Assinatura do perfil para o radar. Como `derivations`, é afordância do site
+   * e não entra na imagem exportada. Ver `./ratings.ts` para por que isto é
+   * silhueta e não medição.
+   */
+  ratings?: AxisRating[];
   /** Link para a origem no GitHub. */
   sourceUrl: string;
 }
+
+/**
+ * De onde saiu um número da carta.
+ *
+ * O modelo é o do gitfut: todo valor derivado mostra a métrica de origem e uma
+ * frase de motivo, em vez de aparecer como número mágico. "Tipo: Fogo" não diz
+ * nada; "Fogo — sua linguagem dominante é C, ponderada por estrelas" diz.
+ *
+ * Opcional de propósito: isto é afordância **do site**, nunca da imagem
+ * exportada. O PNG que viaja para o README de outra pessoa continua limpo
+ * (RFC 9.6), e por isso o renderizador não precisa deste campo.
+ */
+export interface Derivation {
+  /** Chave i18n do que está sendo explicado ("Tipo", "PS", "Raridade"). */
+  labelKey: string;
+  /** O valor derivado, já pronto para exibir. */
+  value: string;
+  /** Chave i18n da frase de motivo. */
+  reasonKey: string;
+  /** Substituições da frase de motivo. */
+  reasonParams?: Record<string, string | number>;
+}
+
+import type { AxisRating } from "./ratings";
 
 export interface CardStat {
   /** Chave do dicionário i18n, não o rótulo já traduzido. */

@@ -12,12 +12,29 @@ não arquivo.** Toda moldura, ícone de tipo e ícone de energia deste projeto �
 | Asset | Quantidade | Destino |
 |---|---|---|
 | Moldura de carta | 7 (uma por elemento) | `public/assets/frames/` |
+| Moldura full-art | 7 (uma por elemento) | `public/assets/frames/fullart-*` |
 | Ícone de energia/custo | 7 | `public/assets/energy/` |
 | Ícone de tipo (pequeno — fraqueza/resistência/recuo) | 7 + 1 de recuo | `public/assets/icons/` |
-| Overlay de holo/foil | 1-2 (só raridades altas) | `public/assets/frames/` |
+| Overlay de foil | 6 (um por tier a partir de `rare`) | `public/assets/frames/foil-*` |
+| Overlay metálico | 2 (ouro e prata) | `public/assets/frames/metal-*` |
 | Fontes | 1-2 famílias, licença livre para embed | `public/assets/fonts/` |
 
-Elementos: `neutral, fire, water, grass, electric, psychic, fighting`.
+O foil deixou de ser "1-2 só nas raridades altas": no TCG a `rare` já vem com
+holográfico básico, então são **seis** tiers com foil. Somaram-se ainda as
+molduras full-art e os dois metais, que são o que distingue os tiers de
+ilustração entre si. Tudo gerado por `scripts/build-assets.mjs`.
+
+Tipos: são **18**, não os 7 elementos originais, e `neutral` virou `normal` —
+`normal, fire, water, grass, electric, ice, fighting, poison, ground, flying,
+psychic, bug, rock, ghost, dragon, dark, steel, fairy`. Ver o adendo na seção 4.4
+da RFC.
+
+Os ícones de tipo são os primeiros assets do projeto que **não** são gerados por
+código: chegaram prontos como SVG em `scripts/assets/types/`, já no formato de
+disco colorido com glifo branco. Cada um vira duas saídas — um PNG para o Satori
+compor na carta e uma cópia do SVG em `public/assets/types/` para a interface web
+usar sem rasterizar. A paleta de `palette.json` foi extraída deles, e não o
+contrário.
 
 ## Caminho escolhido — a decidir
 
@@ -41,5 +58,5 @@ Os outros: **A** = arte original comissionada/desenhada (melhor marca, mais trab
   no servidor antes de entrar na composição.
 - Peso importa: os assets viajam em toda geração serverless. Otimizar (webp onde couber, PNG-8
   quando a paleta permitir).
-- A paleta segue a lógica dos 7 elementos, **não** a paleta pessoal do autor — o produto tem
+- A paleta segue a lógica dos 18 tipos, **não** a paleta pessoal do autor — o produto tem
   identidade visual própria (RFC 9.3).

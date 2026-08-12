@@ -17,6 +17,8 @@ arquivo registra o que foi decidido depois dele e o que ainda falta decidir.
 | D8 | `/<a>/vs/<b>` **sorteia e redireciona** para `/battle/<id>`; o resultado inteiro (com as duas cartas embutidas) fica no Redis com TTL. | Separa "o confronto" (ação, sem cache) do "resultado" (recurso imutável e compartilhável), que é o que a RFC 7.3 pede. As cartas vão embutidas para o link não mudar de significado quando as estrelas mudarem. |
 | D9 | Fonte da carta: **M PLUS Rounded 1c** (SIL OFL 1.1), subsetada para latim por `npm run fonts`. | Terminais arredondados e um peso Black de verdade dão a leitura de TCG. O subset derruba 3,4 MB por peso para ~43 KB e ainda cobre os símbolos de raridade (● ◆ ★), que fontes só-latinas costumam não ter. |
 | D10 | O cache em memória (fallback sem `REDIS_URL`) mora no `globalThis`. | Em desenvolvimento o Next reavalia módulos por bundle de rota: um `Map` no escopo do módulo dá uma instância para a página e outra para a rota de imagem, e o pôster de batalha responde 404 para uma batalha que acabou de ser criada. |
+| D11 | **18 tipos, não os 7 elementos da RFC 4.4.** `neutral` virou `normal`, para casar com o nome do ícone. | O argumento da RFC — "mapear ~20 linguagens para 18 tipos não é tratável" — não se sustentou: o mapa é trabalho de tabela, não de arquitetura. O que os 7 custavam era leitura, porque infraestrutura declarativa, shell, verificação formal, funcional, legado e contratos caíam todos em `neutral`. A paleta dos 18 foi **extraída** do disco colorido de cada ícone, não escolhida à mão, então ícone e moldura não podem divergir. Ver o adendo na RFC 4.4 e `lib/cards/elements.ts`. |
+| D12 | **As derivações e o radar vivem só no site; a imagem exportada segue limpa.** Por isso `derivations` e `ratings` são opcionais no domínio. | RFC 9.6: o PNG viaja para o README de outra pessoa e não carrega explicação nem afordância de navegação. O renderizador de imagem nunca lê esses campos — se um dia ler, a promessa cai junto. |
 
 ## Questões do RFC — resolvidas
 
@@ -24,9 +26,9 @@ arquivo registra o que foi decidido depois dele e o que ainda falta decidir.
 |---|---|---|
 | Q1 | Caminho de arte (RFC 8) | **Caminho C.** Moldura vetorial única recolorida por elemento, foil como camada separada nos tiers altos, tudo gerado por código em `scripts/build-assets.mjs`. Arte 100% original. |
 | Q2 | Fórmulas da carta de repositório (RFC 6.2) | Escala **logarítmica** para HP e para o dano dos contribuidores. No linear, qualquer repo com ~70 estrelas satura o HP e todo repo popular vira a mesma carta. Ver `lib/cards/repo.ts`. |
-| Q3 | 5 tiers de raridade × 3 símbolos de layout | `holo` e `secret` reusam a estrela e se diferenciam pela moldura e pelo foil, não pelo glifo. |
+| Q3 | Tiers de raridade × 3 símbolos de layout | **Revisto.** A resolução original conciliava os 5 tiers da RFC 6.1 com os 3 símbolos do layout reusando `★` em `holo` e `secret`. O sistema passou depois para **8 tiers no padrão do TCG Pokémon**, e a leitura virou **contagem + cor** de estrela (uma, duas ou três; preta, prateada ou dourada), mais **tratamento de arte** (full-art e camada metálica). Ver `docs/design-system.md` e `lib/cards/rarity.ts`. |
 | Q4 | Dimensão do canvas | **500 × 700.** A proporção física do RFC (8,8 × 6,3 cm) dá 0,716; 500/700 dá 0,714. Todas as posições em `lib/cards/layout.json`. |
-| Q5 | "Fraqueza a manutenção" não é um dos 7 elementos | `open_issues_count` vira **custo de recuo**, não fraqueza: 1 pip por 50 issues. Mesma leitura ("repo com fila grande é difícil de largar") sem furar o sistema de tipos nem quebrar a cadeia de efetividade. |
+| Q5 | "Fraqueza a manutenção" não é um dos tipos | `open_issues_count` vira **custo de recuo**, não fraqueza: 1 pip por 50 issues. Mesma leitura ("repo com fila grande é difícil de largar") sem furar o sistema de tipos nem quebrar a cadeia de efetividade. Continua valendo com 18 tipos (D11): "manutenção" não virou um deles. |
 | Q6 | Onde persiste o `battle-id` | Redis com TTL (`BATTLE_TTL_SECONDS`, padrão 30 dias), guardando o resultado completo. Link expirado devolve uma carta de erro explicando, não um 404 mudo. |
 | Q7 | Quem começa a batalha | **Sorteado.** A RFC 7.3 propôs o desafiante e deixou o sorteio como alternativa; sorteando, a revanche não fica presa numa vantagem fixa de quem digitou a URL. |
 
@@ -34,7 +36,7 @@ arquivo registra o que foi decidido depois dele e o que ainda falta decidir.
 
 | # | Questão | Onde | Impacto |
 |---|---|---|---|
-| Q8 | O protótipo `github-card-prototype.html` nunca chegou em `reference/`. O mapa linguagem→elemento e as faixas de raridade foram calibrados aqui do zero. | `lib/cards/elements.ts`, `lib/cards/rarity.ts` | A RFC 6.1 trata aquele mapa como fonte. Se ele aparecer, reconciliar. |
+| Q8 | O protótipo `github-card-prototype.html` nunca chegou em `reference/`. O mapa linguagem→tipo e as faixas de raridade foram calibrados aqui do zero. | `lib/cards/elements.ts`, `lib/cards/rarity.ts` | A RFC 6.1 trata aquele mapa como fonte. Se ele aparecer, reconciliar — lembrando que o mapa de lá seria de 7 elementos e o daqui é de 18 (D11). |
 | Q9 | **Aval do desvio D6** (dano a 1/3 na batalha). | `lib/battle/engine.ts` | Alternativas: aceitar como está, mudar o fator, ou voltar ao dano cru e aceitar batalhas de um golpe. |
 | Q10 | Os 3 perfis de exemplo da home são fixos no código. | `app/page.tsx` | Se algum deles apagar a conta, a home mostra três cartas de erro. |
 | Q11 | Provedor de Redis não escolhido nem configurado. | `.env.example` | Sem `REDIS_URL` o cache é por processo — funciona, mas não protege o rate limit em produção (RFC 11). |

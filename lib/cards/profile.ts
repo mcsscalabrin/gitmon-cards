@@ -10,7 +10,9 @@ import {
   year,
   yearsSince,
 } from "./format";
+import { elementKey, rarityKey } from "../i18n/dictionaries";
 import { rarityForScore } from "./rarity";
+import { ratingsFor } from "./ratings";
 import type { Attack, Card, Element } from "./types";
 
 /**
@@ -54,22 +56,28 @@ export function buildProfileCard(
   const score =
     totalStars * 2 + user.followers * 3 + user.public_repos + accountAge * 5;
 
+  // Uma carta não pode ser fraca e resistente ao mesmo tipo: quando a segunda
+  // linguagem colide com a resistência da cadeia, a fraqueza vence.
+  const chainResists = ELEMENT_CHAIN[element].resists;
+  const resistance = chainResists === weakness ? null : chainResists;
+  const rarity = rarityForScore(score);
+  const retreat = clamp(Math.round(accountAge / 2), 1, 4);
+  const attacks = attacksFromRepos(owned);
+
   return {
     kind: "profile",
     id: user.login,
     name: user.name?.trim() || user.login,
     element,
     hp,
-    attacks: attacksFromRepos(owned),
-    // Uma carta não pode ser fraca e resistente ao mesmo elemento: quando a
-    // segunda linguagem colide com a resistência da cadeia, a fraqueza vence.
+    attacks,
     weakness,
-    resistance:
-      ELEMENT_CHAIN[element].resists === weakness
-        ? null
-        : ELEMENT_CHAIN[element].resists,
-    retreat: clamp(Math.round(accountAge / 2), 1, 4),
-    rarity: rarityForScore(score),
+    resistance,
+    retreat,
+    rarity,
+    // Atribuído fora daqui: serial é I/O, e esta função é pura de propósito.
+    // Ver `withSerial` em `./serial.ts`.
+    serial: null,
     artUrl: user.avatar_url,
     footer: profileFooter(user),
     stats: [
@@ -78,6 +86,73 @@ export function buildProfileCard(
       { labelKey: "stat.repos", value: user.public_repos },
       // String, não número: ano formatado como número vira "2.011".
       { labelKey: "stat.since", value: String(year(user.created_at)) },
+    ],
+    ratings: ratingsFor({
+      stars: totalStars,
+      followers: user.followers,
+      repos: user.public_repos,
+      years: accountAge,
+      languages: languages.length,
+    }),
+    derivations: [
+      {
+        labelKey: "card.type",
+        value: elementKey(element),
+        ...(languages[0]
+          ? {
+              reasonKey: "why.element",
+              reasonParams: { language: languages[0].language },
+            }
+          : { reasonKey: "why.element.none" }),
+      },
+      {
+        labelKey: "card.hp",
+        value: String(hp),
+        reasonKey: "why.hp",
+        reasonParams: {
+          stars: totalStars,
+          followers: user.followers,
+          repos: user.public_repos,
+        },
+      },
+      {
+        labelKey: "card.attacks",
+        value: String(attacks.length),
+        ...(attacks.length > 0
+          ? { reasonKey: "why.attacks", reasonParams: { names: attacks.map((a) => a.name).join(", ") } }
+          : { reasonKey: "why.attacks.none" }),
+      },
+      {
+        labelKey: "card.weakness",
+        value: weakness ? elementKey(weakness) : "card.none",
+        ...(secondary
+          ? { reasonKey: "why.weakness", reasonParams: { language: secondary } }
+          : { reasonKey: "why.weakness.chain" }),
+      },
+      {
+        labelKey: "card.resistance",
+        value: resistance ? elementKey(resistance) : "card.none",
+        // Sem parâmetro de tipo: `reasonParams` é substituição de texto cru, não
+        // passa pelo tradutor, então uma chave i18n aqui vazaria como
+        // "element.fire" na tela.
+        ...(resistance
+          ? { reasonKey: "why.resistance" }
+          : { reasonKey: "why.resistance.none" }),
+      },
+      {
+        labelKey: "card.retreat",
+        value: String(retreat),
+        reasonKey: "why.retreat",
+        // `yearsSince` devolve fração; "14,937808668117981 anos" não é dado, é
+        // vazamento de implementação.
+        reasonParams: { years: Math.floor(accountAge) },
+      },
+      {
+        labelKey: "card.rarityLabel",
+        value: rarityKey(rarity),
+        reasonKey: "why.rarity",
+        reasonParams: { score: Math.round(score) },
+      },
     ],
     sourceUrl: user.html_url,
   };
@@ -117,7 +192,12 @@ function attacksFromRepos(repos: GitHubRepo[]): Attack[] {
         name: truncate(repo.name, 22),
         cost: costForDamage(damage),
         damage,
-        text: repo.description ? truncate(repo.description, 64) : "",
+        // 38, não 64: a coluna de texto do ataque tem 222px a 12px de fonte, e
+        // 64 caracteres não cabiam. O excedente era cortado a seco pelo
+        // renderizador, no meio da palavra e sem reticências — o Satori não
+        // aplica `text-overflow: ellipsis`. Truncar aqui deixa o "…" que o
+        // `truncate` já põe ser o fim visível, com um corte só.
+        text: repo.description ? truncate(repo.description, 38) : "",
       };
     });
 }

@@ -22,11 +22,25 @@ function mix(a, b, amount) {
   return `#${channel(ar, br)}${channel(ag, bg)}${channel(ab, bb)}`;
 }
 
-/** Moldura de um elemento. A janela da arte fica transparente (RFC 4.4, item 3). */
-export function frameSvg(layout, colors) {
-  const { width: W, height: H, radius: R, border: B, window: win } = layout;
+/**
+ * Moldura de um elemento. A janela da arte fica transparente (RFC 4.4, item 3).
+ *
+ * Com `fullArt`, a janela sobe até a borda e a arte passa por trás do nome e da
+ * faixa de tipo. Os dois deixam de ser desenhados dentro da máscara — seriam
+ * recortados junto com o resto — e voltam por cima da arte, o nome apoiado num
+ * scrim escuro. É esse scrim que garante legibilidade sobre avatar claro.
+ *
+ * Abaixo da janela nada muda: ataques e status continuam sobre face opaca.
+ */
+export function frameSvg(layout, colors, { fullArt = false } = {}) {
+  const { width: W, height: H, radius: R, border: B } = layout;
+  const win = fullArt ? layout.fullArt.window : layout.window;
   const inner = { x: B, y: B, w: W - B * 2, h: H - B * 2, r: R - 6 };
   const bezel = 4;
+
+  const typeStrip = `<rect x="${layout.typeStrip.x}" y="${layout.typeStrip.y}" width="${layout.typeStrip.width}"
+          height="${layout.typeStrip.height}" rx="6" fill="${colors.base}" fill-opacity="${fullArt ? 0.62 : 0.2}"
+          stroke="${colors.dark}" stroke-opacity="${fullArt ? 0.55 : 0.3}" stroke-width="1"/>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
@@ -50,6 +64,13 @@ export function frameSvg(layout, colors) {
       <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </radialGradient>
 
+    <!-- Scrim do full-art: o nome precisa ser legível sobre avatar claro. -->
+    <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${colors.ink}" stop-opacity="0.86"/>
+      <stop offset="0.55" stop-color="${colors.ink}" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="${colors.ink}" stop-opacity="0"/>
+    </linearGradient>
+
     <!-- Branco mantém, preto fura. É isto que abre a janela da arte. -->
     <mask id="janela">
       <rect x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>
@@ -67,7 +88,10 @@ export function frameSvg(layout, colors) {
     <rect x="${inner.x + 0.75}" y="${inner.y + 0.75}" width="${inner.w - 1.5}" height="${inner.h - 1.5}"
           rx="${inner.r}" fill="none" stroke="${colors.dark}" stroke-opacity="0.4" stroke-width="1.5"/>
 
-    <!-- Faixa do nome. O texto entra por cima, em runtime. -->
+    ${
+      fullArt
+        ? ""
+        : `<!-- Faixa do nome. O texto entra por cima, em runtime. -->
     <path d="M${inner.x} ${inner.y + inner.r} a${inner.r} ${inner.r} 0 0 1 ${inner.r} -${inner.r}
              h${inner.w - inner.r * 2} a${inner.r} ${inner.r} 0 0 1 ${inner.r} ${inner.r}
              v${86 - inner.r} h-${inner.w} z" fill="url(#faixa)"/>
@@ -79,9 +103,8 @@ export function frameSvg(layout, colors) {
           height="${win.height + bezel * 2}" rx="${win.radius + 2}" fill="${colors.ink}" fill-opacity="0.92"/>
 
     <!-- Faixa de tipo, logo abaixo da janela. -->
-    <rect x="${layout.typeStrip.x}" y="${layout.typeStrip.y}" width="${layout.typeStrip.width}"
-          height="${layout.typeStrip.height}" rx="6" fill="${colors.base}" fill-opacity="0.2"
-          stroke="${colors.dark}" stroke-opacity="0.3" stroke-width="1"/>
+    ${typeStrip}`
+    }
 
     <!-- Painel dos ataques. A divisória entre dois ataques é desenhada em runtime,
          porque depende de quantos ataques a carta tem. -->
@@ -105,10 +128,78 @@ export function frameSvg(layout, colors) {
           y2="${layout.footer.top - 6}" stroke="${colors.dark}" stroke-opacity="0.25" stroke-width="1"/>
   </g>
 
+  ${
+    fullArt
+      ? `<!-- Fora da máscara, portanto por cima da arte. -->
+  <path d="M${win.x} ${win.y + win.radius} a${win.radius} ${win.radius} 0 0 1 ${win.radius} -${win.radius}
+           h${win.width - win.radius * 2} a${win.radius} ${win.radius} 0 0 1 ${win.radius} ${win.radius}
+           v${layout.fullArt.scrimHeight - win.radius} h-${win.width} z" fill="url(#scrim)"/>
+  ${typeStrip}`
+      : ""
+  }
+
   <!-- Desenhado depois da máscara: fica por cima da arte, como o fio dourado de
        uma carta de verdade. -->
   <rect x="${win.x}" y="${win.y}" width="${win.width}" height="${win.height}" rx="${win.radius}"
         fill="none" stroke="${colors.base}" stroke-opacity="0.85" stroke-width="2"/>
+</svg>`;
+}
+
+const METALS = {
+  gold: { bright: "#FFF3B0", mid: "#FFD76A", deep: "#C9A227" },
+  silver: { bright: "#F7FAFD", mid: "#E8EEF5", deep: "#C8CDD4" },
+};
+
+export const METAL_TONES = Object.keys(METALS);
+
+/**
+ * Camada metálica, aplicada por cima da moldura nos tiers que o TCG trata como
+ * texturizados. É o que separa `ultra_rare` (prata) de
+ * `special_illustration_rare` (ouro) quando os dois usam o mesmo full-art, e o
+ * que dá à `hyper_rare` o aspecto folheado sobre o layout padrão.
+ *
+ * Mesma restrição do foil: só alpha, nenhum pixel opaco. O Satori não tem
+ * `mix-blend-mode`, então qualquer área escura viraria véu cinza em vez de
+ * metal. O contorno é desenhado como anel de traço, não como retângulo cheio.
+ */
+export function metalSvg(layout, tone) {
+  const metal = METALS[tone];
+  if (!metal) {
+    throw new Error(`Tom metálico desconhecido: ${tone}`);
+  }
+
+  const { width: W, height: H, radius: R, border: B } = layout;
+  const inner = { x: B, y: B, w: W - B * 2, h: H - B * 2, r: R - 6 };
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <linearGradient id="gilt" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="${metal.bright}" stop-opacity="0.95"/>
+      <stop offset="0.28" stop-color="${metal.deep}" stop-opacity="0.7"/>
+      <stop offset="0.52" stop-color="${metal.bright}" stop-opacity="0.98"/>
+      <stop offset="0.74" stop-color="${metal.deep}" stop-opacity="0.66"/>
+      <stop offset="1" stop-color="${metal.mid}" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="lustro" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="${metal.mid}" stop-opacity="0"/>
+      <stop offset="0.4" stop-color="${metal.bright}" stop-opacity="0.16"/>
+      <stop offset="0.52" stop-color="${metal.bright}" stop-opacity="0.3"/>
+      <stop offset="0.64" stop-color="${metal.bright}" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="${metal.mid}" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Anel folheado sobre a borda. Traço, não preenchimento: o miolo da carta
+       precisa continuar transparente. -->
+  <rect x="${B / 2}" y="${B / 2}" width="${W - B}" height="${H - B}" rx="${R - 3}"
+        fill="none" stroke="url(#gilt)" stroke-width="${B}"/>
+
+  <!-- Fio interno, onde o metal encosta na face. -->
+  <rect x="${inner.x}" y="${inner.y}" width="${inner.w}" height="${inner.h}" rx="${inner.r}"
+        fill="none" stroke="${metal.bright}" stroke-opacity="0.55" stroke-width="1.5"/>
+
+  <!-- Lustro diagonal atravessando a carta inteira. -->
+  <rect x="0" y="0" width="${W}" height="${H}" rx="${R}" fill="url(#lustro)"/>
 </svg>`;
 }
 
@@ -153,8 +244,34 @@ export function retreatSvg(size = 48) {
 }
 
 /**
- * Camada de foil, aplicada por cima da moldura só em `holo` e `secret`
- * (RFC 8, caminho C).
+ * Perfil de foil por tier.
+ *
+ * `gain` multiplica a opacidade de tudo; as bandas dão a temperatura. A escada
+ * vai de holográfico frio e discreto na `rare` até dourado saturado na
+ * `hyper_rare`, para que a diferença entre tiers altos seja legível mesmo quando
+ * a arte por baixo é a mesma.
+ *
+ * `ultra_rare` foge do arco-íris de propósito: no TCG ela é full-art texturizada
+ * prateada, e prata só lê como prata se não competir com as outras cores.
+ */
+const FOIL = {
+  rare: { gain: 0.7, bands: ["#8FD9FF", "#D9A8FF", "#A8FFD1", "#FFE9A8"] },
+  double_rare: { gain: 0.95, bands: ["#8FD9FF", "#D9A8FF", "#A8FFD1", "#FFE9A8"] },
+  illustration_rare: { gain: 1.15, bands: ["#FFE9A8", "#FFC98F", "#D9A8FF", "#8FD9FF"] },
+  ultra_rare: { gain: 1.3, bands: ["#E8EEF5", "#C8CDD4", "#F2F6FA", "#D6DEE8"] },
+  special_illustration_rare: {
+    gain: 1.45,
+    bands: ["#FFD76A", "#FF8FD0", "#7FE7FF", "#FFF3B0"],
+  },
+  hyper_rare: { gain: 1.65, bands: ["#FFD76A", "#FFC02E", "#FFE9A8", "#FFB347"] },
+};
+
+export const FOIL_TIERS = Object.keys(FOIL);
+
+/**
+ * Camada de foil, aplicada por cima da moldura nos seis tiers a partir de `rare`
+ * (RFC 8, caminho C). No TCG a Rare já vem com holográfico básico, por isso o
+ * corte não é mais só nos dois tiers do topo.
  *
  * Tudo aqui é alpha — nenhum pixel opaco, nenhum preto. O Satori compõe imagem
  * com alpha simples e não tem `mix-blend-mode`: qualquer área escura viraria véu
@@ -162,12 +279,12 @@ export function retreatSvg(size = 48) {
  */
 export function foilSvg(layout, tier) {
   const { width: W, height: H, radius: R } = layout;
-  const secret = tier === "secret";
-  const gain = secret ? 1.5 : 1;
 
-  const bands = secret
-    ? ["#FFD76A", "#FF8FD0", "#7FE7FF", "#FFF3B0"]
-    : ["#8FD9FF", "#D9A8FF", "#A8FFD1", "#FFE9A8"];
+  const profile = FOIL[tier];
+  if (!profile) {
+    throw new Error(`Tier sem perfil de foil: ${tier}`);
+  }
+  const { gain, bands } = profile;
 
   const stops = bands
     .map((color, i) => {

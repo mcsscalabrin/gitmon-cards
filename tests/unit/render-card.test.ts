@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderCard } from "@/lib/og/renderCard";
-import type { Card } from "@/lib/cards/types";
+import { ELEMENTS, type Card } from "@/lib/cards/types";
 
 /**
  * Smoke test do renderizador. Não compara pixels — compara que a composição
@@ -27,7 +27,9 @@ const BASE: Card = {
   weakness: "water",
   resistance: "grass",
   retreat: 3,
-  rarity: "secret",
+  rarity: "hyper_rare",
+  // Fixado, não nulo: é o único caminho que exercita a renderização do serial.
+  serial: 42,
   artUrl: "https://avatars.githubusercontent.com/u/1024025",
   footer: "Creator of Linux and Git · 2011",
   stats: [
@@ -62,18 +64,13 @@ describe("renderCard", () => {
     expect(png.byteLength).toBeGreaterThan(20_000);
   }, 60_000);
 
-  it("renderiza os 7 elementos sem quebrar", async () => {
-    const elements = [
-      "neutral",
-      "fire",
-      "water",
-      "grass",
-      "electric",
-      "psychic",
-      "fighting",
-    ] as const;
-
-    for (const element of elements) {
+  /*
+   * Deriva de `ELEMENTS` em vez de listar à mão: um tipo novo entra no teste
+   * sozinho. A lista fixa anterior teria continuado verde com 7 dos 18 tipos
+   * cobertos, e a moldura faltante só apareceria em produção.
+   */
+  it("renderiza todos os tipos sem quebrar", async () => {
+    for (const element of ELEMENTS) {
       const png = await toPng(
         { ...BASE, element, rarity: "rare", name: element },
         "en",
@@ -88,7 +85,7 @@ describe("renderCard", () => {
       {
         ...BASE,
         name: "conta-nova",
-        element: "neutral",
+        element: "normal",
         hp: 30,
         attacks: [],
         weakness: "fighting",
@@ -101,6 +98,69 @@ describe("renderCard", () => {
       },
       "pt",
       "minima.png",
+    );
+    expect(isPng(png)).toBe(true);
+  }, 60_000);
+
+  /*
+   * Regressão: descrição longa de repositório empurrava o dano para fora da
+   * linha do ataque, e a carta saía com o número mais importante ausente.
+   * Reproduzido ao vivo em /gaearon, cuja descrição bate o limite de 64
+   * caracteres. Ver o `minWidth: 0` em AttackRow.
+   */
+  it("mantém o dano visível quando a descrição do ataque é longa", async () => {
+    const png = await toPng(
+      {
+        ...BASE,
+        name: "ataque-longo",
+        attacks: [
+          {
+            name: "react-hot-loader",
+            cost: 4,
+            damage: 300,
+            text: "Tweak React components in real time. (Deprecated: use Fast…",
+          },
+          { name: "curto", cost: 1, damage: 40, text: "ok" },
+        ],
+      },
+      "en",
+      "ataque-longo.png",
+    );
+    expect(isPng(png)).toBe(true);
+  }, 60_000);
+
+  /*
+   * Um por tratamento visual: full-art puro, full-art prata, full-art ouro e
+   * folheada sobre layout padrão. Se a moldura full-art recortar errado ou a
+   * camada de metal cobrir o texto, quebra aqui.
+   */
+  it.each([
+    ["illustration_rare", "trato-illustration.png"],
+    ["ultra_rare", "trato-ultra.png"],
+    ["special_illustration_rare", "trato-special.png"],
+    ["hyper_rare", "trato-hyper.png"],
+  ] as const)("renderiza o tratamento de %s", async (rarity, filename) => {
+    const png = await toPng({ ...BASE, rarity, serial: 7 }, "en", filename);
+    expect(isPng(png)).toBe(true);
+  }, 60_000);
+
+  /*
+   * Pior caso tipográfico do rodapé: o tier de nome mais longo ("Rara Ilustrada
+   * Especial") no idioma mais verboso, ao lado de duas estrelas e do serial de
+   * quatro dígitos. Se algum rótulo estoura a faixa de `layout.footer`, estoura
+   * aqui primeiro.
+   */
+  it("acomoda o rótulo de raridade mais longo sem estourar o rodapé", async () => {
+    const png = await toPng(
+      {
+        ...BASE,
+        name: "carta-longa",
+        element: "fighting",
+        rarity: "special_illustration_rare",
+        serial: 9999,
+      },
+      "pt",
+      "rodape-longo.png",
     );
     expect(isPng(png)).toBe(true);
   }, 60_000);
@@ -121,11 +181,14 @@ describe("renderCard", () => {
         weakness: "fighting",
         resistance: null,
         retreat: 4,
-        rarity: "holo",
+        rarity: "ultra_rare",
+        // Sem serial: cobre o caminho em que o store durável não respondeu e a
+        // carta precisa sair sem número em vez de com número errado.
+        serial: null,
         footer: "The library for web and native user interfaces · facebook · 2013",
       },
       "pt",
-      "repo-holo.png",
+      "repo-ultra-rare.png",
     );
     expect(isPng(png)).toBe(true);
   }, 60_000);

@@ -33,6 +33,69 @@ test.describe("rotas de imagem", () => {
   });
 });
 
+/*
+ * A abertura de pacote é um overlay que cobre a página da carta inteira até ser
+ * rasgado ou pulado. Qualquer teste futuro que clique em algo da página da carta
+ * vai esbarrar nele — estes existem para que esse esbarrão tenha um nome, em vez
+ * de virar uma falha confusa em outro teste.
+ */
+test.describe("abertura de pacote", () => {
+  test("cobre a página da carta e o foco começa no pacote", async ({ page }) => {
+    await page.goto("/torvalds");
+
+    const pack = page.locator(".pack");
+    await expect(pack).toBeVisible();
+    await expect(pack).toHaveAttribute("aria-modal", "true");
+
+    // Foco inicial no objeto interativo, não no botão de escapar.
+    await expect(page.locator(".pack-wrapper")).toBeFocused();
+  });
+
+  test("pular dispensa o pacote e revela a carta", async ({ page }) => {
+    await page.goto("/torvalds");
+    await page.locator(".pack-skip").click();
+
+    await expect(page.locator(".pack")).toHaveCount(0);
+    await expect(page.locator(".tilt-card img")).toBeVisible();
+  });
+
+  test("rasgar dispensa o pacote e revela a carta", async ({ page }) => {
+    await page.goto("/torvalds");
+    await page.locator(".pack-wrapper").click();
+
+    // A coreografia inteira tem menos de 1s; o overlay se desmonta sozinho ao
+    // fim dela, sem ninguém precisar clicar de novo.
+    await expect(page.locator(".pack")).toHaveCount(0, { timeout: 5000 });
+    await expect(page.locator(".tilt-card img")).toBeVisible();
+  });
+
+  test("Escape pula a abertura", async ({ page }) => {
+    await page.goto("/torvalds");
+    await page.keyboard.press("Escape");
+
+    await expect(page.locator(".pack")).toHaveCount(0);
+  });
+
+  /*
+   * `aria-modal="true"` promete que nada fora do diálogo existe. Sem o
+   * confinamento, o Tab cairia nos links do cabeçalho, que estão cobertos pelo
+   * overlay — navegação por teclado às cegas.
+   */
+  test("confina o foco no overlay", async ({ page }) => {
+    await page.goto("/torvalds");
+    await expect(page.locator(".pack-wrapper")).toBeFocused();
+
+    await page.keyboard.press("Tab");
+    await expect(page.locator(".pack-skip")).toBeFocused();
+
+    await page.keyboard.press("Tab");
+    await expect(page.locator(".pack-wrapper")).toBeFocused();
+
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.locator(".pack-skip")).toBeFocused();
+  });
+});
+
 test.describe("site", () => {
   test("abre a home com cartas de exemplo já visíveis", async ({ page }) => {
     await page.goto("/");
@@ -52,7 +115,9 @@ test.describe("site", () => {
     );
 
     await page.goto("/torvalds");
-    await expect(page.getByText("STARS")).toBeVisible();
+    // `dt` explícito: a faixa de apoio também escreve "stars" (no contador do
+    // botão de favoritar), e um getByText solto casa com os dois.
+    await expect(page.locator("dl.stat-grid dt").filter({ hasText: "Stars" })).toBeVisible();
   });
 
   test("busca leva à carta de perfil", async ({ page }) => {

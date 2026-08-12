@@ -30,19 +30,33 @@ export function parseLocale(value: string | null | undefined, fallback: Locale):
 }
 
 const pt = {
-  "element.neutral": "Neutro",
+  "element.normal": "Normal",
   "element.fire": "Fogo",
   "element.water": "Água",
   "element.grass": "Planta",
   "element.electric": "Elétrico",
-  "element.psychic": "Psíquico",
+  "element.ice": "Gelo",
   "element.fighting": "Lutador",
+  "element.poison": "Veneno",
+  "element.ground": "Terra",
+  "element.flying": "Voador",
+  "element.psychic": "Psíquico",
+  "element.bug": "Inseto",
+  "element.rock": "Pedra",
+  "element.ghost": "Fantasma",
+  "element.dragon": "Dragão",
+  "element.dark": "Sombrio",
+  "element.steel": "Aço",
+  "element.fairy": "Fada",
 
   "rarity.common": "Comum",
   "rarity.uncommon": "Incomum",
   "rarity.rare": "Rara",
-  "rarity.holo": "Holográfica",
-  "rarity.secret": "Secreta",
+  "rarity.double_rare": "Rara Dupla",
+  "rarity.illustration_rare": "Rara Ilustrada",
+  "rarity.ultra_rare": "Ultra Rara",
+  "rarity.special_illustration_rare": "Rara Ilustrada Especial",
+  "rarity.hyper_rare": "Hiper Rara",
 
   "card.hp": "PS",
   "card.weakness": "Fraqueza",
@@ -84,6 +98,67 @@ const pt = {
   "home.madeBy": "feito por",
   "home.viewOnGitHub": "Ver no GitHub",
 
+  "card.type": "Tipo",
+  "card.attacks": "Ataques",
+  "card.rarityLabel": "Raridade",
+
+  "radar.title": "Assinatura do perfil",
+  "radar.caption": "Forma comparativa, não medição — os números exatos estão ao lado.",
+  "axis.reach": "Alcance",
+  "axis.community": "Comunidade",
+  "axis.volume": "Volume",
+  "axis.veterancy": "Veterania",
+  "axis.breadth": "Amplitude",
+
+  "why.title": "De onde saem estes números",
+  "why.element": "Sua linguagem dominante é {language}, ponderada por estrelas.",
+  "why.element.none": "Nenhuma linguagem identificada nos seus repositórios próprios.",
+  "why.hp": "Base 30 + {stars} estrelas ×3 + {followers} seguidores + {repos} repositórios ×2.",
+  "why.attacks": "Seus repositórios mais estrelados: {names}.",
+  "why.attacks.none": "Nenhum repositório próprio — a carta sai sem ataque.",
+  "why.weakness": "Sua segunda linguagem é {language}.",
+  "why.weakness.chain": "Você só escreve numa linguagem, então vem da cadeia de tipos.",
+  "why.resistance": "Resistência padrão do seu tipo, pela cadeia de efetividade.",
+  "why.resistance.none": "A fraqueza caiu no mesmo tipo da resistência; a fraqueza vence.",
+  "why.retreat": "Conta com {years} anos: 1 pip a cada 2 anos, teto de 4.",
+  "why.rarity": "{score} pontos — estrelas ×2 + seguidores ×3 + repositórios + anos ×5.",
+
+  /*
+   * Frases da carta de repositório. Separadas das de perfil porque lá o sujeito
+   * é quem está lendo ("sua linguagem dominante") e aqui é o repositório.
+   */
+  "why.repo.element": "A linguagem principal do repositório é {language}.",
+  "why.repo.element.none": "O GitHub não reporta linguagem principal para este repositório.",
+  "why.repo.element.unmapped":
+    "{language} não está no mapa de tipos, então a carta cai no tipo padrão.",
+  "why.repo.hp":
+    "Base 40, em escala logarítmica sobre {stars} estrelas e {forks} forks — teto de 250.",
+  "why.repo.attacks": "Maiores contribuidores humanos: {names}.",
+  "why.repo.attacks.self":
+    "Nenhum contribuidor humano listado — o próprio repositório vira o ataque.",
+  "why.repo.weakness": "Fraqueza padrão do tipo, pela cadeia de efetividade.",
+  "why.repo.weakness.none": "Este tipo não tem fraqueza na cadeia.",
+  "why.repo.resistance": "Resistência padrão do tipo, pela cadeia de efetividade.",
+  "why.repo.resistance.none": "Este tipo não resiste a nenhum outro na cadeia.",
+  "why.repo.retreat": "{issues} issues abertas: 1 pip a cada 50, teto de 4.",
+  "why.repo.rarity":
+    "{score} pontos — {stars} estrelas ×2 + {forks} forks ×3 + {bonus} por atividade recente.",
+  "why.repo.rarity.stale":
+    "{score} pontos — {stars} estrelas ×2 + {forks} forks ×3, sem bônus: o último push passou de 90 dias.",
+  "why.repo.rarity.archived":
+    "{score} pontos — {stars} estrelas ×2 + {forks} forks ×3. Repositório arquivado não recebe bônus de atividade.",
+
+  "pack.label": "Abrindo o pacote de {name}",
+  "pack.brand": "PACOTE DE EXPANSÃO",
+  "pack.tear": "Rasgar",
+  "pack.skip": "Pular abertura",
+
+  "support.title": "Curtiu o projeto?",
+  "support.description":
+    "Favoritar o repositório ajuda outras pessoas a encontrarem. Patrocinar ajuda a manter.",
+  "support.star": "Favoritar no GitHub",
+  "support.stars": "estrelas",
+
   "battle.winner": "Vencedor",
   "battle.draw": "Empate por HP restante",
   "battle.turn": "Turno {n}",
@@ -100,19 +175,33 @@ const pt = {
 export type MessageKey = keyof typeof pt;
 
 const en: Record<MessageKey, string> = {
-  "element.neutral": "Neutral",
+  "element.normal": "Normal",
   "element.fire": "Fire",
   "element.water": "Water",
   "element.grass": "Grass",
   "element.electric": "Electric",
-  "element.psychic": "Psychic",
+  "element.ice": "Ice",
   "element.fighting": "Fighting",
+  "element.poison": "Poison",
+  "element.ground": "Ground",
+  "element.flying": "Flying",
+  "element.psychic": "Psychic",
+  "element.bug": "Bug",
+  "element.rock": "Rock",
+  "element.ghost": "Ghost",
+  "element.dragon": "Dragon",
+  "element.dark": "Dark",
+  "element.steel": "Steel",
+  "element.fairy": "Fairy",
 
   "rarity.common": "Common",
   "rarity.uncommon": "Uncommon",
   "rarity.rare": "Rare",
-  "rarity.holo": "Holo",
-  "rarity.secret": "Secret",
+  "rarity.double_rare": "Double Rare",
+  "rarity.illustration_rare": "Illustration Rare",
+  "rarity.ultra_rare": "Ultra Rare",
+  "rarity.special_illustration_rare": "Special Illustration Rare",
+  "rarity.hyper_rare": "Hyper Rare",
 
   "card.hp": "HP",
   "card.weakness": "Weakness",
@@ -152,6 +241,63 @@ const en: Record<MessageKey, string> = {
   "home.sponsor": "Sponsor the project",
   "home.madeBy": "made by",
   "home.viewOnGitHub": "View on GitHub",
+
+  "card.type": "Type",
+  "card.attacks": "Attacks",
+  "card.rarityLabel": "Rarity",
+
+  "radar.title": "Profile signature",
+  "radar.caption": "Comparative shape, not measurement — exact numbers are alongside.",
+  "axis.reach": "Reach",
+  "axis.community": "Community",
+  "axis.volume": "Volume",
+  "axis.veterancy": "Veterancy",
+  "axis.breadth": "Breadth",
+
+  "why.title": "Where these numbers come from",
+  "why.element": "Your dominant language is {language}, weighted by stars.",
+  "why.element.none": "No language detected across your own repositories.",
+  "why.hp": "Base 30 + {stars} stars ×3 + {followers} followers + {repos} repositories ×2.",
+  "why.attacks": "Your most starred repositories: {names}.",
+  "why.attacks.none": "No repositories of your own — the card ships without attacks.",
+  "why.weakness": "Your second language is {language}.",
+  "why.weakness.chain": "You write in a single language, so this comes from the type chain.",
+  "why.resistance": "Default resistance of your type, from the effectiveness chain.",
+  "why.resistance.none": "The weakness landed on the same type as the resistance; weakness wins.",
+  "why.retreat": "Account is {years} years old: 1 pip every 2 years, capped at 4.",
+  "why.rarity": "{score} points — stars ×2 + followers ×3 + repositories + years ×5.",
+
+  "why.repo.element": "The repository's main language is {language}.",
+  "why.repo.element.none": "GitHub reports no main language for this repository.",
+  "why.repo.element.unmapped":
+    "{language} is not in the type map, so the card falls back to the default type.",
+  "why.repo.hp":
+    "Base 40, on a logarithmic scale over {stars} stars and {forks} forks — capped at 250.",
+  "why.repo.attacks": "Top human contributors: {names}.",
+  "why.repo.attacks.self":
+    "No human contributor listed — the repository itself becomes the attack.",
+  "why.repo.weakness": "Default weakness of the type, from the effectiveness chain.",
+  "why.repo.weakness.none": "This type has no weakness in the chain.",
+  "why.repo.resistance": "Default resistance of the type, from the effectiveness chain.",
+  "why.repo.resistance.none": "This type resists no other type in the chain.",
+  "why.repo.retreat": "{issues} open issues: 1 pip every 50, capped at 4.",
+  "why.repo.rarity":
+    "{score} points — {stars} stars ×2 + {forks} forks ×3 + {bonus} for recent activity.",
+  "why.repo.rarity.stale":
+    "{score} points — {stars} stars ×2 + {forks} forks ×3, no bonus: last push is over 90 days old.",
+  "why.repo.rarity.archived":
+    "{score} points — {stars} stars ×2 + {forks} forks ×3. An archived repository earns no activity bonus.",
+
+  "pack.label": "Opening {name}'s pack",
+  "pack.brand": "EXPANSION PACK",
+  "pack.tear": "Tear open",
+  "pack.skip": "Skip reveal",
+
+  "support.title": "Like this project?",
+  "support.description":
+    "Starring the repository helps others find it. Sponsoring helps keep it running.",
+  "support.star": "Star on GitHub",
+  "support.stars": "stars",
 
   "battle.winner": "Winner",
   "battle.draw": "Decided by remaining HP",
