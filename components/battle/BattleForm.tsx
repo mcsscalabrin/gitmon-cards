@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import UserSearchInput, { type UserSearchInputHandle } from "../ui/UserSearchInput";
 
 /**
  * Manda para `/<desafiante>/vs/<adversário>`, que sorteia uma batalha nova e
@@ -22,10 +23,12 @@ export function BattleForm({
   const router = useRouter();
   const [opponent, setOpponent] = useState("");
   const [pending, startTransition] = useTransition();
+  const inputRef = useRef<UserSearchInputHandle>(null);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    const target = opponent.trim().replace(/^@/, "").replace(/^\/+|\/+$/g, "");
+    const resolved = inputRef.current?.resolve(opponent);
+    const target = resolved ?? opponent.trim().replace(/^@/, "").replace(/^\/+|\/+$/g, "");
     if (!target) return;
     startTransition(() => router.push(`/${challenger}/vs/${target}`));
   }
@@ -34,14 +37,12 @@ export function BattleForm({
     <form className="battle-form" onSubmit={submit}>
       <h2>{label}</h2>
       <div className="battle-form-row">
-        <input
-          type="text"
+        <UserSearchInput
+          ref={inputRef}
           value={opponent}
-          onChange={(event) => setOpponent(event.target.value)}
+          onValueChange={setOpponent}
+          label={placeholder}
           placeholder={placeholder}
-          aria-label={placeholder}
-          autoComplete="off"
-          spellCheck={false}
         />
         <button type="submit" disabled={pending}>
           {action}

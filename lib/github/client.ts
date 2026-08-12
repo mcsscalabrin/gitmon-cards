@@ -1,20 +1,34 @@
 import { GitmonError } from "./errors";
+import {
+  benchToken,
+  pickFailover,
+  pickToken,
+  recordTokenHealth,
+  tokenPool,
+} from "./tokens";
+import type { PoolToken } from "./tokens";
 import type { GitHubContributor, GitHubRepo, GitHubUser } from "./types";
 
 const API = "https://api.github.com";
 
 /**
- * Token de app no servidor (RFC 5). O visitante nunca faz login — é isso que
- * mantém a fricção zero que faz a fórmula funcionar.
+ * Pool de tokens no servidor (RFC 5). O visitante nunca faz login — é isso que
+ * mantém a fricção zero que faz a fórmula funcionar. Cada login é preso a um
+ * token por hash (ver `tokens.ts`); se esse token estiver limitado, tenta um
+ * failover único para o token mais saudável antes de desistir.
  */
-function authHeaders(): HeadersInit {
-  const token = process.env.GITHUB_TOKEN?.trim();
-  if (!token) {
+function discoverPool(): PoolToken[] {
+  const pool = tokenPool();
+  if (!pool.length) {
     throw new GitmonError(
       "no_token",
-      "GITHUB_TOKEN não configurado. Sem token o limite é 60 req/h por IP.",
+      "Nenhum token GitHub configurado. Configure GITHUB_TOKEN (ou GITHUB_TOKENS) — sem token o limite é 60 req/h por IP.",
     );
   }
+  return pool;
+}
+
+function authHeaders(token: string): HeadersInit {
   return {
     Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",
@@ -23,47 +37,70 @@ function authHeaders(): HeadersInit {
   };
 }
 
-async function request<T>(path: string): Promise<T> {
-  let response: Response;
-  try {
-    response = await fetch(`${API}${path}`, {
-      headers: authHeaders(),
-      // O cache é nosso, no Redis. Não queremos duas camadas discordando.
-      cache: "no-store",
-    });
-  } catch (cause) {
-    throw new GitmonError("upstream", "Falha de rede ao consultar a API do GitHub.", String(cause));
-  }
+async function request<T>(path: string, login: string): Promise<T> {
+  const pool = discoverPool();
+  let current = pickToken(login, pool);
 
-  if (response.ok) {
-    return (await response.json()) as T;
-  }
+  for (let attempt = 0; attempt <= 1; attempt++) {
+    let response: Response;
+    try {
+      response = await fetch(`${API}${path}`, {
+        headers: authHeaders(current!.token),
+        // O cache é nosso, no Redis. Não queremos duas camadas discordando.
+        cache: "no-store",
+      });
+    } catch (cause) {
+      throw new GitmonError(
+        "upstream",
+        "Falha de rede ao consultar a API do GitHub.",
+        String(cause),
+      );
+    }
 
-  if (response.status === 404) {
-    throw new GitmonError("not_found", `Recurso não encontrado: ${path}`);
-  }
+    // Fire-and-forget: grava a saúde do token que acabou de responder.
+    void recordTokenHealth(current!.idx, response.headers);
 
-  // 403 com o contador zerado é rate limit; 403 com contador sobrando é outra
-  // coisa (abuso, token sem escopo) e não deve ser reportado como rate limit.
-  const remaining = response.headers.get("x-ratelimit-remaining");
-  if ((response.status === 403 || response.status === 429) && remaining === "0") {
-    const reset = response.headers.get("x-ratelimit-reset");
+    if (response.ok) {
+      return (await response.json()) as T;
+    }
+
+    if (response.status === 404) {
+      throw new GitmonError("not_found", `Recurso não encontrado: ${path}`);
+    }
+
+    // 403 com o contador zerado é rate limit; 403 com contador sobrando é outra
+    // coisa (abuso, token sem escopo) e não deve ser reportado como rate limit.
+    const remaining = response.headers.get("x-ratelimit-remaining");
+    if ((response.status === 403 || response.status === 429) && remaining === "0") {
+      // Põe o token atual de castigo e tenta um failover único. Na segunda
+      // tentativa sem failover, propagamos o erro de rate limit de verdade.
+      void benchToken(current!.idx, response.headers);
+      if (attempt === 0) {
+        const fallback = await pickFailover(current!.idx, pool);
+        if (fallback) {
+          current = fallback;
+          continue;
+        }
+      }
+      throw new GitmonError(
+        "rate_limit",
+        "Limite de requisições da API do GitHub atingido.",
+        response.headers.get("x-ratelimit-reset") ?? undefined,
+      );
+    }
+
     throw new GitmonError(
-      "rate_limit",
-      "Limite de requisições da API do GitHub atingido.",
-      reset ?? undefined,
+      "upstream",
+      `API do GitHub respondeu ${response.status}.`,
+      await response.text().catch(() => undefined),
     );
   }
 
-  throw new GitmonError(
-    "upstream",
-    `API do GitHub respondeu ${response.status}.`,
-    await response.text().catch(() => undefined),
-  );
+  throw new GitmonError("upstream", "Falha ao consultar a API do GitHub.");
 }
 
 export async function fetchUser(login: string): Promise<GitHubUser> {
-  return request<GitHubUser>(`/users/${encodeURIComponent(login)}`);
+  return request<GitHubUser>(`/users/${encodeURIComponent(login)}`, login);
 }
 
 /**
@@ -74,12 +111,14 @@ export async function fetchUser(login: string): Promise<GitHubUser> {
 export async function fetchUserRepos(login: string): Promise<GitHubRepo[]> {
   return request<GitHubRepo[]>(
     `/users/${encodeURIComponent(login)}/repos?per_page=100&sort=updated&type=owner`,
+    login,
   );
 }
 
 export async function fetchRepo(owner: string, repo: string): Promise<GitHubRepo> {
   return request<GitHubRepo>(
     `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+    owner,
   );
 }
 
@@ -97,6 +136,7 @@ export async function fetchRepoContributors(
   try {
     const contributors = await request<GitHubContributor[]>(
       `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors?per_page=10`,
+      owner,
     );
     return Array.isArray(contributors) ? contributors : [];
   } catch {

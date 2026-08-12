@@ -82,10 +82,12 @@ const pt = {
   "error.no_token": "Servidor sem token do GitHub configurado.",
   "error.upstream": "A API do GitHub não respondeu.",
   "error.battle_expired": "Este resultado de batalha expirou. Gere uma nova batalha.",
+  "error.retry": "Tentar de novo",
 
   "home.tagline": "Cartas geradas a partir de dados reais do GitHub.",
   "home.description":
     "Uma URL de imagem, sem login, que se atualiza sozinha. Cole no seu README.",
+  "search.scouting": "buscando nomes…",
   "home.search": "Buscar usuário ou owner/repositório",
   "home.searchAction": "Gerar carta",
   "home.samples": "Exemplos",
@@ -175,6 +177,8 @@ const pt = {
   "battle.share": "Compartilhar resultado",
   "battle.rematch": "Batalhar de novo",
   "battle.skip": "Pular animação",
+  "battle.radar": "Assinatura do perfil",
+  "battle.radarCaption": "Sobreposição dos dois oponentes",
 } as const;
 
 export type MessageKey = keyof typeof pt;
@@ -232,9 +236,11 @@ const en: Record<MessageKey, string> = {
   "error.no_token": "Server has no GitHub token configured.",
   "error.upstream": "The GitHub API did not respond.",
   "error.battle_expired": "This battle result has expired. Run a new battle.",
+  "error.retry": "Try again",
 
   "home.tagline": "Cards generated from real GitHub data.",
   "home.description": "One image URL, no login, updating on its own. Paste it in your README.",
+  "search.scouting": "searching names…",
   "home.search": "Search a user or owner/repository",
   "home.searchAction": "Generate card",
   "home.samples": "Samples",
@@ -320,6 +326,8 @@ const en: Record<MessageKey, string> = {
   "battle.share": "Share result",
   "battle.rematch": "Battle again",
   "battle.skip": "Skip animation",
+  "battle.radar": "Profile signature",
+  "battle.radarCaption": "Both opponents overlaid",
 };
 
 const DICTIONARIES: Record<Locale, Record<MessageKey, string>> = { pt, en };

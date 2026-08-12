@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { BattleResult, Side } from "@/lib/battle/types";
 import { ELEMENT_COLORS } from "@/lib/cards/elements";
-import type { Element } from "@/lib/cards/types";
+import type { Card, Element } from "@/lib/cards/types";
 import { translator, type Locale } from "@/lib/i18n/dictionaries";
+import { BattleRadar } from "./BattleRadar";
 
 /**
  * Animação do log de turnos.
@@ -25,12 +27,21 @@ export function BattleReplay({
 }) {
   const t = translator(locale);
   const [played, setPlayed] = useState(0);
+  const logRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => {
     if (played >= battle.turns.length) return;
     const timer = setTimeout(() => setPlayed((n) => n + 1), TURN_MS);
     return () => clearTimeout(timer);
   }, [played, battle.turns.length]);
+
+  /** Auto-scroll para o último turno visível. */
+  useEffect(() => {
+    const log = logRef.current;
+    if (!log) return;
+    const last = log.lastElementChild;
+    if (last) last.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [played]);
 
   /** HP de cada lado depois dos turnos já tocados. */
   const hp = useMemo(() => {
@@ -48,19 +59,15 @@ export function BattleReplay({
     <div className="replay">
       <div className="replay-fighters">
         <FighterBar
-          name={battle.a.name}
-          element={battle.a.element}
+          card={battle.a}
           hp={hp.a}
-          max={battle.a.hp}
           won={finished && battle.winner === "a"}
           label={t("battle.winner")}
         />
         <span className="replay-vs">VS</span>
         <FighterBar
-          name={battle.b.name}
-          element={battle.b.element}
+          card={battle.b}
           hp={hp.b}
-          max={battle.b.hp}
           won={finished && battle.winner === "b"}
           label={t("battle.winner")}
         />
@@ -99,13 +106,15 @@ export function BattleReplay({
       </ol>
 
       {finished ? (
-        <p className="replay-result">
-          {battle.winner
-            ? `${t("battle.winner")}: ${battle.winner === "a" ? battle.a.name : battle.b.name}`
-            : "—"}
-          {/* No teto de turnos ninguém foi nocauteado: vale dizer como foi decidido. */}
-          {battle.decidedBy === "hp" ? <em> · {t("battle.draw")}</em> : null}
-        </p>
+        <>
+          <p className="replay-result">
+            {battle.winner
+              ? `${t("battle.winner")}: ${battle.winner === "a" ? battle.a.name : battle.b.name}`
+              : "—"}
+            {battle.decidedBy === "hp" ? <em> · {t("battle.draw")}</em> : null}
+          </p>
+          <BattleRadar a={battle.a} b={battle.b} locale={locale} />
+        </>
       ) : (
         <button
           type="button"
@@ -120,32 +129,35 @@ export function BattleReplay({
 }
 
 function FighterBar({
-  name,
-  element,
+  card,
   hp,
-  max,
   won,
   label,
 }: {
-  name: string;
-  element: Element;
+  card: Card;
   hp: number;
-  max: number;
   won: boolean;
   label: string;
 }) {
-  const colors = ELEMENT_COLORS[element];
-  const ratio = Math.max(0, Math.min(1, hp / Math.max(1, max)));
+  const colors = ELEMENT_COLORS[card.element];
+  const ratio = Math.max(0, Math.min(1, hp / Math.max(1, card.hp)));
 
   return (
     <div className="fighter-bar" data-won={won || undefined}>
+      <Image
+        src={`/${card.id}.png`}
+        alt={card.name}
+        width={140}
+        height={196}
+        className="fighter-card-img"
+      />
       <div className="fighter-head">
-        <strong>{name}</strong>
+        <strong>{card.name}</strong>
         {won ? <span className="fighter-won">{label}</span> : null}
       </div>
       <div className="fighter-hp">
         <span>{hp}</span>
-        <i>/ {max}</i>
+        <i>/ {card.hp}</i>
       </div>
       <div className="fighter-track">
         <div

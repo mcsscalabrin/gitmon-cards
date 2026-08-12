@@ -1,5 +1,9 @@
-import { AXES, gridPoints, labelPosition, polygonPoints } from "@/lib/cards/ratings";
+"use client";
+
+import { useState } from "react";
+import { AXES } from "@/lib/cards/ratings";
 import type { AxisRating } from "@/lib/cards/ratings";
+import { radarGeometry, radarSector } from "@/lib/radar";
 import { translator, type Locale, type MessageKey } from "@/lib/i18n/dictionaries";
 
 /**
@@ -25,10 +29,15 @@ export function RadarChart({
   locale: Locale;
 }) {
   const t = translator(locale);
+  const [active, setActive] = useState<number | null>(null);
 
   const size = 240;
-  const center = size / 2;
-  const radius = 82;
+
+  const values = ratings.map((r) => r.value);
+  const labels = AXES.map((a) => t(`axis.${a}` as MessageKey));
+  const geo = radarGeometry(values, labels, size);
+
+  const dimmed = (i: number) => active !== null && active !== i;
 
   return (
     <figure className="radar">
@@ -37,58 +46,94 @@ export function RadarChart({
         <p>{t("radar.caption")}</p>
       </figcaption>
 
-      <svg
-        viewBox={`0 0 ${size} ${size}`}
-        className="radar-svg"
-        role="img"
-        aria-label={t("radar.title")}
-      >
-        {/* Grade recessiva: só profundidade, sem valor associado. */}
-        {[0.25, 0.5, 0.75, 1].map((step) => (
-          <polygon
-            key={step}
-            points={gridPoints(AXES.length, radius * step, center)}
-            className="radar-grid"
-          />
-        ))}
+      <div className="radar-svg-wrap">
+        <svg
+          viewBox={`0 0 ${size} ${size}`}
+          className="radar-svg"
+          role="img"
+          aria-label={t("radar.title")}
+        >
+          {geo.rings.map((ring, i) => (
+            <polygon key={i} points={ring} className="radar-grid" />
+          ))}
 
-        {AXES.map((_, index) => {
-          const { x, y } = labelPosition(index, AXES.length, radius, center);
-          return (
+          {active !== null && (
+            <polygon
+              points={geo.sectors[active]}
+              className="radar-sector-active"
+            />
+          )}
+
+          {geo.sectors.map((sector, i) => (
             <line
-              key={index}
-              x1={center}
-              y1={center}
-              x2={x}
-              y2={y}
+              key={i}
+              x1={geo.center}
+              y1={geo.center}
+              x2={geo.vertices[i].x}
+              y2={geo.vertices[i].y}
               className="radar-spoke"
             />
-          );
-        })}
+          ))}
 
-        <polygon points={polygonPoints(ratings, radius, center)} className="radar-shape" />
+          <polygon
+            points={geo.points}
+            className="radar-shape"
+            style={{
+              fillOpacity: active !== null ? 0.18 : 0.28,
+              transition: "fill-opacity .25s ease",
+            }}
+          />
 
-        {ratings.map((rating, index) => {
-          const { x, y } = labelPosition(index, AXES.length, (rating.value / 99) * radius, center);
-          return <circle key={rating.axis} cx={x} cy={y} r={3.5} className="radar-vertex" />;
-        })}
+          {geo.vertices.map((v, i) => (
+            <circle
+              key={i}
+              cx={v.x}
+              cy={v.y}
+              r={active === i ? 4 : 3.5}
+              className="radar-vertex"
+              opacity={dimmed(i) ? 0.3 : 1}
+              style={{ transition: "r .2s ease, opacity .25s ease" }}
+            />
+          ))}
 
-        {AXES.map((axis, index) => {
-          const { x, y, anchor } = labelPosition(index, AXES.length, radius + 18, center);
-          return (
+          {geo.labels.map((l, i) => (
             <text
-              key={axis}
-              x={x}
-              y={y}
-              textAnchor={anchor}
+              key={i}
+              x={l.x}
+              y={l.y}
+              textAnchor="middle"
               dominantBaseline="middle"
               className="radar-label"
+              fill={active === i ? "var(--text)" : "var(--text-faint)"}
+              opacity={dimmed(i) ? 0.3 : 1}
+              style={{ transition: "fill .2s ease, opacity .25s ease" }}
             >
-              {t(`axis.${axis}` as MessageKey)}
+              {l.label}
             </text>
-          );
-        })}
-      </svg>
+          ))}
+
+          {AXES.map((_, i) => (
+            <polygon
+              key={i}
+              points={radarSector(geo.center, geo.radius + 17, i, AXES.length)}
+              fill="transparent"
+              className="radar-hitzone"
+              onMouseEnter={() => setActive(i)}
+              onMouseLeave={() => setActive(null)}
+              onClick={() => setActive((prev) => (prev === i ? null : i))}
+            />
+          ))}
+        </svg>
+
+        {active !== null && (
+          <div className="radar-tooltip">
+            <div className="radar-tooltip-label">{labels[active]}</div>
+            <div className="radar-tooltip-value">
+              {ratings[active].raw.toLocaleString(locale)}
+            </div>
+          </div>
+        )}
+      </div>
 
       <table className="visually-hidden">
         <caption>{t("radar.title")}</caption>
