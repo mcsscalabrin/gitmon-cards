@@ -1,3 +1,4 @@
+import foil from "./foil.json";
 import type { Rarity } from "./types";
 
 /**
@@ -107,25 +108,31 @@ export function raritySymbolColor(rarity: Rarity): string {
 }
 
 /**
- * Tamanho de fonte do símbolo. Não cresce linearmente por tier: a partir de duas
- * estrelas o conjunto já ocupa o dobro da largura, então o tamanho recua para o
- * rodapé não estourar (`layout.footer`).
+ * Tamanho do símbolo **quando ele é o herói do selo** — ou seja, na carta sem
+ * serial, onde ele assume sozinho o bloco da direita do rodapé (`layout.footer`).
+ *
+ * Não cresce linearmente por tier, e sim ao contrário: a partir de duas estrelas
+ * o conjunto já ocupa o dobro da largura, então o corpo recua para o selo não
+ * estourar. Três estrelas a 32px sairiam por cima do texto ao lado.
+ *
+ * Na carta **com** serial o símbolo é acompanhante e não herói: ali ele usa o
+ * `symbolSize` fixo de `layout.footer`, porque quem manda no bloco é o número.
  */
 export function raritySymbolSize(rarity: Rarity): number {
   switch (rarity) {
     case "common":
-      return 14;
+      return 34;
     case "uncommon":
-      return 16;
+      return 32;
     case "rare":
     case "illustration_rare":
-      return 18;
+      return 32;
     case "double_rare":
     case "ultra_rare":
     case "special_illustration_rare":
-      return 15;
+      return 28;
     case "hyper_rare":
-      return 13;
+      return 23;
   }
 }
 
@@ -140,47 +147,43 @@ export function hasFoil(rarity: Rarity): boolean {
   return rarity !== "common" && rarity !== "uncommon";
 }
 
+/*
+ * A anotação de tipo é o que dá exaustividade a uma tabela que vem de JSON: um
+ * tier novo em `types.ts` sem a linha correspondente em `foil.json` deixa de
+ * compilar aqui, no lugar de devolver `undefined` e apagar o foil em silêncio.
+ * É a mesma garantia que o `switch` dava antes de a escada virar arquivo.
+ */
+const FOIL_INTENSITY: Record<Rarity, number> = foil.intensity;
+
 /**
- * Força do foil ao vivo, de 0 a 1 (`components/card/TiltCard.tsx`).
+ * Força do foil, de 0 a 1.
  *
- * O `hasFoil` acima é booleano porque a moldura impressa só precisa saber se
- * existe arquivo de foil para compor. Na tela é diferente: seis tiers dividindo
- * a mesma camada faz `rare` e `hyper_rare` brilharem igual, e a escada de
- * raridade que o resto da carta constrói morre exatamente no efeito mais
- * visível dela.
+ * O `hasFoil` acima é booleano porque a composição só precisa saber se existe
+ * arquivo de foil. A intensidade é outra coisa: seis tiers dividindo a mesma
+ * camada faz `rare` e `hyper_rare` brilharem igual, e a escada de raridade que o
+ * resto da carta constrói morre exatamente no efeito mais visível dela.
  *
- * Os valores não são lineares. O salto grande fica entre `double_rare` e
- * `illustration_rare`, que é onde o tratamento também muda para full-art
- * (`cardTreatment`) — o foil acompanha o degrau que já existe em vez de
- * inventar outro.
+ * Vale para os **dois** foils. `components/card/TiltCard.tsx` multiplica este
+ * número nas opacidades do CSS, e `scripts/build-assets.mjs` multiplica o mesmo
+ * número nas quatro camadas do PNG assado (`foilSvg`). Antes eram duas escadas
+ * paralelas com números diferentes; ver o `_comment` de `foil.json`.
  */
 export function foilIntensity(rarity: Rarity): number {
-  switch (rarity) {
-    case "common":
-    case "uncommon":
-      return 0;
-    case "rare":
-      return 0.42;
-    case "double_rare":
-      return 0.55;
-    case "illustration_rare":
-      return 0.78;
-    case "ultra_rare":
-      return 0.88;
-    case "special_illustration_rare":
-      return 0.95;
-    case "hyper_rare":
-      return 1;
-  }
+  return FOIL_INTENSITY[rarity];
 }
 
 export type MetalTone = "silver" | "gold";
+
+/** Ver `edgeSvg` em `scripts/lib/art.mjs`. */
+export type CardEdge = "polished" | "double";
 
 export interface CardTreatment {
   /** Janela da arte em sangria, com nome e faixa de tipo por cima dela. */
   fullArt: boolean;
   /** Camada metálica sobre a moldura, ou `null`. */
   metal: MetalTone | null;
+  /** Tratamento do anel da borda, ou `null`. Nunca coexiste com `metal`. */
+  edge: CardEdge | null;
 }
 
 /**
@@ -190,8 +193,10 @@ export interface CardTreatment {
  * `ultra_rare` e `special_illustration_rare` saíam praticamente idênticas, já que
  * a arte é sempre o mesmo avatar na mesma moldura. A escada visual agora é:
  *
- *   rare / double_rare          layout padrão, só foil
- *   illustration_rare           full-art sem metal
+ *   common / uncommon           layout padrão, sem foil, sem borda
+ *   rare                        layout padrão + borda polida
+ *   double_rare                 layout padrão + borda dupla
+ *   illustration_rare           full-art + borda polida
  *   ultra_rare                  full-art + prata
  *   special_illustration_rare   full-art + ouro
  *   hyper_rare                  layout padrão + ouro (folheada, como no TCG)
@@ -200,18 +205,32 @@ export interface CardTreatment {
  * gravada sobre a carta normal, não sobre full-art, e isso a torna distinguível
  * da `special_illustration_rare` à primeira vista em vez de por contagem de
  * estrelas.
+ *
+ * A borda entrou porque a escada morria no thumbnail, que é onde a carta mais
+ * vive (D13). `rare` e `double_rare` dividiam layout, ausência de metal e — até
+ * o foil ganhar temperaturas próprias — a mesma superfície: a 150px eram a mesma
+ * carta, e a única diferença era uma estrela contra duas, ilegível nesse
+ * tamanho. Ver `edgeSvg` em `scripts/lib/art.mjs`.
+ *
+ * **Metal e borda nunca coexistem.** O anel folheado já é o tratamento de borda
+ * dos tiers que o têm, e somar os dois só apaga o folheado. Os dois juntos num
+ * tier é bug, não escada nova — coberto em `tests/unit/rarity.test.ts`.
  */
 export function cardTreatment(rarity: Rarity): CardTreatment {
   switch (rarity) {
+    case "rare":
+      return { fullArt: false, metal: null, edge: "polished" };
+    case "double_rare":
+      return { fullArt: false, metal: null, edge: "double" };
     case "illustration_rare":
-      return { fullArt: true, metal: null };
+      return { fullArt: true, metal: null, edge: "polished" };
     case "ultra_rare":
-      return { fullArt: true, metal: "silver" };
+      return { fullArt: true, metal: "silver", edge: null };
     case "special_illustration_rare":
-      return { fullArt: true, metal: "gold" };
+      return { fullArt: true, metal: "gold", edge: null };
     case "hyper_rare":
-      return { fullArt: false, metal: "gold" };
+      return { fullArt: false, metal: "gold", edge: null };
     default:
-      return { fullArt: false, metal: null };
+      return { fullArt: false, metal: null, edge: null };
   }
 }

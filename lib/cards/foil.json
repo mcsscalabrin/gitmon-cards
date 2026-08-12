@@ -1,0 +1,25 @@
+{
+  "_comment": "Escada do foil por tier. Fonte única, na mesma convenção de layout.json e palette.json: `intensity` é lida pelo runtime (lib/cards/rarity.ts → foilIntensity, que components/card/TiltCard.tsx multiplica nas opacidades do CSS) e pelo gerador de arte (scripts/build-assets.mjs → foilSvg). Antes cada lado tinha a sua própria escada e as duas divergiam — o foil ao vivo subia em seis degraus e o impresso em outros seis, com números diferentes.",
+
+  "_intensityComment": "Não é linear. O salto grande fica entre double_rare e illustration_rare, que é onde o tratamento também vira full-art (cardTreatment) — o foil acompanha o degrau que já existe em vez de inventar outro.",
+  "intensity": {
+    "common": 0,
+    "uncommon": 0,
+    "rare": 0.42,
+    "double_rare": 0.55,
+    "illustration_rare": 0.78,
+    "ultra_rare": 0.88,
+    "special_illustration_rare": 0.95,
+    "hyper_rare": 1
+  },
+
+  "_bandsComment": "Temperatura espectral: as cores que a faixa percorre ao longo da diagonal da carta. Existe só nos tiers com foil (hasFoil), e um tier a mais aqui sem o par em hasFoil gera um PNG que ninguém compõe. ultra_rare foge do arco-íris de propósito: no TCG ela é full-art texturizada prateada, e prata só lê como prata se não competir com as outras cores. rare e double_rare tinham as MESMAS quatro cores e a 150px eram a mesma carta — a diferença de intensidade sozinha não separa dois tiers vizinhos num thumbnail. Agora a rare é fria e a double_rare é verde-dourada.",
+  "bands": {
+    "rare": ["#8FD9FF", "#B7C4FF", "#D9A8FF", "#A8E6FF"],
+    "double_rare": ["#A8FFD1", "#FFE9A8", "#7FE0B4", "#D8F58F"],
+    "illustration_rare": ["#FFE9A8", "#FFC98F", "#D9A8FF", "#8FD9FF"],
+    "ultra_rare": ["#E8EEF5", "#C8CDD4", "#F2F6FA", "#D6DEE8"],
+    "special_illustration_rare": ["#FFD76A", "#FF8FD0", "#7FE7FF", "#FFF3B0"],
+    "hyper_rare": ["#FFD76A", "#FFC02E", "#FFE9A8", "#FFB347"]
+  }
+}

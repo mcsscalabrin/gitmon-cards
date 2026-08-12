@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { FOOTER_CHARS } from "@/lib/cards/format";
 import { buildRepoCard } from "@/lib/cards/repo";
 import type { GitHubContributor, GitHubRepo } from "@/lib/github/types";
 import { LOCALES, t, type MessageKey } from "@/lib/i18n/dictionaries";
@@ -124,6 +125,46 @@ describe("recuo a partir de issues abertas (Q5)", () => {
     const card = buildRepoCard(repo({ language: "Rust", open_issues_count: 900 }), [], NOW);
     expect(card.weakness).toBe("water");
     expect(card.resistance).toBe("grass");
+  });
+});
+
+/*
+ * O rodapé encolheu quando o serial virou elemento de design: o selo levou
+ * 108px da direita, e o que passa do orçamento o Satori corta a seco, no meio da
+ * palavra e sem reticências. O "…" só é o fim visível se o corte acontecer aqui.
+ * Sem este teste, a próxima mudança em `layout.footer` volta a descalibrar a
+ * linha e o sintoma só aparece na imagem.
+ */
+describe("orçamento do rodapé", () => {
+  it("cabe na linha mesmo com descrição e dono longos", () => {
+    const card = buildRepoCard(
+      repo({
+        description:
+          "A declarative, efficient, and flexible JavaScript library for building user interfaces",
+        owner: { login: "facebook", avatar_url: "x", type: "Organization" },
+      }),
+      [],
+      NOW,
+    );
+    expect(card.footer.length).toBeLessThanOrEqual(FOOTER_CHARS);
+    expect(card.footer).toContain("…");
+  });
+
+  it("nunca reticencia dono nem ano — eles cabem inteiros ou a descrição sai", () => {
+    const card = buildRepoCard(
+      repo({
+        description: "qualquer descrição",
+        owner: { login: "uma-organizacao-de-nome-absurdamente-longo", avatar_url: "x", type: "Organization" },
+      }),
+      [],
+      NOW,
+    );
+    expect(card.footer).toBe("uma-organizacao-de-nome-absurdamente-longo · 2020");
+  });
+
+  it("dispensa a descrição sem deixar separador solto", () => {
+    const card = buildRepoCard(repo({ description: null }), [], NOW);
+    expect(card.footer).toBe("dev · 2020");
   });
 });
 

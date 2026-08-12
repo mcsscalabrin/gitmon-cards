@@ -5,7 +5,8 @@ import { BattleForm } from "@/components/battle/BattleForm";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Shell } from "@/components/ui/Shell";
 import { getProfileCard, getProfileRepos } from "@/lib/cards";
-import { absoluteUrl } from "@/lib/config";
+import { ELEMENT_COLORS } from "@/lib/cards/elements";
+import { cardMetadata } from "@/lib/metadata";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 
@@ -13,11 +14,12 @@ type Params = { params: Promise<{ owner: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { owner } = await params;
-  return {
-    title: owner,
-    openGraph: { images: [absoluteUrl(`/${owner}.png`)] },
-    twitter: { card: "summary_large_image", images: [absoluteUrl(`/${owner}.png`)] },
-  };
+  return cardMetadata({
+    subject: owner,
+    path: `/${owner}`,
+    ogPath: `/api/card-og/${owner}`,
+    locale: await getLocale(),
+  });
 }
 
 export default async function ProfilePage({ params }: Params) {
@@ -51,8 +53,17 @@ export default async function ProfilePage({ params }: Params) {
         />
       </CardPanel>
 
+      {/*
+        A lista fica fora do `CardPanel`, e é ele quem define `--element`. Sem
+        repetir a variável aqui, a página terminava em cinza neutro logo abaixo
+        de um painel inteiro com a temperatura do tipo — o corte aparecia como
+        se a lista fosse de outra página.
+      */}
       {repos.length > 0 ? (
-        <section className="repo-list">
+        <section
+          className="repo-list"
+          style={{ ["--element" as string]: ELEMENT_COLORS[card.element].base }}
+        >
           <h2>{t("home.repos")}</h2>
           <ul>
             {repos.map((repo) => (

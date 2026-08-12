@@ -9,11 +9,12 @@ import {
   raritySymbolColor,
   raritySymbolSize,
 } from "../cards/rarity";
-import type { Attack, Card } from "../cards/types";
+import type { Attack, Card, Rarity } from "../cards/types";
 import { elementKey, rarityKey, translator, type Locale } from "../i18n/dictionaries";
 import {
   CARD_FONT,
   avatarUri,
+  edgeUri,
   energyUri,
   foilUri,
   frameUri,
@@ -42,20 +43,36 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
   const art = treatment.fullArt ? layout.fullArt.art : layout.art;
   const artWindow = treatment.fullArt ? layout.fullArt.window : layout.window;
 
-  const [fonts, frame, avatar, energy, retreat, foil, metal, weaknessIcon, resistanceIcon] =
-    await Promise.all([
+  const [
+    fonts,
+    frame,
+    avatar,
+    energy,
+    retreat,
+    foil,
+    edge,
+    metal,
+    weaknessIcon,
+    resistanceIcon,
+  ] = await Promise.all([
       loadFonts(),
       frameUri(card.element, treatment.fullArt),
       avatarUri(card.artUrl, art.width),
       energyUri(card.element),
       retreatUri(),
-      hasFoil(card.rarity) ? foilUri(card.rarity) : Promise.resolve(null),
+      hasFoil(card.rarity) ? foilUri(card.rarity, treatment.fullArt) : Promise.resolve(null),
+      treatment.edge ? edgeUri(treatment.edge) : Promise.resolve(null),
       treatment.metal ? metalUri(treatment.metal) : Promise.resolve(null),
       card.weakness ? energyUri(card.weakness) : Promise.resolve(null),
       card.resistance ? energyUri(card.resistance) : Promise.resolve(null),
     ]);
 
   const primaryStat = card.stats[0];
+
+  const rarityLabel = t("card.footer", {
+    rarity: t(rarityKey(card.rarity)),
+    element: t(elementKey(card.element)),
+  });
 
   return new ImageResponse(
     (
@@ -101,6 +118,20 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
           style={{ position: "absolute", left: 0, top: 0 }}
         />
 
+        {/*
+          Borda antes do foil: ela é relevo da própria moldura, e o brilho
+          holográfico passa por cima dela como passa por cima do resto da carta.
+          Nunca coexiste com o metal — ver `cardTreatment`.
+        */}
+        {edge ? (
+          <img
+            src={edge}
+            width={layout.width}
+            height={layout.height}
+            style={{ position: "absolute", left: 0, top: 0 }}
+          />
+        ) : null}
+
         {foil ? (
           <img
             src={foil}
@@ -145,7 +176,15 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
           {card.name}
         </div>
 
-        {/* HP, vermelho e alinhado à direita (RFC 4.4, item 4) */}
+        {/*
+          HP, vermelho e alinhado à direita (RFC 4.4, item 4).
+
+          É o herói numérico da carta: na régua Wrapped/Skyline o que faz a peça
+          ler em um segundo é um número grande, e a 34 contra 30 do nome os dois
+          competiam sem que nenhum vencesse. O rótulo desce a acompanhante —
+          corpo menor, alinhado pela base do número em vez de pelo centro da
+          caixa, que é onde ele flutuava.
+        */}
         <div
           style={{
             position: "absolute",
@@ -153,16 +192,31 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
             top: layout.hp.top,
             height: layout.hp.boxHeight,
             display: "flex",
-            alignItems: "center",
-            gap: 4,
+            alignItems: "flex-end",
+            gap: 5,
             // O vermelho de contraste com face clara some sobre o scrim.
             color: treatment.fullArt ? HP_RED_ON_ART : HP_RED,
           }}
         >
-          <span style={{ fontSize: layout.hp.labelSize, fontWeight: 700, paddingTop: 8 }}>
+          <span
+            style={{
+              fontSize: layout.hp.labelSize,
+              fontWeight: 700,
+              opacity: 0.8,
+              letterSpacing: 0.5,
+              paddingBottom: 9,
+            }}
+          >
             {t("card.hp")}
           </span>
-          <span style={{ fontSize: layout.hp.size, fontWeight: 900, letterSpacing: -1 }}>
+          <span
+            style={{
+              fontSize: layout.hp.size,
+              fontWeight: 900,
+              letterSpacing: -2,
+              lineHeight: 1,
+            }}
+          >
             {card.hp}
           </span>
         </div>
@@ -260,76 +314,202 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
           </StatusCell>
         </div>
 
-        {/* Rodapé: raridade à esquerda, símbolo à direita (RFC 4.4, item 8) */}
+        {/* Rodapé, coluna de texto: tier em cima, linha factual embaixo */}
         <div
           style={{
             position: "absolute",
             left: layout.footer.left,
             top: layout.footer.top,
-            width: layout.footer.right - layout.footer.left,
+            width: footerTextWidth,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            fontSize: layout.footer.size,
-            opacity: 0.85,
+            flexDirection: "column",
           }}
         >
-          <span style={{ fontWeight: 700 }}>
-            {t("card.footer", {
-              rarity: t(rarityKey(card.rarity)),
-              element: t(elementKey(card.element)),
-            })}
+          <span
+            style={{
+              fontSize: rarityLabelSize(rarityLabel),
+              fontWeight: 700,
+              opacity: 0.85,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+            }}
+          >
+            {rarityLabel}
           </span>
+
           {/*
-            Serial e símbolo andam juntos no canto direito, como no TCG. O serial
-            só aparece quando existe: sem store durável a carta sai sem número
-            (ver lib/cards/serial.ts), e um espaço vazio é melhor que um "#----".
+            Bio/descrição truncada + o número que mais importa.
+
+            As duas colunas têm largura explícita pelo mesmo motivo da linha de
+            ataque: o Satori não implementa `min-width: auto`, então `overflow:
+            hidden` não impede o irmão de crescer até o tamanho do texto. Com
+            `space-between` e larguras implícitas, uma bio longa empurrava o
+            "★ 214.0k" para fora e a carta saía com "★ 214".
           */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {card.serial !== null && (
-              <span style={{ fontSize: 12, fontWeight: 700, opacity: 0.7 }}>
-                {`#${String(card.serial).padStart(4, "0")}`}
-              </span>
-            )}
+          <div
+            style={{
+              display: "flex",
+              marginTop: 5,
+              fontSize: layout.footer.size,
+              opacity: 0.62,
+              whiteSpace: "nowrap",
+            }}
+          >
             <span
-              style={{
-                fontSize: raritySymbolSize(card.rarity),
-                fontWeight: 900,
-                color: raritySymbolColor(card.rarity),
-              }}
+              style={{ width: footerTextWidth - STAT_WIDTH, overflow: "hidden" }}
             >
-              {raritySymbol(card.rarity)}
+              {card.footer}
             </span>
+            {primaryStat ? (
+              <span
+                style={{
+                  width: STAT_WIDTH,
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  fontWeight: 700,
+                }}
+              >
+                ★ {formatCount(Number(primaryStat.value))}
+              </span>
+            ) : null}
           </div>
         </div>
 
-        {/* Linha factual: bio/descrição truncada + o número que mais importa */}
-        <div
-          style={{
-            position: "absolute",
-            left: layout.footer.left,
-            top: layout.footer.top + 22,
-            width: layout.footer.right - layout.footer.left,
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-            fontSize: 12,
-            opacity: 0.62,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-          }}
-        >
-          <span style={{ overflow: "hidden" }}>{card.footer}</span>
-          {primaryStat ? (
-            <span style={{ fontWeight: 700 }}>
-              ★ {formatCount(Number(primaryStat.value))}
-            </span>
-          ) : null}
-        </div>
+        <Stamp rarity={card.rarity} serial={card.serial} ink={colors.ink} />
       </div>
     ),
     { width: layout.width, height: layout.height, fonts },
   );
+}
+
+/** Largura que sobra para o texto do rodapé depois do selo. */
+const footerTextWidth =
+  layout.footer.right -
+  layout.footer.left -
+  layout.footer.stampWidth -
+  layout.footer.stampGap;
+
+/** Reservado ao "★ 214.0k". Cabe o maior que o `formatCount` produz. */
+const STAT_WIDTH = 60;
+
+/**
+ * Selo do rodapé direito: símbolo de raridade e número de série (RFC 4.4, item 8).
+ *
+ * **A composição é desenhada para a carta sem serial.** Sem `REDIS_URL` a carta
+ * sai sem número (`lib/cards/serial.ts`) e isso não é exceção rara — é o estado
+ * padrão em desenvolvimento e o estado de qualquer deploy sem store durável.
+ * Desenhar primeiro o estado cheio deixaria um vazio no lugar do elemento herói
+ * toda vez que o Redis faltasse, que é o buraco que este bloco existe para
+ * evitar.
+ *
+ * Por isso o bloco tem largura e altura fixas e é sempre o mesmo bloco. O que
+ * muda é quem manda dentro dele:
+ *
+ *   sem serial   o símbolo ocupa o selo sozinho, no corpo grande de
+ *                `raritySymbolSize` — é ele o herói
+ *   com serial   o símbolo encolhe para `layout.footer.symbolSize` e sobe, e o
+ *                número assume o corpo grande logo abaixo
+ *
+ * Nada fora do selo se desloca entre os dois estados, e nenhum dos dois deixa
+ * espaço vazio. O serial é uma adição que valoriza o rodapé, nunca um slot que
+ * esvazia.
+ *
+ * O número fica em tinta cheia e não na cor do metal: contra a régua Topps ele é
+ * o elemento verdadeiramente escasso da carta — a única coisa que não pode ser
+ * recalculada — e precisa ler antes de decorar. Quem carrega o metal é o
+ * símbolo, logo acima.
+ */
+function Stamp({
+  rarity,
+  serial,
+  ink,
+}: {
+  rarity: Rarity;
+  serial: number | null;
+  ink: string;
+}) {
+  const symbol = (
+    <span
+      style={{
+        fontSize: serial === null ? raritySymbolSize(rarity) : layout.footer.symbolSize,
+        fontWeight: 900,
+        letterSpacing: 1,
+        color: raritySymbolColor(rarity),
+        // Entrelinha travada: com a padrão de 1.2 as duas linhas do selo somam
+        // 55px numa caixa de 48 e o símbolo desce por cima dos dígitos. O `●`
+        // da common pousava em cima do "2" do serial.
+        lineHeight: 1,
+      }}
+    >
+      {raritySymbol(rarity)}
+    </span>
+  );
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        right: layout.width - layout.footer.right,
+        top: layout.footer.top - 2,
+        width: layout.footer.stampWidth,
+        height: layout.footer.stampHeight,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+    >
+      {symbol}
+      {serial !== null ? (
+        <div
+          style={{ display: "flex", alignItems: "flex-end", color: ink, marginTop: 4 }}
+        >
+          <span
+            style={{
+              fontSize: layout.footer.hashSize,
+              fontWeight: 700,
+              opacity: 0.5,
+              paddingBottom: 3,
+            }}
+          >
+            #
+          </span>
+          <span
+            style={{
+              fontSize: serialSize(serial),
+              fontWeight: 900,
+              letterSpacing: -1,
+              lineHeight: 1,
+            }}
+          >
+            {String(serial).padStart(4, "0")}
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * O serial cresce sem teto — é sequencial por ordem de geração —, e a largura do
+ * selo não. Quatro dígitos é o caso desenhado; a partir do quinto o corpo recua
+ * para o número continuar dentro do bloco em vez de invadir o texto ao lado.
+ * Mesma tática do `nameSize` logo abaixo.
+ */
+function serialSize(serial: number): number {
+  const digits = Math.max(4, String(serial).length);
+  if (digits <= 4) return layout.footer.serialSize;
+  if (digits === 5) return layout.footer.serialSize - 6;
+  return layout.footer.serialSize - 11;
+}
+
+/**
+ * "Carta Rara Ilustrada Especial · tipo Lutador" tem 43 caracteres e é o pior
+ * caso dos dois idiomas. Cabe nos 284px da coluna de texto, mas só um corpo
+ * abaixo do padrão.
+ */
+function rarityLabelSize(label: string): number {
+  return label.length > 36 ? layout.footer.size - 1 : layout.footer.size;
 }
 
 function AttackRow({

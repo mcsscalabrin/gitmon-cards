@@ -2,7 +2,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderCard } from "@/lib/og/renderCard";
-import { ELEMENTS, type Card } from "@/lib/cards/types";
+import { renderCardOg } from "@/lib/og/renderCardOg";
+import { ELEMENTS, RARITIES, type Card } from "@/lib/cards/types";
 
 /**
  * Smoke test do renderizador. Não compara pixels — compara que a composição
@@ -39,8 +40,13 @@ const BASE: Card = {
   sourceUrl: "https://github.com/torvalds",
 };
 
-async function toPng(card: Card, locale: "pt" | "en", filename: string): Promise<Buffer> {
-  const image = await renderCard(card, locale);
+async function toPng(
+  card: Card,
+  locale: "pt" | "en",
+  filename: string,
+  render = renderCard,
+): Promise<Buffer> {
+  const image = await render(card, locale);
   const buffer = Buffer.from(await image.arrayBuffer());
 
   if (PREVIEW) {
@@ -130,6 +136,19 @@ describe("renderCard", () => {
   }, 60_000);
 
   /*
+   * A escada inteira, um PNG por tier, para a verificação que nenhum teste faz:
+   * **olhar os oito lado a lado, reduzidos a ~150px**. O alvo declarado do plano
+   * é distinguir os tiers num thumbnail de feed sem ler texto, e isso não se
+   * confere no monitor inteiro nem em asserção.
+   */
+  it("renderiza os oito tiers da escada", async () => {
+    for (const rarity of RARITIES) {
+      const png = await toPng({ ...BASE, rarity }, "en", `tier-${rarity}.png`);
+      expect(isPng(png)).toBe(true);
+    }
+  }, 120_000);
+
+  /*
    * Um por tratamento visual: full-art puro, full-art prata, full-art ouro e
    * folheada sobre layout padrão. Se a moldura full-art recortar errado ou a
    * camada de metal cobrir o texto, quebra aqui.
@@ -165,6 +184,35 @@ describe("renderCard", () => {
     expect(isPng(png)).toBe(true);
   }, 60_000);
 
+  /*
+   * A prévia de link. Renderiza a carta por dentro, então cobre os dois passes
+   * de Satori de uma vez — e o `PREVIEW` grava o 1200×630 para a verificação que
+   * importa: a carta tem que caber inteira, sem o corte de cabeçalho e rodapé
+   * que o `/<id>.png` retrato levava nas prévias.
+   */
+  it("compõe a prévia de link em paisagem", async () => {
+    const png = await toPng(BASE, "en", "og-profile.png", renderCardOg);
+    expect(isPng(png)).toBe(true);
+  }, 60_000);
+
+  it("acomoda nome longo e carta sem serial na prévia", async () => {
+    const png = await toPng(
+      {
+        ...BASE,
+        kind: "repo",
+        name: "uma-organizacao-de-nome-longo",
+        element: "poison",
+        rarity: "double_rare",
+        serial: null,
+        footer: "Descrição curta… · owner · 2019",
+      },
+      "pt",
+      "og-repo.png",
+      renderCardOg,
+    );
+    expect(isPng(png)).toBe(true);
+  }, 60_000);
+
   it("renderiza a carta de repositório em português", async () => {
     const png = await toPng(
       {
@@ -185,7 +233,11 @@ describe("renderCard", () => {
         // Sem serial: cobre o caminho em que o store durável não respondeu e a
         // carta precisa sair sem número em vez de com número errado.
         serial: null,
-        footer: "The library for web and native user interfaces · facebook · 2013",
+        // Exatamente o que `repoFooter` produz para facebook/react dentro do
+        // orçamento de `FOOTER_CHARS`: dono e ano inteiros, descrição com o
+        // resto. Uma string mais longa aqui testaria o corte a seco do Satori,
+        // que a camada de dados existe para nunca deixar acontecer.
+        footer: "The library for… · facebook · 2013",
       },
       "pt",
       "repo-ultra-rare.png",

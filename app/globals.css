@@ -4,6 +4,39 @@
  * segue os 7 elementos.
  */
 
+/*
+ * A face da carta, no site.
+ *
+ * Não é uma fonte nova: é M PLUS Rounded 1c, a mesma que o Satori desenha dentro
+ * da carta, já versionada e subsetada em `public/assets/fonts` por
+ * `npm run fonts`. O ganho é maior que tipografia — sem ela o site parece um
+ * invólucro genérico em volta da carta, e não a mesma peça continuando.
+ *
+ * O custo é deliberado e delimitado (D16): **só display e título**. Corpo e UI
+ * seguem na stack de sistema, onde ela é boa e custa zero bytes. Por isso são
+ * dois pesos e não três — não há texto de 400 na face aqui.
+ *
+ * `swap` porque a alternativa é pior nos dois lados: `block` esconde o título por
+ * até três segundos, e `optional` faz a face aparecer só na segunda visita, o que
+ * é o mesmo que não tê-la para quem chega por link compartilhado — que é a
+ * maioria.
+ */
+@font-face {
+  font-family: "Rounded";
+  src: url("/assets/fonts/Rounded-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rounded";
+  src: url("/assets/fonts/Rounded-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #0d0f14;
   --bg-raised: #161a22;
@@ -24,6 +57,8 @@
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
+  /* A stack de sistema fica atrás como fallback do swap, não como alternativa. */
+  --font-display: "Rounded", var(--font-sans);
 
   --radius: 10px;
   --radius-lg: 18px;
@@ -54,6 +89,49 @@ body {
 
 a {
   color: inherit;
+}
+
+/*
+ * A cor do tipo como **superfície**, não como texto.
+ *
+ * `--element` já existia no painel inteiro, e mesmo assim a página de uma carta
+ * de Fogo e a de uma de Água só diferiam em algumas palavras de 13px e na
+ * auréola atrás da carta. O resto — todas as caixas, todas as bordas — era o
+ * mesmo cinza-azulado nas duas.
+ *
+ * A correção é a mesma que a carta recebeu na escada de raridade: tingir a
+ * superfície, não pintar mais texto. 7% do tipo numa caixa não lê como "caixa
+ * colorida", lê como a página inteira ter temperatura — e uma página inteira
+ * morna contra uma fria é uma diferença que se vê antes de ler qualquer coisa.
+ *
+ * Duas variáveis para não repetir o `color-mix` em oito lugares, e para a dose
+ * ser um número só quando alguém quiser mexer nela.
+ */
+:root,
+.card-panel,
+.repo-list {
+  --surface-tint: color-mix(in srgb, var(--element, transparent) 7%, var(--bg-raised));
+  --border-tint: color-mix(in srgb, var(--element, transparent) 22%, var(--border));
+}
+
+/*
+ * Onde a face da carta entra. Uma lista explícita, e não uma regra em `h1, h2,
+ * h3`: os `h2` deste site são rótulos de 13px em caixa alta, que é UI e não
+ * display — a face arredondada num rótulo desses só engorda o traço.
+ *
+ * O critério é o mesmo em todos: texto grande o bastante para o desenho da letra
+ * ser visível, ou número que a carta também desenharia.
+ */
+.brand,
+.hero h1,
+.card-headline h1,
+.error-state h1,
+.support-copy h2,
+.stat-grid dd,
+.fighter-hp span,
+.replay-vs,
+.replay-result {
+  font-family: var(--font-display);
 }
 
 img,
@@ -301,7 +379,10 @@ select {
   gap: 0 12px;
   padding: 10px 12px;
   border-radius: var(--radius);
-  background: var(--bg-raised);
+  background: var(--surface-tint);
+  /* Trilho do tipo na borda de dentro: a lista de derivações é o bloco mais
+     repetido da página, e é onde a temperatura se acumula sem pesar. */
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--element, transparent) 55%, transparent);
 }
 
 .why-label {
@@ -714,6 +795,11 @@ select {
 .battle-form input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+/* Dentro do painel quem manda é o tipo; o amarelo da marca fica para a home. */
+.card-panel .battle-form input:focus-visible {
+  outline-color: var(--element, var(--accent));
 }
 
 .search-form button,
@@ -1210,12 +1296,50 @@ select {
   color: var(--text-faint);
 }
 
+/*
+ * Baixar e compartilhar. Os dois têm o mesmo peso de propósito: qual deles é o
+ * caminho certo depende do aparelho, não da intenção — no celular a folha nativa
+ * resolve tudo, no desktop o arquivo em mãos é que resolve.
+ */
+.share-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/*
+ * Largura natural, não `flex: 1`. O `.card-side` atravessa a grade inteira, e
+ * dois botões esticados nele viram duas faixas de 600px — peso de banner para
+ * uma ação secundária.
+ */
+.share-button {
+  flex: 0 0 auto;
+  min-width: 160px;
+  border: 1px solid var(--border-tint);
+  border-radius: var(--radius);
+  background: var(--surface-tint);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: border-color 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A cor do tipo é o realce, como no resto do painel. */
+.share-button:hover {
+  border-color: var(--element, var(--border-strong));
+}
+
 .copy-field {
   display: flex;
   align-items: stretch;
   gap: 8px;
   background: var(--bg-sunken);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-tint);
   border-radius: var(--radius);
   padding: 8px 8px 8px 12px;
 }
@@ -1271,14 +1395,14 @@ select {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-tint);
   border-radius: var(--radius);
   text-decoration: none;
-  background: var(--bg-raised);
+  background: var(--surface-tint);
 }
 
 .repo-list a:hover {
-  border-color: var(--border-strong);
+  border-color: var(--element, var(--border-strong));
 }
 
 .repo-name {

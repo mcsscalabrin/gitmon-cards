@@ -66,6 +66,8 @@ const pt = {
   "card.profile": "Perfil",
   "card.repo": "Repositório",
   "card.footer": "Carta {rarity} · tipo {element}",
+  "card.metaDescription":
+    "A carta de {subject}, gerada a partir dos dados públicos do GitHub. Sem login, sem cadastro.",
 
   "stat.stars": "Estrelas",
   "stat.followers": "Seguidores",
@@ -90,6 +92,9 @@ const pt = {
   "home.embed": "Embutir no README",
   "home.copy": "Copiar",
   "home.copied": "Copiado",
+  "home.download": "Baixar PNG",
+  "home.share": "Compartilhar",
+  "home.linkCopied": "Link copiado",
   "home.repos": "Repositórios deste perfil",
   "home.battle": "Batalhar",
   "home.battleAction": "Simular batalha",
@@ -211,6 +216,8 @@ const en: Record<MessageKey, string> = {
   "card.profile": "Profile",
   "card.repo": "Repository",
   "card.footer": "{rarity} {element}-type Card",
+  "card.metaDescription":
+    "The {subject} card, generated from public GitHub data. No login, no signup.",
 
   "stat.stars": "Stars",
   "stat.followers": "Followers",
@@ -234,6 +241,9 @@ const en: Record<MessageKey, string> = {
   "home.embed": "Embed in your README",
   "home.copy": "Copy",
   "home.copied": "Copied",
+  "home.download": "Download PNG",
+  "home.share": "Share",
+  "home.linkCopied": "Link copied",
   "home.repos": "Repositories of this profile",
   "home.battle": "Battle",
   "home.battleAction": "Simulate battle",

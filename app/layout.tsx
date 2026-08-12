@@ -23,6 +23,24 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
+      <head>
+        {/*
+          A face da carta é usada no primeiro texto visível de toda página — a
+          marca no topo e o título logo abaixo. Sem o preload ela só é descoberta
+          depois que o CSS é baixado e casado, e o `swap` troca a fonte com a
+          página já lida. São 28 KB, o custo que a decisão do revamp aceitou.
+        */}
+        {["Bold", "Black"].map((weight) => (
+          <link
+            key={weight}
+            rel="preload"
+            as="font"
+            type="font/woff2"
+            href={`/assets/fonts/Rounded-${weight}.woff2`}
+            crossOrigin="anonymous"
+          />
+        ))}
+      </head>
       <body>{children}</body>
     </html>
   );

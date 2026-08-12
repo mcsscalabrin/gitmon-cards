@@ -1,6 +1,7 @@
 import type { GitHubContributor, GitHubRepo } from "../github/types";
 import { ELEMENT_CHAIN, LANGUAGE_ELEMENTS, elementForLanguage } from "./elements";
 import {
+  FOOTER_CHARS,
   clamp,
   costForDamage,
   daysSince,
@@ -277,12 +278,18 @@ function attacksFrom(
 }
 
 /**
- * Descrição curta: o rodapé divide a linha com a contagem de estrelas, e 64
- * caracteres empurravam o ano para fora do quadro.
+ * Descrição curta: o rodapé divide a linha com a contagem de estrelas, e o que
+ * passa do orçamento é cortado a seco pelo renderizador.
+ *
+ * Dono e ano vêm primeiro no orçamento porque são de tamanho conhecido e não
+ * podem ser reticenciados sem virar mentira — "faceboo… · 20…" não informa nada.
+ * A descrição fica com o resto, e some inteira quando o resto é curto demais
+ * para valer: quatro caracteres de descrição são ruído, não informação.
  */
 function repoFooter(repo: GitHubRepo): string {
-  const parts: string[] = [];
-  if (repo.description) parts.push(truncate(repo.description, 38));
-  parts.push(`${repo.owner.login} · ${year(repo.created_at)}`);
-  return parts.join(" · ");
+  const tail = `${repo.owner.login} · ${year(repo.created_at)}`;
+  const room = FOOTER_CHARS - tail.length - 3;
+
+  if (!repo.description || room < 12) return tail;
+  return `${truncate(repo.description, room)} · ${tail}`;
 }

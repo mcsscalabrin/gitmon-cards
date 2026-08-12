@@ -41,6 +41,29 @@ export function year(iso: string): number {
 }
 
 /**
+ * Orçamento em caracteres da linha factual do rodapé (`Card.footer`).
+ *
+ * Vem da geometria, não do gosto: o selo do serial leva 108px da direita do
+ * rodapé, a coluna do stat leva 60px, e o que sobra para a bio são 216px a 12px
+ * de corpo — cerca de 36 caracteres. O Satori não aplica `text-overflow:
+ * ellipsis`, então o que passa daqui é cortado a seco, no meio da palavra e sem
+ * reticências. Truncar na camada de dados é o que faz o "…" ser o fim visível.
+ *
+ * É a mesma calibração que os 38 caracteres da descrição de ataque já fazem em
+ * `profile.ts` — e o número muda junto com `layout.footer`, não sozinho.
+ */
+export const FOOTER_CHARS = 36;
+
+/**
+ * Orçamento do nome no cabeçalho da carta.
+ *
+ * `nameSize` em `lib/og/renderCard.tsx` encolhe o corpo em três degraus e para
+ * em 19px; daí para frente, `layout.name.maxWidth` corta a seco. 26 é onde o
+ * último degrau ainda cabe nos 280px.
+ */
+export const CARD_NAME_CHARS = 26;
+
+/**
  * Trunca sem cortar palavra no meio quando dá, e usa reticências de um caractere
  * só (não três pontos) para não roubar espaço na linha.
  */

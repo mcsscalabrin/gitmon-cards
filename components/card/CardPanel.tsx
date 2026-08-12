@@ -3,6 +3,7 @@ import type { Card } from "@/lib/cards/types";
 import { absoluteUrl } from "@/lib/config";
 import { elementKey, rarityKey, translator, type Locale } from "@/lib/i18n/dictionaries";
 import { CopyField } from "@/components/ui/CopyField";
+import { ShareActions } from "@/components/ui/ShareActions";
 import { PackOpening } from "./PackOpening";
 import { RadarChart } from "./RadarChart";
 import { StatBreakdown } from "./StatBreakdown";
@@ -94,6 +95,21 @@ export function CardPanel({
       </div>
 
       <div className="card-side">
+        {/*
+          Levar a carta embora vem antes do snippet: o destino principal é o feed
+          (D13), onde o PNG é o produto inteiro, e o README é o secundário. A
+          ordem na página é a ordem de importância dos dois destinos.
+        */}
+        <ShareActions
+          imagePath={imagePath}
+          pageUrl={absoluteUrl(`/${card.id}`)}
+          name={card.name}
+          filename={`${card.id.replace("/", "-")}.png`}
+          downloadLabel={t("home.download")}
+          shareLabel={t("home.share")}
+          copiedLabel={t("home.linkCopied")}
+        />
+
         <section className="embed">
           <h2>{t("home.embed")}</h2>
           <CopyField value={markdown} copyLabel={t("home.copy")} copiedLabel={t("home.copied")} />

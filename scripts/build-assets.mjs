@@ -10,8 +10,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import {
+  edgeSvg,
+  EDGE_STYLES,
   foilSvg,
-  FOIL_TIERS,
   frameSvg,
   metalSvg,
   METAL_TONES,
@@ -23,15 +24,25 @@ const readJson = async (path) => JSON.parse(await readFile(join(root, path), "ut
 
 const layout = await readJson("lib/cards/layout.json");
 const palette = await readJson("lib/cards/palette.json");
+const foil = await readJson("lib/cards/foil.json");
 const elements = Object.keys(palette).filter((key) => !key.startsWith("_"));
 
-const png = (svg) => sharp(Buffer.from(svg)).png({ compressionLevel: 9 });
-
-async function emit(relativePath, svg) {
+/**
+ * `palette` quantiza para 256 cores indexadas.
+ *
+ * É reservado ao foil, e por medição: as quatro camadas de ruído saem em 780 KB
+ * por arquivo em cor direta, e o PNG indexado devolve o mesmo desenho em 230 KB
+ * sem diferença visível — ruído de baixo contraste é o caso em que a paleta não
+ * custa nada. Nas molduras seria o contrário: são gradientes largos e suaves,
+ * exatamente onde 256 cores viram faixas.
+ */
+async function emit(relativePath, svg, { palette = false } = {}) {
   const target = join(root, "public/assets", relativePath);
   await mkdir(dirname(target), { recursive: true });
-  const { size } = await png(svg).toFile(target);
-  console.log(`  ${relativePath.padEnd(28)} ${(size / 1024).toFixed(1)} KB`);
+  const { size } = await sharp(Buffer.from(svg))
+    .png({ compressionLevel: 9, palette, effort: palette ? 10 : undefined })
+    .toFile(target);
+  console.log(`  ${relativePath.padEnd(44)} ${(size / 1024).toFixed(1)} KB`);
 }
 
 console.log(`\nmolduras (${layout.width}x${layout.height})`);
@@ -52,9 +63,31 @@ for (const tone of METAL_TONES) {
   await emit(`frames/metal-${tone}.png`, metalSvg(layout, tone));
 }
 
+// Dois arquivos para os oito tiers, sem elemento: é a RFC 8 caminho C outra vez
+// — o que varia por raridade nunca multiplica pelos 18 tipos.
+console.log("\nborda");
+for (const style of EDGE_STYLES) {
+  await emit(`frames/edge-${style}.png`, edgeSvg(layout, style));
+}
+
+/*
+ * O tier vem de `lib/cards/foil.json`, que também alimenta o `foilIntensity()`
+ * do runtime — a mesma escada dos dois lados. Um tier aqui sem par em `hasFoil()`
+ * gera um PNG que ninguém compõe, e o contrário quebra ao renderizar; é o que o
+ * teste de `foil.json` em tests/unit/rarity.test.ts guarda.
+ *
+ * Duas variantes por tier, como nas molduras: o foil recua sobre a janela da
+ * arte, e a janela do full-art é outra. Gerar as duas para todo tier em vez de
+ * só para os tiers que são full-art mantém esta build ignorante de
+ * `cardTreatment()`, que é do runtime — mesma escolha já feita em `fullart-`.
+ */
 console.log("\nfoil");
-for (const tier of FOIL_TIERS) {
-  await emit(`frames/foil-${tier}.png`, foilSvg(layout, tier));
+for (const [tier, bands] of Object.entries(foil.bands)) {
+  const profile = { intensity: foil.intensity[tier], bands };
+  await emit(`frames/foil-${tier}.png`, foilSvg(layout, profile), { palette: true });
+  await emit(`frames/fullart-foil-${tier}.png`, foilSvg(layout, profile, { fullArt: true }), {
+    palette: true,
+  });
 }
 
 /*

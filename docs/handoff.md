@@ -7,18 +7,32 @@ itens.
 
 ## Onde está
 
-Branch `feat/tipos-18-raridade-e-status`, três commits, ainda sem PR — o autor
-abre quando as pendências fecharem.
+Duas branches, duas PRs empilhadas, ambas abertas.
 
-| Commit | Escopo |
-|---|---|
-| `a2996dc` | 18 tipos, escada de raridade do TCG, serial, tratamentos de arte, painel de explicação, abertura de pacote, faixa de apoio |
-| `7e2516d` | Radar de assinatura do perfil |
-| `9d79276` | Arranjo simétrico da página da carta |
-| (a seguir) | Derivações da carta de repositório, ícones de tipo na interface, RFCs conciliadas com os 18 tipos |
+| PR | Branch | Base | Escopo |
+|---|---|---|---|
+| [#1](https://github.com/mcsscalabrin/gitmon-cards/pull/1) | `feat/tipos-18-raridade-e-status` | `main` | 18 tipos, raridade, serial, radar, derivações, ícones de tipo, docs conciliadas — 9 commits |
+| [#2](https://github.com/mcsscalabrin/gitmon-cards/pull/2) | `feat/carta-holografica` | `feat/tipos-18-raridade-e-status` | Foil holográfico por camadas e o fix do tilt 3D — 2 commits |
 
-Verificado no último commit: **103 testes unitários, 13 e2e, typecheck e build
-limpos**.
+A #2 é empilhada de propósito, para os dois assuntos serem revisáveis em
+separado. Quando a #1 entrar na `main`, o GitHub reaponta a #2 sozinho.
+
+Verificado no último commit: **106 testes unitários, 13 e2e, typecheck limpo**.
+
+### O bug que vale conhecer antes de mexer em animação
+
+O tilt 3D **nunca funcionou** desde que foi escrito, e o motivo não aparece em
+teste nenhum: `.tilt-card` declarava `animation: reveal ... both`, e com
+`fill-mode: both` o quadro 100% da animação (`transform: none`) continua valendo
+depois que ela termina. No CSS, animação vence declaração normal na cascata — o
+`transform` com as custom properties do tilt nunca chegava a ser aplicado.
+
+O componente calculava os ângulos certos, escrevia as variáveis certas, o
+`data-active` entrava no DOM, e a carta não se mexia. Medido no navegador:
+`--tilt-x: 4.8deg` com `transform: matrix(1, 0, 0, 1, 0, 0)`.
+
+A lição generalizável: **`fill-mode: both` numa regra que também declara
+`transform` congela esse transform para sempre.** Use `backwards`.
 
 `.claude/` está **deliberadamente fora dos commits** — contém só o skill file do
 Superdesign, que é ferramenta e não produto. Decidir se versiona é do autor.
@@ -47,6 +61,61 @@ correção.
    (RFC 9.6), e é por isso que `derivations` e `ratings` são opcionais no
    domínio — o renderizador nunca os lê.
 
+## Revamp visual — fase 1 feita, fases 2 e 3 não
+
+O plano completo está em [`revamp-visual.md`](./revamp-visual.md); o contexto de
+produto, em [`PRODUCT.md`](../PRODUCT.md); as decisões, em D13–D17 de
+[`decisions.md`](./decisions.md). O sistema **como ficou** está em
+[`design-system.md`](./design-system.md) — é de lá que se deve ler, não do plano.
+
+A **fase 1 (a carta exportada) está implementada**, em cinco commits, um por
+item: foil reassado em quatro camadas · serial como elemento de design · mais
+arte e a solda · HP como herói · raridade em superfície e borda. 114 testes
+unitários, 13 e2e, typecheck limpo.
+
+A **fase 2 (compartilhamento)** está implementada: prévia de link em paisagem,
+baixar PNG e Web Share com fallback para copiar.
+
+A **fase 3 (o site)** também: a face da carta em display e título, e o tipo como
+superfície no painel inteiro.
+
+**O revamp inteiro está feito.** 116 testes unitários, 16 e2e, typecheck limpo.
+
+O que outra sessão precisa saber:
+
+1. **A direção foi escolhida sem comps.** A sessão de planejamento não tinha
+   ferramenta de geração de imagem, então a página de decisão levou paleta e
+   fatos. Se a execução parecer errada, a hipótese mais provável não é o plano —
+   é que o autor escolheu sem ver.
+2. **Nenhuma mudança da fase 1 alterou o formato do dado**, então `CARD_VERSION`
+   não subiu. Mas o **cache do navegador** mascara tudo isso: a rota de imagem
+   responde `max-age=3600` e o PNG na tela pode ser de uma hora atrás. Ver a
+   seção de caches mais abaixo.
+3. **`lib/cards/foil.json` é fonte única da escada do foil**, lida pelo runtime
+   (`foilIntensity`) e pela build (`foilSvg`). Antes eram duas escadas paralelas
+   com números diferentes.
+4. **O que muda por raridade nunca multiplica pelos 18 tipos** (RFC 8, caminho
+   C). Foil, metal e borda são camadas sem elemento. A única exceção é o foil,
+   que tem duas variantes — padrão e full-art — porque recua sobre a janela da
+   arte, e a janela do full-art é outra.
+5. **`/api/card-og/<id>` é a rota mais cara do produto**, por construção: ela
+   renderiza a carta inteira e depois a compõe numa segunda passada de Satori.
+   Quente responde em meio segundo; a frio, no dev server com quatro workers
+   disputando a máquina, passa dos 30s padrão do Playwright — daí o
+   `test.setTimeout` explícito no e2e dela. O preço é aceito para nunca existir
+   uma segunda versão da carta (RFC 4.2).
+6. **`npm run fonts` gera dois formatos por peso, e os dois são necessários.** O
+   Satori lê do disco e só entende TrueType; o navegador entende WOFF2 e paga um
+   terço dos bytes pelo mesmo desenho. `web: true` na tabela `WEIGHTS` marca os
+   pesos que o site usa — o Regular não recebe WOFF2 porque não há texto de 400
+   na face da carta dentro do site.
+7. **`--surface-tint` e `--border-tint` são declarados três vezes de propósito**
+   (`:root`, `.card-panel`, `.repo-list`). Um custom property que referencia
+   outro é substituído no elemento onde é declarado, não onde é usado: declarado
+   só em `:root`, o `var(--element)` de dentro resolveria para nada e o valor já
+   morto desceria por herança. Bloco novo com `--element` próprio precisa entrar
+   nessa lista.
+
 ## Superdesign
 
 Projeto: `ed05a819-e5d0-41e7-ad22-2a5f91db6205`
@@ -70,9 +139,20 @@ Créditos gastos: ~60,5.
 
 ## Bloqueado no autor
 
-1. **Olhar o foil ao vivo** em `/torvalds`. Terceira tentativa no efeito, duas
-   reprovadas. Está no DOM no tier certo e ausente no errado, mas ninguém julgou
-   o resultado visual.
+1. **Olhar a carta** em `/torvalds` e `/facebook/react` — agora as duas coisas,
+   o foil ao vivo e a carta exportada, que mudou inteira na fase 1 do revamp.
+   Nenhuma das duas foi julgada por pessoa: as duas reprovações anteriores do
+   foil foram do autor olhando, e nem essa etapa nem a da carta nova
+   aconteceram. Conferido só por PNG renderizado pelo assistente.
+
+   Vale olhar **reduzida**, não só no monitor inteiro: o alvo declarado é a
+   carta ler em um segundo num thumbnail de feed, e é lá que a escada de
+   raridade se prova. Para ver os oito tiers de uma vez,
+   `$env:PREVIEW="out"; npx vitest run tests/unit/render-card.test.ts` grava um
+   `tier-<rarity>.png` por tier.
+
+   E force o cache: a rota de imagem responde `max-age=3600`, então o PNG na tela
+   pode ser anterior a tudo isto. `?bust=<agora>` resolve.
 2. **Subir o Docker Desktop.** Com ele de pé, levantar um Redis e exercitar a
    atomicidade do script Lua — é o único caminho de código que iria para
    produção sem nunca ter rodado. A lógica em volta tem 15 testes com o cliente

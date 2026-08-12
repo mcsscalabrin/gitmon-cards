@@ -6,27 +6,30 @@
   "radius": 22,
   "border": 14,
 
-  "_artComment": "centerY = centro da janela, não os 210 da spec original. Um avatar é quadrado e a janela é mais baixa que larga: centrar na janela corta 50px em cima e 50 embaixo, em vez de jogar o rosto para fora do quadro.",
-  "art": { "width": 390, "centerX": 250, "centerY": 250 },
-  "window": { "x": 55, "y": 100, "width": 390, "height": 300, "radius": 8 },
+  "_artComment": "centerY = centro da janela, não os 210 da spec original. Um avatar é quadrado e a janela é mais baixa que larga: centrar na janela corta o excedente em cima e embaixo, em vez de jogar o rosto para fora do quadro.",
+  "art": { "width": 420, "centerX": 250, "centerY": 253 },
 
-  "_fullArtComment": "Variante full-art dos tiers de ilustração. A janela sobe até a borda e desce até onde os ataques começam (448), então a arte passa por trás do nome e da faixa de tipo — que viram scrim por cima dela. Abaixo de 448 a face continua opaca: os ataques e o status precisam de fundo sólido para serem legíveis. A arte é quadrada, então o lado é o maior dos dois eixos da janela.",
+  "_windowComment": "420x310 = 37,2% do canvas, contra os 390x300 (33,4%) do layout original. A vertical já estava no limite — a faixa do nome acima e a de tipo abaixo não davam folga —, então o ganho veio de recalcular o empilhamento inteiro: faixa do nome de 86 para 84, faixa de tipo de 34 para 32, caixa de ataque de 52 para 48 e status de 42 para 40. Nenhum deles estava apertado; a janela estava. A largura é 40..460 e não uma margem própria: janela, faixa de tipo, painel de ataques e faixa de status passam a dividir a mesma coluna, porque quatro elementos empilhados com quatro larguras diferentes leem como erro de impressão.",
+  "window": { "x": 40, "y": 98, "width": 420, "height": 310, "radius": 10 },
+
+  "_fullArtComment": "Variante full-art dos tiers de ilustração. A janela sobe até a borda e desce até onde os ataques começam (452), então a arte passa por trás do nome e da faixa de tipo — que viram scrim por cima dela. Abaixo dali a face continua opaca: os ataques e o status precisam de fundo sólido para serem legíveis. A arte é quadrada, então o lado é o maior dos dois eixos da janela.",
   "fullArt": {
-    "window": { "x": 14, "y": 14, "width": 472, "height": 434, "radius": 16 },
-    "art": { "width": 472, "centerX": 250, "centerY": 231 },
+    "window": { "x": 14, "y": 14, "width": 472, "height": 438, "radius": 16 },
+    "art": { "width": 472, "centerX": 250, "centerY": 233 },
     "scrimHeight": 118
   },
 
-  "name": { "x": 48, "top": 32, "boxHeight": 46, "size": 30, "maxWidth": 300 },
-  "hp": { "right": 40, "top": 30, "boxHeight": 48, "size": 34, "labelSize": 15 },
+  "_headerComment": "O HP ganha do nome de propósito. A 34 contra 30 os dois competiam e nenhum vencia, e num thumbnail de feed a carta não tinha ponto de entrada. `maxWidth` do nome recuou para 280 para abrir o espaço que o número passou a ocupar: a 46px, `250` mais o rótulo começam em x=355, e 300 de largura de nome chegariam a 348.",
+  "name": { "x": 48, "top": 34, "boxHeight": 46, "size": 28, "maxWidth": 280 },
+  "hp": { "right": 40, "top": 26, "boxHeight": 56, "size": 46, "labelSize": 14 },
 
-  "typeStrip": { "x": 55, "y": 408, "width": 390, "height": 34, "size": 15 },
+  "typeStrip": { "x": 40, "y": 416, "width": 420, "height": 32, "size": 15 },
 
   "attacks": {
-    "top": 448,
+    "top": 460,
     "left": 40,
     "right": 460,
-    "boxHeight": 52,
+    "boxHeight": 48,
     "gap": 6,
     "energySize": 26,
     "energyColumnWidth": 92,
@@ -38,7 +41,20 @@
     "damageSize": 26
   },
 
-  "status": { "y": 568, "height": 42, "iconSize": 22, "labelSize": 10, "valueSize": 15 },
+  "status": { "y": 570, "height": 40, "iconSize": 22, "labelSize": 10, "valueSize": 15 },
 
-  "footer": { "top": 624, "left": 48, "right": 452, "size": 13, "symbolRight": 40 }
+  "_footerComment": "Duas linhas de texto à esquerda e um selo de largura fixa à direita. O selo é dimensionado para a carta SEM serial, onde o símbolo de raridade o ocupa sozinho e grande; quando há serial, o símbolo encolhe para acompanhante e o número vira o herói do mesmo bloco. É por isso que `stampWidth` não depende de haver serial — nada se desloca entre os dois estados, e o estado sem número nunca deixa buraco.",
+  "footer": {
+    "top": 620,
+    "left": 48,
+    "right": 452,
+    "size": 12,
+    "lineGap": 22,
+    "stampWidth": 108,
+    "stampGap": 12,
+    "stampHeight": 48,
+    "serialSize": 32,
+    "hashSize": 15,
+    "symbolSize": 14
+  }
 }

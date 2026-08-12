@@ -3,6 +3,11 @@ import { expect, test } from "@playwright/test";
 /** Assinatura de arquivo PNG. */
 const PNG_MAGIC = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
+/** Largura e altura do IHDR, que é sempre o primeiro chunk do arquivo. */
+function pngSize(buffer: Buffer): { width: number; height: number } {
+  return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+}
+
 test.describe("rotas de imagem", () => {
   test("serve a carta de perfil em /<user>.png com o cache da RFC 4.2", async ({ request }) => {
     const response = await request.get("/torvalds.png");
@@ -18,6 +23,33 @@ test.describe("rotas de imagem", () => {
 
     expect(response.status()).toBe(200);
     expect((await response.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
+  });
+
+  /*
+   * A prévia de link é a única imagem do produto que precisa de uma **proporção**
+   * específica: 1.91:1. A carta é 5:7, e apontar o `og:image` direto para ela
+   * fazia o X e o LinkedIn cortarem pelo centro, comendo o cabeçalho e o rodapé.
+   * Por isso o teste mede o IHDR em vez de só conferir que saiu um PNG — o
+   * sintoma de regressão aqui não é erro, é enquadramento.
+   */
+  test("serve a prévia de link em paisagem 1200x630", async ({ request }) => {
+    /*
+     * A rota mais cara do produto, e por construção: ela renderiza a carta
+     * inteira e depois a compõe numa segunda passada de Satori, justamente para
+     * não existir uma segunda versão da carta. Quente ela responde em meio
+     * segundo, mas aqui ela é compilada pelo dev server enquanto quatro workers
+     * disputam a mesma máquina, e os 30s padrão não bastam.
+     */
+    test.setTimeout(90_000);
+
+    const response = await request.get("/api/card-og/torvalds");
+
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toBe("image/png");
+
+    const body = await response.body();
+    expect(body.subarray(0, 8)).toEqual(PNG_MAGIC);
+    expect(pngSize(body)).toEqual({ width: 1200, height: 630 });
   });
 
   test("devolve carta de erro, e não imagem quebrada, para usuário inexistente", async ({
@@ -118,6 +150,41 @@ test.describe("site", () => {
     // `dt` explícito: a faixa de apoio também escreve "stars" (no contador do
     // botão de favoritar), e um getByText solto casa com os dois.
     await expect(page.locator("dl.stat-grid dt").filter({ hasText: "Stars" })).toBeVisible();
+  });
+
+  /*
+   * O que uma prévia de link precisa está no HTML, não na imagem — e sai errado
+   * em silêncio: nada quebra, a página abre, e só quem cola o link em outro
+   * lugar descobre. Daí testar as tags e não a aparência delas.
+   */
+  test("aponta a prévia de link para a rota em paisagem", async ({ page }) => {
+    await page.goto("/torvalds");
+
+    const image = page.locator('meta[property="og:image"]');
+    await expect(image).toHaveAttribute("content", /\/api\/card-og\/torvalds$/);
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      "content",
+      "summary_large_image",
+    );
+    // Sem dimensões declaradas alguns scrapers desistem antes de baixar a
+    // imagem e caem no cartão pequeno, que é o desfecho que isto evita.
+    await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute(
+      "content",
+      "1200",
+    );
+  });
+
+  test("dá a carta em mãos: baixar o PNG e compartilhar", async ({ page }) => {
+    await page.goto("/torvalds");
+    await page.getByRole("button", { name: /Pular|Skip/ }).click();
+
+    // O download é âncora, não botão com script: continua valendo em clique do
+    // meio e em "salvar link como".
+    const download = page.getByRole("link", { name: /Baixar PNG|Download PNG/ });
+    await expect(download).toHaveAttribute("href", "/torvalds.png");
+    await expect(download).toHaveAttribute("download", "torvalds.png");
+
+    await expect(page.getByRole("button", { name: /Compartilhar|Share/ })).toBeVisible();
   });
 
   test("busca leva à carta de perfil", async ({ page }) => {

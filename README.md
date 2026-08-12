@@ -43,6 +43,27 @@ pacote, foil especular seguindo o ponteiro, radar de assinatura do perfil e um p
 derivações mostrando de onde cada número saiu. O PNG que viaja para o README de outra pessoa
 continua limpo.
 
+E fala a língua da carta em vez de ser um invólucro em volta dela: display e títulos usam a
+**mesma face** que o Satori desenha na carta (M PLUS Rounded 1c, 28 KB em dois pesos WOFF2), e o
+tipo da carta tinge a superfície da página inteira — 7% no fundo das caixas, 22% nas bordas. Uma
+página de Fogo e uma de Água já não são a mesma página cinza com duas palavras trocadas.
+
+## Levar a carta embora
+
+Três saídas, para três destinos:
+
+| Saída | Para onde |
+|---|---|
+| **Baixar PNG** | Feed social, onde o arquivo é o produto inteiro e não há site em volta |
+| **Compartilhar** | Folha nativa do celular, com o arquivo quando o navegador aceita e o link quando não; no desktop, copia o link |
+| **Snippet de markdown** | README de outra pessoa |
+
+Colar a URL da página em qualquer lugar que leia Open Graph rende uma prévia em **paisagem**
+(`/api/card-og/<id>`), com a carta inteira ao lado dos números. A carta é 5:7 e as prévias de link
+são 1.91:1 — apontar o `og:image` direto para o `/<id>.png` fazia o corte comer o cabeçalho e o
+rodapé. A prévia embute o PNG real renderizado por `renderCard`, não uma segunda composição: o
+projeto só tem uma carta, e é assim que continua tendo.
+
 ## Rodando
 
 ```bash
@@ -68,7 +89,7 @@ embutida no README de alguém, não é. Em produção o Redis é obrigatório (R
 | `npm run test:e2e` | Playwright (precisa de `npx playwright install chromium`) |
 | `PREVIEW=<dir> npm test` | Grava os PNGs renderizados em disco para inspeção visual |
 | `npm run assets` | Regenera molduras, foil, metal e ícones de energia |
-| `npm run fonts` | Baixa e subseta a fonte da carta |
+| `npm run fonts` | Baixa e subseta a fonte da carta — TTF para o Satori, WOFF2 para o site |
 
 No PowerShell, a variável de preview vai antes, separada: `$env:PREVIEW="out"; npm test`.
 
@@ -113,6 +134,8 @@ app/
   api/
     card-image/[owner]/        rota de imagem do perfil    → reescrita de /<user>.png
     card-image/[owner]/[repo]/ rota de imagem do repo      → reescrita de /<owner>/<repo>.png
+    card-og/[owner]/           prévia de link em paisagem  → só o og:image aponta para cá
+    card-og/[owner]/[repo]/
     battle/[battleId]/image/   pôster do resultado         → reescrita de /battle/<id>.png
 
 components/
@@ -131,14 +154,15 @@ lib/
     layout.json                geometria da carta em pixels — fonte única
     palette.json               cor dos 18 tipos — fonte única, extraída dos ícones
   battle/                      motor de simulação turno-a-turno (RFC 7.3)
-  og/                          renderCard, renderBattle, renderError — Satori + sharp
+  og/                          renderCard, renderCardOg, renderBattle, renderError
+  metadata.ts                  tags de prévia de link, compartilhadas por perfil e repo
   cache/                       Redis, com fallback em memória para dev
   i18n/                        dicionários PT/EN (obrigatório desde a v1, RFC 9.1)
   config.ts                    URLs e políticas de cache — sem domínio hardcoded
 
 scripts/
   build-assets.mjs             gera moldura, full-art, foil, metal e energia (SVG → PNG)
-  build-fonts.mjs              baixa e subseta a fonte da carta
+  build-fonts.mjs              baixa e subseta a fonte da carta (TTF + WOFF2)
   assets/types/                os 18 ícones de tipo, entrada de build — não gerados por código
   lib/art.mjs                  as primitivas de desenho usadas pelo build
 
@@ -181,6 +205,8 @@ Os símbolos de raridade (`● ◆ ★`) não são assets: são glifos cobertos 
 | [`docs/assets-brief.md`](docs/assets-brief.md) | Briefing da arte original (molduras, energia, raridade) |
 | [`docs/foil-especular.md`](docs/foil-especular.md) | O efeito de foil ao vivo, e por que ele é camada sobre o PNG |
 | [`docs/gaps-revalidacao.md`](docs/gaps-revalidacao.md) | Placar de pendências conhecidas, com justificativa |
+| [`docs/revamp-visual.md`](docs/revamp-visual.md) | Plano do revamp visual de carta e site — direção travada, nada implementado |
+| [`PRODUCT.md`](PRODUCT.md) | Verdade de produto durável: usuários, posicionamento, restrições e compromissos de marca |
 | [`docs/handoff.md`](docs/handoff.md) | Estado do trabalho em andamento e o contexto que não está no código |
 
 A RFC é a fonte de verdade declarada. Onde uma decisão posterior a substituiu, a seção original

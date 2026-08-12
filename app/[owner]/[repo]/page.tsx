@@ -5,7 +5,7 @@ import { CardPanel } from "@/components/card/CardPanel";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Shell } from "@/components/ui/Shell";
 import { getRepoCard } from "@/lib/cards";
-import { absoluteUrl } from "@/lib/config";
+import { cardMetadata } from "@/lib/metadata";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 
@@ -13,12 +13,12 @@ type Params = { params: Promise<{ owner: string; repo: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { owner, repo } = await params;
-  const image = absoluteUrl(`/${owner}/${repo}.png`);
-  return {
-    title: `${owner}/${repo}`,
-    openGraph: { images: [image] },
-    twitter: { card: "summary_large_image", images: [image] },
-  };
+  return cardMetadata({
+    subject: `${owner}/${repo}`,
+    path: `/${owner}/${repo}`,
+    ogPath: `/api/card-og/${owner}/${repo}`,
+    locale: await getLocale(),
+  });
 }
 
 export default async function RepoPage({ params }: Params) {

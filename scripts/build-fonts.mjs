@@ -9,6 +9,12 @@
  * cada cold start, para desenhar nomes de repositório em latim. O subset derruba
  * isso para dezenas de KB sem perder nada que a carta use — incluindo os símbolos
  * de raridade (⬤ ◆ ★), que fontes só-latinas normalmente não têm.
+ *
+ * **Dois formatos por peso, e os dois são necessários.** O Satori carrega o
+ * arquivo do disco e só entende TrueType; o navegador entende WOFF2 e paga
+ * metade dos bytes pelo mesmo desenho, porque WOFF2 é o mesmo TTF comprimido com
+ * Brotli. Servir o TTF ao navegador funcionaria e custaria o dobro à toa; mandar
+ * WOFF2 ao Satori não funcionaria de jeito nenhum.
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -20,10 +26,17 @@ const dest = join(root, "public/assets/fonts");
 
 const SOURCE = "https://raw.githubusercontent.com/google/fonts/main/ofl/mplusrounded1c";
 
+/**
+ * `web` marca os pesos que o **site** também usa.
+ *
+ * A carta usa os três; o site usa a face só em display e título, e display é
+ * sempre pesado — não há texto de 400 na face da carta dentro do site. Gerar o
+ * WOFF2 do Regular seria versionar 14 KB que nenhum `@font-face` referencia.
+ */
 const WEIGHTS = [
-  { file: "MPLUSRounded1c-Regular.ttf", out: "Rounded-Regular.ttf" },
-  { file: "MPLUSRounded1c-Bold.ttf", out: "Rounded-Bold.ttf" },
-  { file: "MPLUSRounded1c-Black.ttf", out: "Rounded-Black.ttf" },
+  { file: "MPLUSRounded1c-Regular.ttf", out: "Rounded-Regular.ttf", web: false },
+  { file: "MPLUSRounded1c-Bold.ttf", out: "Rounded-Bold.ttf", web: true },
+  { file: "MPLUSRounded1c-Black.ttf", out: "Rounded-Black.ttf", web: true },
 ];
 
 /**
@@ -51,15 +64,23 @@ async function download(name) {
 await mkdir(dest, { recursive: true });
 
 console.log(`\nsubset (${CHARS.length} caracteres)`);
-for (const { file, out } of WEIGHTS) {
+for (const { file, out, web } of WEIGHTS) {
   const original = await download(file);
-  const subset = await subsetFont(original, CHARS, { targetFormat: "truetype" });
-  await writeFile(join(dest, out), subset);
 
-  const ratio = ((1 - subset.length / original.length) * 100).toFixed(1);
+  // TrueType para o Satori, WOFF2 para o navegador. Mesmo subset, mesmo desenho.
+  const ttf = await subsetFont(original, CHARS, { targetFormat: "truetype" });
+  await writeFile(join(dest, out), ttf);
+
+  let note = "";
+  if (web) {
+    const woff2 = await subsetFont(original, CHARS, { targetFormat: "woff2" });
+    await writeFile(join(dest, out.replace(/\.ttf$/, ".woff2")), woff2);
+    note = ` · ${(woff2.length / 1024).toFixed(1)} KB woff2`;
+  }
+
   console.log(
-    `  ${out.padEnd(22)} ${(original.length / 1024 / 1024).toFixed(2)} MB → ` +
-      `${(subset.length / 1024).toFixed(1)} KB  (−${ratio}%)`,
+    `  ${out.replace(/\.ttf$/, "").padEnd(18)} ${(original.length / 1024 / 1024).toFixed(2)} MB → ` +
+      `${(ttf.length / 1024).toFixed(1)} KB ttf${note}`,
   );
 }
 

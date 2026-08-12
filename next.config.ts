@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   // explicitamente — sem isto funciona em dev e quebra em produção.
   outputFileTracingIncludes: {
     "/api/card-image/**": ["./public/assets/**"],
+    "/api/card-og/**": ["./public/assets/**"],
     "/api/battle/**": ["./public/assets/**"],
   },
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import foil from "@/lib/cards/foil.json";
 import {
   cardTreatment,
   foilIntensity,
@@ -102,11 +103,42 @@ describe("tratamento visual", () => {
   });
 
   it("mantém a hyper_rare no layout padrão, distinguindo-a da special", () => {
-    expect(cardTreatment("hyper_rare")).toEqual({ fullArt: false, metal: "gold" });
+    expect(cardTreatment("hyper_rare")).toEqual({
+      fullArt: false,
+      metal: "gold",
+      edge: null,
+    });
     expect(cardTreatment("special_illustration_rare")).toEqual({
       fullArt: true,
       metal: "gold",
+      edge: null,
     });
+  });
+
+  /*
+   * O anel folheado já é o tratamento de borda dos tiers que o têm. Somar os
+   * dois não faz um tier mais raro — apaga o folheado, que é o sinal mais caro
+   * da carta.
+   */
+  it("nunca põe metal e borda no mesmo tier", () => {
+    for (const rarity of RARITIES) {
+      const { metal, edge } = cardTreatment(rarity);
+      expect(metal !== null && edge !== null, rarity).toBe(false);
+    }
+  });
+
+  /*
+   * O que o thumbnail de feed enxerga é a combinação de layout, metal e borda —
+   * não a contagem de estrelas, ilegível a 150px. Se dois tiers colapsarem na
+   * mesma combinação, a escada volta a morrer no tamanho em que a carta mais
+   * vive, e nada mais quebra.
+   */
+  it("dá combinação própria a cada tier a partir da rare", () => {
+    const combos = RARITIES.filter(hasFoil).map((r) => {
+      const { fullArt, metal, edge } = cardTreatment(r);
+      return `${fullArt}:${metal}:${edge}`;
+    });
+    expect(new Set(combos).size).toBe(combos.length);
   });
 
   /*
@@ -166,6 +198,24 @@ describe("intensidade do foil ao vivo", () => {
     for (const rarity of RARITIES) {
       expect(foilIntensity(rarity)).toBeGreaterThanOrEqual(0);
       expect(foilIntensity(rarity)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  /*
+   * `foil.json` é a fonte única das duas pontas: o `foilIntensity()` que o
+   * TiltCard multiplica no CSS e o `foilSvg()` que a build assa em PNG. As duas
+   * pontas divergirem não quebra compilação nenhuma — dá carta sem foil de um
+   * lado ou arquivo órfão do outro, e o sintoma só aparece na imagem. Daí o
+   * teste ser sobre o arquivo, e não sobre a função.
+   */
+  it("tem uma banda espectral por tier com foil, e só por esses", () => {
+    expect(Object.keys(foil.bands).sort()).toEqual(RARITIES.filter(hasFoil).sort());
+  });
+
+  it("dá quatro cores a cada banda — é o ciclo que o gradiente repete", () => {
+    for (const [tier, bands] of Object.entries(foil.bands)) {
+      expect(bands, tier).toHaveLength(4);
+      for (const color of bands) expect(color, tier).toMatch(/^#[0-9A-F]{6}$/i);
     }
   });
 });
