@@ -1,14 +1,14 @@
-import { baseUrl } from "../config";
+import "server-only";
 
-// Fluxo mínimo de OAuth do GitHub — "gere sua própria carta em um clique". O
-// visitante cai em /api/auth/login, é levado ao GitHub e volta para /<seu login>,
-// onde a carta já é gerada. Nenhuma sessão é mantida: o token do OAuth é trocado,
-// usado uma vez para ler o login e descartado.
+// Minimal GitHub OAuth App flow — "match your own profile in one click". A
+// visitor hits /api/auth/login, gets bounced to GitHub, and lands back on
+// /<their login> where the scout already ran. No session is kept: the OAuth
+// token is exchanged, used once to read the login, then discarded.
 //
-// Configure um OAuth App do GitHub (github.com/settings/developers) com a URL de
-// callback <seu-origin>/api/auth/callback. Tudo degrada limpo: sem
-// GITHUB_OAUTH_CLIENT_ID/GITHUB_OAUTH_CLIENT_SECRET o botão de login simplesmente
-// não aparece.
+// Configure a GitHub OAuth App (github.com/settings/developers) with the
+// callback URL <your-origin>/api/auth/callback. Everything degrades cleanly:
+// without GITHUB_OAUTH_CLIENT_ID/GITHUB_OAUTH_CLIENT_SECRET the login button
+// simply doesn't render.
 
 interface OAuthConfig {
   clientId: string;
@@ -19,12 +19,12 @@ export function oauthConfig(): OAuthConfig | null {
   const clientId = process.env.GITHUB_OAUTH_CLIENT_ID?.trim();
   const clientSecret = process.env.GITHUB_OAUTH_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) return null;
-  // Segredos de OAuth App do GitHub são sempre 40 hex em minúsculas; um client ID
-  // nunca é. Pega o clássico erro de copiar client_id/client_secret trocados, que
-  // senão só aparece como falha confusa na hora do authorize.
+  // GitHub OAuth App client secrets are always 40 lowercase hex chars; a client
+  // ID never is. Catches the classic client_id/client_secret copy-paste swap,
+  // which would otherwise only surface as a confusing failure at authorize time.
   if (/^[0-9a-f]{40}$/.test(clientId)) {
     console.warn(
-      "[oauth] GITHUB_OAUTH_CLIENT_ID parece um client secret (40 hex). Verifique as variáveis.",
+      "[oauth] GITHUB_OAUTH_CLIENT_ID looks like a client secret (40-hex). Check the env vars.",
     );
     return null;
   }
@@ -35,18 +35,22 @@ export function oauthEnabled(): boolean {
   return oauthConfig() !== null;
 }
 
-/**
- * A origem usada no redirect_uri do OAuth. Vem do `lib/config.ts` — a RFC 11
- * proíbe hardcodar domínio; o override explícito e as URLs de deploy da Vercel
- * já são resolvidos lá.
- */
-function appBaseUrl(): string {
-  return baseUrl();
+// The origin used to build the OAuth redirect_uri. Explicit override wins;
+// VERCEL_URL covers Vercel deploys (preview + production); localhost as a last
+// resort for local dev.
+export function appBaseUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (explicit) return explicit.replace(/\/+$/, "");
+  const prod = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (prod) return `https://${prod}`;
+  const url = process.env.VERCEL_URL?.trim();
+  if (url) return `https://${url}`;
+  return "http://localhost:3000";
 }
 
 export function oauthAuthorizeUrl(state: string): string {
   const config = oauthConfig();
-  if (!config) throw new Error("OAuth não configurado.");
+  if (!config) throw new Error("OAuth is not configured.");
   const params = new URLSearchParams({
     client_id: config.clientId,
     scope: "read:user",
@@ -58,7 +62,7 @@ export function oauthAuthorizeUrl(state: string): string {
 
 export async function exchangeOauthCode(code: string): Promise<string> {
   const config = oauthConfig();
-  if (!config) throw new Error("OAuth não configurado.");
+  if (!config) throw new Error("OAuth is not configured.");
   const res = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
@@ -68,13 +72,13 @@ export async function exchangeOauthCode(code: string): Promise<string> {
       code,
     }),
   });
-  if (!res.ok) throw new Error("O GitHub rejeitou o código OAuth.");
+  if (!res.ok) throw new Error("GitHub rejected the OAuth code.");
   const body = (await res.json()) as {
     access_token?: string;
     error_description?: string;
   };
   if (!body.access_token)
-    throw new Error(body.error_description ?? "Troca do código OAuth falhou.");
+    throw new Error(body.error_description ?? "OAuth exchange failed.");
   return body.access_token;
 }
 
@@ -95,7 +99,7 @@ export async function fetchOauthUser(token: string): Promise<OAuthUser> {
   if (!res.ok) {
     const snippet = (await res.text().catch(() => "")).slice(0, 160);
     throw new Error(
-      `O GitHub não devolveu o usuário logado (HTTP ${res.status}): ${snippet}`,
+      `GitHub didn't return the logged-in user (HTTP ${res.status}): ${snippet}`,
     );
   }
   const body = (await res.json()) as {
@@ -103,7 +107,7 @@ export async function fetchOauthUser(token: string): Promise<OAuthUser> {
     name?: string | null;
     avatar_url?: string;
   };
-  if (!body.login) throw new Error("O GitHub não devolveu um login.");
+  if (!body.login) throw new Error("GitHub didn't return a login.");
   return {
     login: body.login,
     name: body.name ?? null,
