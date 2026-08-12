@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import UserSearchInput, { type UserSearchInputHandle } from "./UserSearchInput";
 
 /**
  * Busca por usuário ou `owner/repo`. Aceita URL do GitHub colada inteira, porque
- * é o que a pessoa tem na mão quando chega aqui.
+ * é o que a pessoa tem na mão quando chega aqui. Usa UserSearchInput para
+ * sugestões de nome em tempo real.
  */
 export function SearchForm({
   placeholder,
@@ -16,23 +18,23 @@ export function SearchForm({
 }) {
   const router = useRouter();
   const [value, setValue] = useState("");
+  const inputRef = useRef<UserSearchInputHandle>(null);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    const target = normalize(value);
+    const resolved = inputRef.current?.resolve(value);
+    const target = resolved ?? normalize(value);
     if (target) router.push(`/${target}`);
   }
 
   return (
     <form className="search-form" onSubmit={submit}>
-      <input
-        type="text"
+      <UserSearchInput
+        ref={inputRef}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onValueChange={setValue}
+        label={placeholder}
         placeholder={placeholder}
-        aria-label={placeholder}
-        autoComplete="off"
-        spellCheck={false}
       />
       <button type="submit">{action}</button>
     </form>

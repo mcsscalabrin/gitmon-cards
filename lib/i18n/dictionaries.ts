@@ -86,6 +86,7 @@ const pt = {
   "home.tagline": "Cartas geradas a partir de dados reais do GitHub.",
   "home.description":
     "Uma URL de imagem, sem login, que se atualiza sozinha. Cole no seu README.",
+  "search.scouting": "buscando nomes…",
   "home.search": "Buscar usuário ou owner/repositório",
   "home.searchAction": "Gerar carta",
   "home.samples": "Exemplos",
@@ -235,6 +236,7 @@ const en: Record<MessageKey, string> = {
 
   "home.tagline": "Cards generated from real GitHub data.",
   "home.description": "One image URL, no login, updating on its own. Paste it in your README.",
+  "search.scouting": "searching names…",
   "home.search": "Search a user or owner/repository",
   "home.searchAction": "Generate card",
   "home.samples": "Samples",
