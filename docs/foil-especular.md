@@ -20,39 +20,49 @@ feBlend           mode="screen"                                                 
 
 | Original | Aqui |
 |---|---|
-| `<video>` com webcam como camada de reflexo | camada de gradiente estático de ambiente sob o filtro |
-| `fePointLight` em posição fixa `x=0 y=0 z=300` | `x`/`y` seguem o ponteiro, reaproveitando `--glare-x` / `--glare-y` que o `TiltCard` já calcula |
+| `<video>` com webcam como camada de reflexo | nenhuma: o que está embaixo é o próprio PNG da carta |
+| `fePointLight` em posição fixa `x=0 y=0 z=300` | `x`/`y` seguem o ponteiro, reaproveitando a posição que o `TiltCard` já calcula |
 | Loop automático | sem loop: a luz só se move com o cursor |
-| Aplicado ao card inteiro como container | camada `position: absolute; inset: 0` **sobre o PNG**, dentro do `.tilt-card` existente (RFC 7.1) |
-| Sempre ativo | só quando `hasFoil(rarity)` é true — tiers `holo` e `secret` |
+| Aplicado ao card inteiro como container | camadas `position: absolute; inset: 0` **sobre o PNG**, dentro do `.tilt-card` existente (RFC 7.1) |
+| Sempre ativo | só quando `hasFoil(rarity)` é true, e com intensidade por tier (`foilIntensity`) |
 
-Camadas de apoio que valem manter do CSS original, todas por cima do PNG:
+## O que está implementado
 
-```css
-/* grão metálico */
-.reflective-noise {
-  opacity: var(--roughness, 0.4);
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,...feTurbulence baseFrequency='0.8' numOctaves='3'...");
-}
+`components/card/TiltCard.tsx` + `.tilt-*` em `app/globals.css`. Quatro camadas,
+cada uma com um trabalho distinto — a separação importa, porque foi tentar fazer
+uma camada só resolver cor **e** luz que produziu a primeira versão enevoada:
 
-/* sheen diagonal */
-.reflective-sheen {
-  background: linear-gradient(135deg,
-    rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 40%,
-    rgba(255,255,255,0)  50%, rgba(255,255,255,0.1) 60%,
-    rgba(255,255,255,0.3) 100%);
-  mix-blend-mode: overlay;
-  opacity: var(--metalness, 1);
-}
+| Camada | Papel | Blend |
+|---|---|---|
+| `.tilt-foil` | relevo especular (o filtro acima), mascarado em volta do ponteiro | `screen` |
+| `.tilt-spectral` | faixas de arco-íris que varrem com a inclinação | `color` |
+| `.tilt-sheen` | lâmina diagonal, o reflexo duro da fonte de luz | `overlay` |
+| `.tilt-grain` | granulado fixo, tira a lisura de gradiente CSS | `overlay` |
 
-/* borda com máscara xor — vira moldura de raridade */
-.reflective-border {
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.6));
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-}
-```
+Duas decisões que custaram tentativa e erro:
 
-`prefers-reduced-motion: reduce` já zera transições globalmente em `app/globals.css`; a camada deve virar brilho estático, não sumir.
+- **`mix-blend-mode: color` no espectro, não `color-dodge` nem `hard-light`.** A
+  arte destas cartas é clara, e qualquer modo que some luz satura para branco e
+  enevoa nome, stats e rosto. `color` troca só matiz e saturação, preserva a
+  luminosidade do que está embaixo, e por isso o texto continua legível com a
+  carta inteira em arco-íris.
+- **O espectro e o relevo são mascarados por um radial preso ao ponteiro.**
+  Espalhados pela carta inteira eles leem como filtro de foto; concentrados num
+  ponto que se move, leem como reflexo.
+
+O `feDisplacementMap` da pilha original, que a primeira implementação tinha
+descartado, voltou — mas deslocando **ruído por ruído** (um `feTurbulence`
+anisotrópico ondulado por outro de frequência baixa), e não a `SourceGraphic`
+como no React Bits. Lá a fonte é o vídeo da webcam; aqui a fonte é um `<rect>`
+sólido, e deslocar um retângulo de cor uniforme não produz nada.
+
+A frequência anisotrópica (`baseFrequency="0.004 0.09"`) é o que dá linhas em vez
+de chuvisco: é o padrão do foil linear do TCG.
+
+## Movimento reduzido
+
+`prefers-reduced-motion: reduce` já zera transições globalmente em
+`app/globals.css`; a camada vira brilho estático, não some. Quem faz isso
+acontecer é o `TiltCard` **não escrever nada**: o laço de rAF nem começa, então
+não há custom property inline vencendo a regra de media query que monta o brilho
+parado.

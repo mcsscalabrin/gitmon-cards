@@ -140,6 +140,40 @@ export function hasFoil(rarity: Rarity): boolean {
   return rarity !== "common" && rarity !== "uncommon";
 }
 
+/**
+ * Força do foil ao vivo, de 0 a 1 (`components/card/TiltCard.tsx`).
+ *
+ * O `hasFoil` acima é booleano porque a moldura impressa só precisa saber se
+ * existe arquivo de foil para compor. Na tela é diferente: seis tiers dividindo
+ * a mesma camada faz `rare` e `hyper_rare` brilharem igual, e a escada de
+ * raridade que o resto da carta constrói morre exatamente no efeito mais
+ * visível dela.
+ *
+ * Os valores não são lineares. O salto grande fica entre `double_rare` e
+ * `illustration_rare`, que é onde o tratamento também muda para full-art
+ * (`cardTreatment`) — o foil acompanha o degrau que já existe em vez de
+ * inventar outro.
+ */
+export function foilIntensity(rarity: Rarity): number {
+  switch (rarity) {
+    case "common":
+    case "uncommon":
+      return 0;
+    case "rare":
+      return 0.42;
+    case "double_rare":
+      return 0.55;
+    case "illustration_rare":
+      return 0.78;
+    case "ultra_rare":
+      return 0.88;
+    case "special_illustration_rare":
+      return 0.95;
+    case "hyper_rare":
+      return 1;
+  }
+}
+
 export type MetalTone = "silver" | "gold";
 
 export interface CardTreatment {

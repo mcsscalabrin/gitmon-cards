@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cardTreatment,
+  foilIntensity,
   hasFoil,
   rarityForScore,
   raritySymbol,
@@ -138,5 +139,33 @@ describe("foil", () => {
 
   it("cobre seis tiers — um PNG por tier em public/assets/frames", () => {
     expect(RARITIES.filter(hasFoil)).toHaveLength(6);
+  });
+});
+
+describe("intensidade do foil ao vivo", () => {
+  it("é zero exatamente onde não há foil", () => {
+    for (const rarity of RARITIES) {
+      if (hasFoil(rarity)) expect(foilIntensity(rarity)).toBeGreaterThan(0);
+      else expect(foilIntensity(rarity)).toBe(0);
+    }
+  });
+
+  /*
+   * O ponto da função. Se dois tiers empatarem, a escada de raridade morre no
+   * efeito mais visível que a carta tem — que foi o estado anterior, com um
+   * booleano decidindo o brilho de seis tiers.
+   */
+  it("cresce estritamente entre os tiers com foil", () => {
+    const valores = RARITIES.filter(hasFoil).map(foilIntensity);
+    for (let i = 1; i < valores.length; i += 1) {
+      expect(valores[i]).toBeGreaterThan(valores[i - 1]);
+    }
+  });
+
+  it("fica no intervalo que o CSS multiplica, sem estourar as opacidades", () => {
+    for (const rarity of RARITIES) {
+      expect(foilIntensity(rarity)).toBeGreaterThanOrEqual(0);
+      expect(foilIntensity(rarity)).toBeLessThanOrEqual(1);
+    }
   });
 });

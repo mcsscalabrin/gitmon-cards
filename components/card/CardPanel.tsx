@@ -1,5 +1,4 @@
 import { ELEMENT_COLORS } from "@/lib/cards/elements";
-import { hasFoil } from "@/lib/cards/rarity";
 import type { Card } from "@/lib/cards/types";
 import { absoluteUrl } from "@/lib/config";
 import { elementKey, rarityKey, translator, type Locale } from "@/lib/i18n/dictionaries";
@@ -65,7 +64,7 @@ export function CardPanel({
           src={imagePath}
           alt={`${card.name} — ${t(elementKey(card.element))}`}
           priority
-          foil={hasFoil(card.rarity)}
+          rarity={card.rarity}
         />
         <div className="card-headline">
           <h1>{card.name}</h1>

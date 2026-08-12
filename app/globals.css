@@ -755,22 +755,45 @@ select {
 .tilt-card {
   position: relative;
   border-radius: 16px;
-  transform-style: preserve-3d;
-  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
-  animation: reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: transform;
-}
 
-.tilt-card[data-active] {
-  transition: transform 80ms linear;
+  /*
+   * `--active` vai de 0 a 1 no laço de rAF do TiltCard e é o dimmer de toda a
+   * pilha: inclinação, elevação, brilho e espectro leem daqui. Uma variável só
+   * garante que tudo acenda e apague junto, sem transição de CSS competindo com
+   * a interpolação do JS.
+   */
+  --active: 0;
+  --foil: 0;
+
+  transform: translateZ(calc(var(--active) * 26px)) rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg));
+
+  /*
+   * `backwards` e nao `both`.
+   *
+   * Com `both`, o quadro 100% desta animacao (`transform: none`) continua valendo
+   * depois que ela termina, e animacao vence declaracao normal na cascata — o
+   * `transform` acima nunca chegava a ser aplicado. A carta ficava permanentemente
+   * chapada por mais que o JS escrevesse `--tilt-x`. `backwards` cobre so o que o
+   * `both` existia para cobrir (o estado inicial antes do primeiro quadro) e
+   * devolve o controle do transform assim que a revelacao acaba.
+   */
+  animation: reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  will-change: transform;
 }
 
 .tilt-card img {
   width: 100%;
   height: auto;
   border-radius: 16px;
-  filter: drop-shadow(0 18px 34px rgb(0 0 0 / 0.45));
+  /*
+   * A sombra cresce com a elevação: carta levantada projeta sombra maior e mais
+   * difusa. Sem isso o `translateZ` lê como zoom, não como altura.
+   */
+  filter: drop-shadow(
+    0 calc(18px + var(--active) * 16px) calc(34px + var(--active) * 26px)
+      rgb(0 0 0 / calc(0.45 + var(--active) * 0.2))
+  );
 }
 
 .tilt-glare {
@@ -778,45 +801,183 @@ select {
   inset: 0;
   border-radius: 16px;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 240ms ease;
+  opacity: var(--active);
+  /*
+   * Bem mais discreto do que era quando esta camada estava sozinha. Com a pilha
+   * holo por cima, um borrão branco largo só soma névoa: as três camadas de foil
+   * já clareiam a região do ponteiro, e o brilho da fonte de luz vira um ponto
+   * quente pequeno em vez do reflexo inteiro.
+   */
   background: radial-gradient(
     circle at var(--glare-x, 50%) var(--glare-y, 50%),
-    rgb(255 255 255 / 0.34),
-    transparent 46%
+    rgb(255 255 255 / 0.2),
+    transparent 38%
   );
 }
 
-.tilt-card[data-active] .tilt-glare {
-  opacity: 1;
-}
-
 /*
- * Foil especular. Camada por cima do PNG, nunca dentro dele — a imagem exportada
- * já carrega o seu próprio foil, gerado na build (RFC 7.1, 9.6).
+ * ---------------------------------------------------------------- foil holo
  *
- * `screen` faz o preto do filtro desaparecer e só o brilho somar. Fica fraco
- * parado e acende no hover, porque a luz só existe quando há ponteiro para
- * movê-la.
+ * Camadas por cima do PNG, nunca dentro dele — a imagem exportada já carrega o
+ * seu próprio foil, gerado na build (RFC 7.1, 9.6).
+ *
+ * Todas herdam a mesma conta de opacidade: `--foil` (a raridade, fixa) × uma
+ * base em repouso + o que o ponteiro acrescenta. A carta nunca fica morta
+ * parada, mas só chega ao brilho cheio quando alguém a toca.
  */
-.tilt-foil {
+.tilt-holo {
   position: absolute;
   inset: 0;
   border-radius: 16px;
   overflow: hidden;
   pointer-events: none;
-  mix-blend-mode: screen;
-  opacity: 0.28;
-  transition: opacity 240ms ease;
 }
 
-.tilt-card[data-active] .tilt-foil {
-  opacity: 0.75;
+.tilt-holo > * {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * Relevo especular: o grão de metal que reflete a luz do ponteiro.
+ *
+ * Mascarado em volta do ponteiro, e não espalhado pela carta inteira. Sem a
+ * máscara o relevo cobre os 500×700 num véu leitoso uniforme e o avatar
+ * desaparece atrás dele — o que é fisicamente errado, além de feio: relevo só
+ * acende onde a luz bate. A máscara é bem mais larga que a do espectro porque o
+ * reflexo difuso do metal se espalha mais que a refração.
+ */
+.tilt-foil {
+  mix-blend-mode: screen;
+  opacity: calc(var(--foil) * (0.07 + var(--active) * 0.25));
+  -webkit-mask-image: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    #000 0%,
+    rgb(0 0 0 / 0.45) 38%,
+    transparent 74%
+  );
+  mask-image: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    #000 0%,
+    rgb(0 0 0 / 0.45) 38%,
+    transparent 74%
+  );
 }
 
 .tilt-foil-svg {
   width: 100%;
   height: 100%;
+}
+
+/*
+ * Faixas de espectro — a camada que faz a carta ler como holográfica em vez de
+ * apenas brilhante.
+ *
+ * `mix-blend-mode: color`, e não `color-dodge` nem `hard-light`. Os dois foram
+ * tentados e falham pelo mesmo motivo: a arte destas cartas é clara (moldura
+ * pastel, avatar sobre fundo claro), então qualquer modo que some luz satura
+ * para branco e enevoa o nome, os stats e o rosto — foi exatamente o que a
+ * primeira versão desta camada fazia.
+ *
+ * `color` troca **só** matiz e saturação e mantém a luminosidade do que está
+ * embaixo. O texto preto continua preto, o contraste da arte não se move, e
+ * ainda assim a carta ganha as faixas de arco-íris de verdade. O brilho que o
+ * holo também precisa vem de outra camada (`.tilt-foil`), que é onde ele deve
+ * estar: cor e luz separadas, cada uma controlável sem estragar a outra.
+ *
+ * A máscara radial prende o espectro a um halo em volta do ponteiro. Espectro
+ * cobrindo a carta inteira lê como filtro de foto; concentrado num ponto que se
+ * move, lê como reflexo.
+ */
+.tilt-spectral {
+  mix-blend-mode: color;
+  opacity: calc(var(--foil) * var(--active) * 0.85);
+  background: repeating-linear-gradient(
+    112deg,
+    hsl(348 92% 58%) 0%,
+    hsl(45 96% 58%) 5%,
+    hsl(140 82% 54%) 10%,
+    hsl(192 94% 56%) 15%,
+    hsl(268 90% 62%) 20%,
+    hsl(320 92% 60%) 25%,
+    hsl(348 92% 58%) 30%
+  );
+  background-size: 220% 220%;
+  background-position: var(--holo-shift, 50%) var(--holo-drift, 50%);
+  -webkit-mask-image: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    #000 0%,
+    rgb(0 0 0 / 0.45) 28%,
+    transparent 58%
+  );
+  mask-image: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    #000 0%,
+    rgb(0 0 0 / 0.45) 28%,
+    transparent 58%
+  );
+}
+
+/* Lâmina diagonal: o reflexo duro da fonte de luz varrendo a superfície. */
+.tilt-sheen {
+  mix-blend-mode: overlay;
+  opacity: calc(var(--foil) * (0.08 + var(--active) * 0.24));
+  background: linear-gradient(
+    108deg,
+    transparent 36%,
+    rgb(255 255 255 / 0.72) 47%,
+    rgb(255 255 255 / 0.22) 53%,
+    transparent 64%
+  );
+  background-size: 260% 100%;
+  background-position: var(--sheen-shift, 50%) center;
+}
+
+/*
+ * Granulado fixo. Não se move e não reage — existe só para quebrar a lisura dos
+ * gradientes acima, que sem ele denunciam CSS à primeira vista. Data URI porque
+ * um request de rede para 400 bytes de ruído não se justifica.
+ */
+.tilt-grain {
+  mix-blend-mode: overlay;
+  opacity: calc(var(--foil) * 0.16);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='0.55'/></svg>");
+}
+
+/*
+ * Metal do tier tinge o espectro. `ultra_rare` é prata e
+ * `special_illustration_rare`/`hyper_rare` são ouro na moldura impressa
+ * (`cardTreatment`); sem isto o reflexo ao vivo sai igual nos três e desmente a
+ * moldura que está logo embaixo.
+ */
+.tilt-holo[data-metal="gold"] .tilt-spectral {
+  filter: hue-rotate(-18deg) saturate(1.15);
+}
+
+.tilt-holo[data-metal="silver"] .tilt-spectral {
+  filter: saturate(0.55) brightness(1.12);
+}
+
+/* Fio de luz na borda, como o corte metálico de uma carta de verdade. */
+.tilt-card[data-foil]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  padding: 1px;
+  opacity: calc(var(--foil) * (0.25 + var(--active) * 0.6));
+  background: linear-gradient(
+    calc(120deg + var(--tilt-y, 0deg)),
+    rgb(255 255 255 / 0.9),
+    rgb(255 255 255 / 0.1) 45%,
+    rgb(255 255 255 / 0.75)
+  );
+  /* Máscara xor: pinta só a moldura de 1px, e não o miolo. */
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
 }
 
 /*
@@ -836,6 +997,23 @@ select {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+}
+
+/*
+ * Sem movimento, o foil vira brilho estático em vez de sumir (docs/foil-especular.md).
+ * A regra global já zera durações; o que falta é impedir que a carta fique
+ * apagada esperando um ponteiro cujo efeito foi desligado.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card {
+    --active: 0.5;
+    transform: none;
+  }
+
+  .tilt-spectral,
+  .tilt-glare {
+    opacity: 0;
   }
 }
 
@@ -861,11 +1039,45 @@ select {
   margin-inline: calc(50% - min(680px, 50vw - 20px));
 }
 
+/*
+ * Auréola do elemento atrás da carta.
+ *
+ * A cor do tipo já existe em `--element` (o `CardPanel` a define no painel
+ * inteiro), mas até aqui ela só aparecia em texto de 13px — a página ficava
+ * idêntica para uma carta de Fogo e uma de Água, com o fundo cinza-azulado do
+ * produto valendo para as dezoito. A auréola dá o ambiente sem tocar na carta:
+ * é luz **atrás** dela, não em cima, e por isso não briga com o PNG exportado
+ * nem com o foil.
+ *
+ * `position: absolute` num pseudo-elemento em vez de `box-shadow` no `img`:
+ * sombra colorida acompanharia a inclinação da carta e a auréola tem que ficar
+ * parada, senão vira brilho grudado e denuncia que a carta é uma imagem plana.
+ */
 .card-center {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
+}
+
+.card-center::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  /* Larga o suficiente para vazar da carta sem alcançar as colunas de texto. */
+  left: 50%;
+  top: 40px;
+  width: 620px;
+  height: 620px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--element, #f2c94c) 34%, transparent) 0%,
+    color-mix(in srgb, var(--element, #f2c94c) 12%, transparent) 34%,
+    transparent 68%
+  );
 }
 
 .card-aside {
