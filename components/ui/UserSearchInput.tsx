@@ -88,7 +88,6 @@ const UserSearchInput = forwardRef<UserSearchInputHandle, {
       }}
       className="search-input-wrap"
     >
-      <span className="search-input-at">@</span>
       <input
         value={value}
         onChange={(e) => {

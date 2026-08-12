@@ -810,21 +810,9 @@ select {
   min-width: 0;
 }
 
-.search-input-at {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: var(--accent);
-  font-weight: 800;
-  font-size: 15px;
-  opacity: 0.7;
-}
-
 .search-input {
   width: 100%;
-  padding: 11px 14px 11px 30px;
+  padding: 11px 14px;
   border-radius: var(--radius);
   border: 1px solid var(--border-strong);
   background: var(--bg-sunken);
