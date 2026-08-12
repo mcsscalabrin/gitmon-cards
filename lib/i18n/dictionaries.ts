@@ -82,6 +82,7 @@ const pt = {
   "error.no_token": "Servidor sem token do GitHub configurado.",
   "error.upstream": "A API do GitHub não respondeu.",
   "error.battle_expired": "Este resultado de batalha expirou. Gere uma nova batalha.",
+  "error.retry": "Tentar de novo",
 
   "home.tagline": "Cartas geradas a partir de dados reais do GitHub.",
   "home.description":
@@ -233,6 +234,7 @@ const en: Record<MessageKey, string> = {
   "error.no_token": "Server has no GitHub token configured.",
   "error.upstream": "The GitHub API did not respond.",
   "error.battle_expired": "This battle result has expired. Run a new battle.",
+  "error.retry": "Try again",
 
   "home.tagline": "Cards generated from real GitHub data.",
   "home.description": "One image URL, no login, updating on its own. Paste it in your README.",
