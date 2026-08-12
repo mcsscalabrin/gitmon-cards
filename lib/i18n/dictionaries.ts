@@ -177,6 +177,8 @@ const pt = {
   "battle.share": "Compartilhar resultado",
   "battle.rematch": "Batalhar de novo",
   "battle.skip": "Pular animação",
+  "battle.radar": "Assinatura do perfil",
+  "battle.radarCaption": "Sobreposição dos dois oponentes",
 } as const;
 
 export type MessageKey = keyof typeof pt;
@@ -324,6 +326,8 @@ const en: Record<MessageKey, string> = {
   "battle.share": "Share result",
   "battle.rematch": "Battle again",
   "battle.skip": "Skip animation",
+  "battle.radar": "Profile signature",
+  "battle.radarCaption": "Both opponents overlaid",
 };
 
 const DICTIONARIES: Record<Locale, Record<MessageKey, string>> = { pt, en };

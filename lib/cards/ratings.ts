@@ -91,8 +91,7 @@ export function ratingsFor(input: RatingInput): AxisRating[] {
 /**
  * Pontos do polígono no espaço do SVG.
  *
- * Ângulo inicial em -90° para o primeiro eixo apontar para cima: um polígono
- * apoiado num vértice superior lê como emblema; rotacionado, lê como erro.
+ * Wrapper que normaliza AxisRating[] e delega para lib/radar.ts.
  */
 export function polygonPoints(
   ratings: AxisRating[],

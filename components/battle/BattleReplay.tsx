@@ -5,6 +5,7 @@ import type { BattleResult, Side } from "@/lib/battle/types";
 import { ELEMENT_COLORS } from "@/lib/cards/elements";
 import type { Element } from "@/lib/cards/types";
 import { translator, type Locale } from "@/lib/i18n/dictionaries";
+import { BattleRadar } from "./BattleRadar";
 
 /**
  * Animação do log de turnos.
@@ -65,6 +66,8 @@ export function BattleReplay({
           label={t("battle.winner")}
         />
       </div>
+
+      <BattleRadar a={battle.a} b={battle.b} locale={locale} />
 
       <ol className="replay-log" aria-live="polite">
         {battle.turns.slice(0, played).map((turn) => {

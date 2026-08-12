@@ -299,14 +299,6 @@ select {
   color: var(--text-faint);
 }
 
-.radar-svg {
-  width: 100%;
-  max-width: 260px;
-  height: auto;
-  align-self: center;
-  overflow: visible;
-}
-
 /* Grade e raios recuam: são estrutura, não dado. */
 .radar-grid {
   fill: none;
@@ -343,6 +335,66 @@ select {
   font-weight: 700;
   letter-spacing: 0.6px;
   text-transform: uppercase;
+  transition: fill .2s ease, opacity .25s ease;
+}
+
+.radar-svg-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  align-self: center;
+}
+
+.radar-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.radar-sector-active {
+  fill: var(--element, var(--accent));
+  fill-opacity: 0.12;
+  stroke: var(--element, var(--accent));
+  stroke-opacity: 0.3;
+  stroke-width: 1;
+  animation: pop .16s cubic-bezier(.16,1,.3,1) both;
+}
+
+.radar-hitzone {
+  cursor: pointer;
+  outline: none;
+}
+
+.radar-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(calc(100% + 8px));
+  z-index: 10;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  pointer-events: none;
+  animation: pop .16s cubic-bezier(.16,1,.3,1) both;
+}
+
+.radar-tooltip-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.radar-tooltip-value {
+  margin-top: 2px;
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--element, var(--accent));
+  font-variant-numeric: tabular-nums;
 }
 
 .visually-hidden {
@@ -1710,6 +1762,127 @@ select {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------ radar de batalha */
+
+.battle-radar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+}
+
+.battle-radar-caption h2 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.battle-radar-caption p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.battle-radar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.battle-radar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.battle-radar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.battle-radar-svg-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+}
+
+.battle-radar-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.battle-radar-shape {
+  fill-opacity: 0.28;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  transition: fill-opacity .25s ease, stroke-opacity .25s ease;
+}
+
+.battle-radar-sector {
+  stroke-width: 1;
+  animation: pop .16s cubic-bezier(.16,1,.3,1) both;
+}
+
+.battle-radar-hitzone {
+  cursor: pointer;
+  outline: none;
+}
+
+.battle-radar-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(calc(100% + 8px));
+  z-index: 10;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  pointer-events: none;
+  animation: pop .16s cubic-bezier(.16,1,.3,1) both;
+}
+
+.battle-radar-tooltip-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.battle-radar-tooltip-values {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
 }
 
 /* --------------------------------------------------------------- erro */
