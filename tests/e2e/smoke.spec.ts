@@ -63,6 +63,27 @@ test.describe("rotas de imagem", () => {
     // Erro não herda o cache longo da carta.
     expect(response.headers()["cache-control"]).toContain("max-age=60");
   });
+
+  /*
+   * O recorte de `/assets/` no rewrite. Sem ele, qualquer asset de dois segmentos
+   * casa com `/:owner/:repo.png` e a resposta é uma carta de erro: um PNG de
+   * verdade, com status 404, indistinguível dentro de um `<img>` de um arquivo
+   * que só mudou de lugar. O sintoma da regressão não é erro — é arte errada.
+   */
+  test("mantém /assets/ fora do rewrite: arquivo estático não vira carta", async ({
+    request,
+  }) => {
+    const asset = await request.get("/assets/backs/card-back.svg");
+
+    expect(asset.status()).toBe(200);
+    expect(asset.headers()["content-type"]).toContain("image/svg+xml");
+
+    // Este não existe no disco, e é o caso que o rewrite engolia: tem que morrer
+    // como arquivo ausente, não voltar como carta do dono "assets".
+    const ausente = await request.get("/assets/card-back.png");
+
+    expect(ausente.headers()["content-type"]).not.toContain("image/png");
+  });
 });
 
 /*
@@ -88,7 +109,7 @@ test.describe("abertura de pacote", () => {
     await page.locator(".pack-skip").click();
 
     await expect(page.locator(".pack")).toHaveCount(0);
-    await expect(page.locator(".tilt-card img")).toBeVisible();
+    await expect(page.locator(".tilt-face-front img")).toBeVisible();
   });
 
   test("rasgar dispensa o pacote e revela a carta", async ({ page }) => {
@@ -98,7 +119,7 @@ test.describe("abertura de pacote", () => {
     // A coreografia inteira tem menos de 1s; o overlay se desmonta sozinho ao
     // fim dela, sem ninguém precisar clicar de novo.
     await expect(page.locator(".pack")).toHaveCount(0, { timeout: 5000 });
-    await expect(page.locator(".tilt-card img")).toBeVisible();
+    await expect(page.locator(".tilt-face-front img")).toBeVisible();
   });
 
   test("Escape pula a abertura", async ({ page }) => {
@@ -125,6 +146,44 @@ test.describe("abertura de pacote", () => {
 
     await page.keyboard.press("Shift+Tab");
     await expect(page.locator(".pack-skip")).toBeFocused();
+  });
+});
+
+test.describe("virar a carta", () => {
+  test("clique no perfil revela o verso e outro clique volta", async ({ page }) => {
+    await page.goto("/torvalds");
+    await page.locator(".pack-skip").click();
+
+    const card = page.locator(".tilt-card");
+    // Virável é `role="button"`, não link: o clique vira, não navega.
+    await expect(card).toHaveAttribute("role", "button");
+
+    await card.click();
+    await expect(page.locator(".tilt-inner")).toHaveAttribute("data-flipped", "true");
+    await expect(page.locator(".tilt-face-back img")).toHaveAttribute(
+      "src",
+      "/assets/backs/card-back.svg",
+    );
+
+    await card.click();
+    await expect(page.locator(".tilt-inner")).not.toHaveAttribute("data-flipped", "true");
+  });
+
+  test("teclado vira a carta com Enter", async ({ page }) => {
+    await page.goto("/torvalds");
+    await page.locator(".pack-skip").click();
+
+    await page.locator(".tilt-card").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".tilt-inner")).toHaveAttribute("data-flipped", "true");
+  });
+
+  test("a home não vira: a carta de exemplo segue sendo um link", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".sample .tilt-card").first()).not.toHaveAttribute(
+      "role",
+      "button",
+    );
   });
 });
 
@@ -189,7 +248,7 @@ test.describe("site", () => {
 
   test("busca leva à carta de perfil", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("textbox").fill("torvalds");
+    await page.getByRole("combobox").fill("torvalds");
     await page.getByRole("button", { name: /Gerar carta|Generate card/ }).click();
 
     await expect(page).toHaveURL(/\/torvalds$/);

@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 700" width="500" height="700">
+  <title>Verso da carta Gitmon</title>
+
+  <!--
+    Verso da marca, redesenhado em vetor a partir do card-back.png que ele
+    substitui (300x397, preservado no histórico do git).
+
+    A proporção mudou: o PNG era 0.756 e a carta é 5:7 (0.714). Nada aqui foi
+    esticado — as medidas do original foram escaladas pela **largura** (x1.667,
+    que é o que preserva a espessura relativa dos traços) e a altura que sobra
+    virou lateral reta da moldura. Por isso o emblema continua circular e o
+    contorno continua com a mesma espessura ótica do original.
+
+    Uma cor só, #f4bf3d, medida no PNG. Todo o resto é transparente: o verso é
+    aplicado sobre o fundo escuro do site, e o glifo do Git é **vazado** do
+    disco (máscara), não pintado por cima — pintar de escuro amarraria o asset
+    a um fundo específico.
+  -->
+
+  <defs>
+    <!--
+      O glifo de branch/merge como buraco no disco. Traço de 19 e nós de raio
+      24, as duas medidas tiradas do original. O cotovelo é redondo porque no
+      original ele é: a haste sai vertical do nó, curva, e só então corre a 45°
+      até o encontro em (250, 393), de onde desce ao nó de baixo.
+    -->
+    <mask id="glifo-git" maskUnits="userSpaceOnUse" x="0" y="0" width="500" height="700">
+      <rect width="500" height="700" fill="#fff" />
+      <g fill="none" stroke="#000" stroke-width="19" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M189 297v35l61 61" />
+        <path d="M311 297v35l-61 61" />
+        <path d="M250 393v54" />
+      </g>
+      <circle cx="189" cy="297" r="24" fill="#000" />
+      <circle cx="311" cy="297" r="24" fill="#000" />
+      <circle cx="250" cy="447" r="24" fill="#000" />
+    </mask>
+
+    <!--
+      Canto de circuito. A faixa é bem mais fina que a parede da moldura (7
+      contra 20) e tem um degrau no alto — os dois detalhes existem no original
+      e são o que impede o canto de virar um chanfro genérico.
+
+      As duas pontas entram na parede (215,10) e (10,172) em vez de parar na
+      aresta interna dela. Um traço a 45° termina em bisel, também a 45°: parado
+      na aresta, ele encosta num ponto só e deixa um entalhe escuro de cada lado
+      da junta. Enterrado, o bisel some dentro do sólido e a faixa nasce da
+      moldura. O excedente é invisível — mesma cor, dentro da parede.
+    -->
+    <g id="canto">
+      <path d="M215 10 180 45h-43L10 172" fill="none" stroke="#f4bf3d" stroke-width="7" />
+      <circle cx="92" cy="53" r="9" />
+      <circle cx="70" cy="77" r="9" />
+      <circle cx="48" cy="98" r="9" />
+    </g>
+
+    <!--
+      Espícula: ponta em r=190. A base desce até r=160, dentro da faixa do anel
+      (153 a 172), pelo mesmo motivo: a base é uma reta e o anel é curvo, então
+      uma base apoiada na borda externa toca só no eixo e abre duas frestas nos
+      cantos. As laterais são as mesmas retas — o que aparece acima do anel não
+      muda, só o que fica escondido embaixo.
+    -->
+    <path id="espicula" d="M250 160l25 30h-50z" />
+  </defs>
+
+  <g fill="#f4bf3d">
+    <!--
+      Moldura: parede de 20, canto externo 22 e interno 2 (22 menos a parede,
+      que é o que mantém os dois arcos concêntricos).
+
+      O 22 não vem do PNG — vem de `lib/cards/layout.json`, que é a fonte única
+      da geometria da carta e descreve o mesmo canvas de 500x700. O PNG tinha
+      canto 58 e por isso o verso arredondava mais que a silhueta da carta, com
+      a moldura descolando do limite nos quatro cantos. Frente e verso agora
+      leem o mesmo número.
+    -->
+    <path fill-rule="evenodd" d="M22 0h456a22 22 0 0 1 22 22v656a22 22 0 0 1-22 22H22a22 22 0 0 1-22-22V22A22 22 0 0 1 22 0Zm0 20a2 2 0 0 0-2 2v656a2 2 0 0 0 2 2h456a2 2 0 0 0 2-2V22a2 2 0 0 0-2-2H22Z" />
+
+    <use href="#canto" />
+    <use href="#canto" transform="rotate(180 250 350)" />
+
+    <!--
+      Emblema. Quatro espículas e só quatro, nos eixos — no original não há
+      ponta nas diagonais. O vão transparente entre o disco (r=137) e o anel
+      (r=153 a 172) é o que dá o ar de medalha; sem ele o emblema fecha num
+      borrão só.
+    -->
+    <use href="#espicula" />
+    <use href="#espicula" transform="rotate(90 250 350)" />
+    <use href="#espicula" transform="rotate(180 250 350)" />
+    <use href="#espicula" transform="rotate(270 250 350)" />
+
+    <circle cx="250" cy="350" r="162.5" fill="none" stroke="#f4bf3d" stroke-width="19" />
+    <circle cx="250" cy="350" r="137" mask="url(#glifo-git)" />
+  </g>
+</svg>

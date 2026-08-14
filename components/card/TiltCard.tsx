@@ -1,8 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { cardTreatment, foilIntensity, hasFoil } from "@/lib/cards/rarity";
 import type { Rarity } from "@/lib/cards/types";
+import {
+  DEFAULT_LOCALE,
+  translator,
+  type Locale,
+} from "@/lib/i18n/dictionaries";
 
 /**
  * Carta interativa: inclinação 3D seguindo o mouse + pilha holográfica, e a
@@ -24,6 +29,11 @@ import type { Rarity } from "@/lib/cards/types";
  * o peso de objeto físico: sem ela a carta salta para a posição do cursor, com
  * ela ela persegue o cursor e continua andando por alguns quadros depois que ele
  * para.
+ *
+ * Com `flippable`, um clique gira a carta e revela o verso (a arte da marca).
+ * O flip é experiência do site — o PNG exportado continua só com a frente (RFC
+ * 9.6). O eixo do flip mora num filho (`.tilt-inner`), então não disputa o
+ * `transform` que o tilt e a revelação escrevem no `.tilt-card`.
  */
 
 const MAX_TILT = 12;
@@ -47,6 +57,9 @@ export function TiltCard({
   alt,
   priority = false,
   rarity,
+  flippable = false,
+  back = "/assets/backs/card-back.svg",
+  locale,
 }: {
   src: string;
   alt: string;
@@ -57,9 +70,27 @@ export function TiltCard({
    * lá a carta fica lisa, com inclinação e brilho, e sem foil.
    */
   rarity?: Rarity;
+  /**
+   * Liga o flip: um clique (ou Enter/Espaço) gira a carta e revela o verso.
+   * Fica desligado na home, onde a carta é um link para o perfil.
+   */
+  flippable?: boolean;
+  /**
+   * Arte do verso. O mesmo PNG para qualquer carta — é o verso da marca.
+   *
+   * Qualquer caminho sob `/assets/` serve: a rewrite `/:owner/:repo.png` do
+   * `next.config.ts` recorta essa pasta explicitamente, então o request chega a
+   * `public/` sem virar carta de um repositório inexistente.
+   */
+  back?: string;
+  /** Idioma dos rótulos de acessibilidade do flip. Obrigatório quando `flippable`. */
+  locale?: Locale;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const lightRef = useRef<SVGFEPointLightElement>(null);
+
+  const [flipped, setFlipped] = useState(false);
+  const t = translator(locale ?? DEFAULT_LOCALE);
 
   const target = useRef<Pointer>({ px: 0.5, py: 0.5, active: 0 });
   const current = useRef<Pointer>({ px: 0.5, py: 0.5, active: 0 });
@@ -170,27 +201,63 @@ export function TiltCard({
     start();
   }
 
+  function onFlip() {
+    if (!flippable) return;
+    setFlipped((prev) => !prev);
+  }
+
+  function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    // `role="button"` num `<div>` não dispara `onClick` por teclado; o Enter e o
+    // Espaço precisam ser traduzidos à mão, como o botão nativo faria.
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onFlip();
+    }
+  }
+
   return (
     <div className="tilt-scene">
       <div
         ref={cardRef}
         className="tilt-card"
         data-foil={foil || undefined}
+        role={flippable ? "button" : undefined}
+        aria-pressed={flippable ? flipped : undefined}
+        aria-label={flippable ? (flipped ? t("card.flipBack") : t("card.flip")) : undefined}
+        tabIndex={flippable ? 0 : undefined}
+        onClick={flippable ? onFlip : undefined}
+        onKeyDown={flippable ? onKeyDown : undefined}
         onPointerMove={onMove}
         onPointerLeave={reset}
         onPointerCancel={reset}
         style={{ ["--foil" as string]: intensity }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt={alt}
-          width={500}
-          height={700}
-          fetchPriority={priority ? "high" : "auto"}
-        />
-        {foil ? <HoloFoil filterId={filterId} lightRef={lightRef} metal={metal} /> : null}
-        <span className="tilt-glare" aria-hidden="true" />
+        <div className="tilt-inner" data-flipped={flipped || undefined}>
+          <div className="tilt-face tilt-face-front">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={alt}
+              width={500}
+              height={700}
+              fetchPriority={priority ? "high" : "auto"}
+            />
+            {foil ? <HoloFoil filterId={filterId} lightRef={lightRef} metal={metal} /> : null}
+            <span className="tilt-glare" aria-hidden="true" />
+          </div>
+
+          {/*
+            O verso só existe quando a carta é virável. É decorativo — o nome do
+            card continua sendo a frente —, então a imagem sai com `alt` vazio e
+            a face com `aria-hidden`.
+          */}
+          {flippable ? (
+            <div className="tilt-face tilt-face-back" aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={back} alt="" width={500} height={700} />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
