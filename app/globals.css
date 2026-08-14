@@ -76,6 +76,40 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/*
+ * A página não rola de lado. Nunca.
+ *
+ * A auréola do elemento atrás da carta é um quadrado de 620px que sangra para
+ * fora dela de propósito (`.card-center::before`). No telefone ela sangra para
+ * fora da tela junto, e o que fica rolável é a cauda do gradiente — já
+ * transparente, sem nada para ver. O estrago maior é indireto: documento mais
+ * largo que a tela faz o navegador móvel esticar o **viewport de layout** até
+ * caber o vazamento, e é dele que sai a caixa do pacote (`position: fixed;
+ * inset: 0`). A embalagem passa a ser medida em 505px numa tela de 390: sai do
+ * centro e leva o botão de pular para fora da borda.
+ *
+ * São duas linhas e nenhuma sobra:
+ *
+ *   `html`  vira a origem do overflow do viewport. É só o que interessa dela —
+ *           cortar aqui não encolhe o documento, porque a raiz **propaga** o
+ *           valor para o viewport em vez de aplicá-lo em si mesma, e o viewport
+ *           de layout continua esticado (medido: `.pack` seguia com 505px).
+ *   `body`  é quem corta de verdade. Ele só aplica o próprio `overflow` porque a
+ *           linha de cima tirou a raiz do `visible` — sem ela, o `body` seria o
+ *           elemento a propagar, e o corte voltaria a ser o do viewport.
+ *
+ * O corte fica no nível da tela, e não em `.card-center`, porque o sangramento é
+ * intencional: a auréola continua com os 620px inteiros em qualquer largura, e o
+ * que some é só o que já estava fora da tela. `clip` e não `hidden` porque
+ * `hidden` deixa o eixo rolável por script — um `scrollIntoView` de algo que
+ * vazou ainda arrastaria a página de lado, sem barra para desfazer. `overflow-y`
+ * segue `visible` nos dois, então a rolagem vertical não muda.
+ */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   min-height: 100dvh;
