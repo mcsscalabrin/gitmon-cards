@@ -1,0 +1,67 @@
+name: Bug report
+description: Something renders wrong, returns wrong data, or breaks.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This product is an image. If the problem is visible, a screenshot is worth more than any
+        description you could write — the field for it is below and it is the one that matters most.
+
+  - type: input
+    id: url
+    attributes:
+      label: Affected URL
+      description: The card, page or image route where you saw it.
+      placeholder: https://<host>/torvalds.png
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: >-
+        If a number on the card looks wrong, say which one and what you believe it should be.
+        The formulas are documented in docs/data-mapping.md.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: >-
+        Drag the image in. For a layout problem this is the report — text descriptions of layout
+        bugs have historically sent us looking in the wrong place.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options:
+        - The exported PNG (image route)
+        - The website
+        - The link preview (Open Graph)
+        - A battle result
+        - Local development
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and OS
+      description: Only if the problem is on the website.
+      placeholder: Firefox 141, Windows 11
+    validations:
+      required: false

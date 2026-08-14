@@ -1,0 +1,57 @@
+name: Feature request
+description: Propose something the cards or the site should do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two constraints worth knowing before you write, because they decide most proposals:
+
+        - **The scoring formulas are locked in the RFC** (sections 6.1 and 6.2). Changing a weight
+          is not a preference — it needs the RFC updated in the same PR, with the reason.
+        - **The exported image stays clean** (RFC 9.6). Explanation, navigation and interaction live
+          on the site; the PNG that travels into someone else's README carries none of it.
+
+        Neither one closes the door. They just mean a proposal that touches them needs an argument,
+        not only a description.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation, not the solution you already have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: What it touches
+      multiple: true
+      options:
+        - The card itself (layout, art, a new field)
+        - A scoring formula (RFC 6.1 / 6.2)
+        - The website
+        - Battles
+        - Image routes / caching
+        - Tooling, CI, docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: rfc
+    attributes:
+      label: Does this contradict the RFC?
+      description: >-
+        If yes, say which section and why the change is worth it. `docs/rfc-001-gitmon-cards.md`
+        is the source of truth, and it gets superseded rather than rewritten — a good argument is
+        how that happens.
+    validations:
+      required: false
