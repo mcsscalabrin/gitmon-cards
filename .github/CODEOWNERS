@@ -1,0 +1,11 @@
+# Single maintainer, so this is a review request rather than a gate: `main` does
+# not require approvals, because a solo maintainer cannot approve their own PR
+# and every merge would become an admin bypass.
+*                       @mcsscalabrin
+
+# Listed separately because they are the files where a change is easy to make and
+# expensive to get wrong — the RFC is the declared source of truth, and the two
+# JSONs are read by both the build and the runtime.
+/docs/rfc-001-gitmon-cards.md   @mcsscalabrin
+/lib/cards/layout.json          @mcsscalabrin
+/lib/cards/palette.json         @mcsscalabrin

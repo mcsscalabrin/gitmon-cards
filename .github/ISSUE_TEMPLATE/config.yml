@@ -1,0 +1,12 @@
+# Blank issues stay off: the two forms above ask for the things whose absence
+# turns a report into a round trip — the affected URL, and a screenshot when the
+# problem is visible.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/mcsscalabrin/gitmon-cards/security/advisories/new
+    about: Report privately. Do not open a public issue for this.
+  - name: How to contribute
+    url: https://github.com/mcsscalabrin/gitmon-cards/blob/main/CONTRIBUTING.md
+    about: Setup, the commands CI runs, and the domain rules locked by the RFC.

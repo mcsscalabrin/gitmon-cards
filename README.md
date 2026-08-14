@@ -1,335 +1,228 @@
+<div align="center">
+
 # Gitmon Cards
 
-Gerador de cartas de trading card game a partir de dados reais do GitHub.
-Uma URL de imagem estática, sem login, embutível em qualquer README, que se atualiza sozinha.
+**Trading card game cards generated from real GitHub data.**
+A static image URL, no login, embeddable in any README, that keeps itself up to date.
+
+[![quality](https://github.com/mcsscalabrin/gitmon-cards/actions/workflows/production.yml/badge.svg)](https://github.com/mcsscalabrin/gitmon-cards/actions/workflows/production.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-f2c94c)](LICENSE)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
+
+<img src=".github/assets/rarity-ladder.png" alt="The same profile card at three rarity tiers: rare, special illustration rare and ultra rare" width="900">
+
+<sub>One profile, three rarity tiers. Rarity does not just change a symbol — it changes the art treatment.</sub>
+
+</div>
 
 ```
-<host>/<username>.png            → carta de perfil
-<host>/<owner>/<repo>.png        → carta de repositório
-<host>/battle/<battle-id>.png    → resultado estático de uma batalha
+<host>/<username>.png            → profile card
+<host>/<owner>/<repo>.png        → repository card
+<host>/battle/<battle-id>.png    → static result of a battle
 ```
 
 ```markdown
 [![torvalds](https://<host>/torvalds.png)](https://github.com/torvalds)
 ```
 
-> **Status:** v1 funcional em desenvolvimento local. Cartas de perfil e de repositório, batalha
-> com resultado compartilhável, site bilíngue. Não publicado — ver `docs/decisions.md` (Q12).
-> A especificação completa está em [`docs/rfc-001-gitmon-cards.md`](docs/rfc-001-gitmon-cards.md).
+> **Status:** v1 working locally. Profile and repository cards, battle with a shareable result,
+> bilingual site. Not published yet — see `docs/decisions.md` (Q12). The full specification is in
+> [`docs/rfc-001-gitmon-cards.md`](docs/rfc-001-gitmon-cards.md).
 
-## O que a carta mostra
+## What the card shows
 
-Todo número na carta é derivado de dado da API, por fórmula fixa e documentada. Nenhum texto é
-inventado: nomes de ataque são nomes de repositório ou logins de contribuidor, e o rodapé é
-template a partir dos números (RFC 9.2). Não há flavor text.
+Every number on the card is derived from API data by a fixed, documented formula. No text is
+invented: attack names are repository names or contributor logins, and the footer is templated from
+the numbers (RFC 9.2). There is no flavour text.
 
-| Elemento | De onde vem |
+| Element | Where it comes from |
 |---|---|
-| **Tipo** (18) | Linguagem dominante, ponderada por estrelas. Mapa em `lib/cards/elements.ts` |
-| **PS** | Perfil: linear sobre estrelas, seguidores e repos. Repo: **logarítmico** sobre estrelas e forks |
-| **Ataques** (0–2) | Perfil: repositórios mais estrelados. Repo: maiores contribuidores humanos |
-| **Fraqueza** | Perfil: a segunda linguagem do dev. Repo: a cadeia do tipo |
-| **Resistência** | Cadeia de efetividade do tipo |
-| **Recuo** | Perfil: idade da conta. Repo: fila de issues abertas |
-| **Raridade** (8 tiers) | Score composto, na escada do TCG Pokémon |
-| **Número de série** | Sequencial por ordem de geração, imutável depois de atribuído |
+| **Type** (18) | Dominant language, weighted by stars. Map in `lib/cards/elements.ts` |
+| **HP** | Profile: linear over stars, followers and repos. Repo: **logarithmic** over stars and forks |
+| **Attacks** (0–2) | Profile: most-starred repositories. Repo: largest human contributors |
+| **Weakness** | Profile: the developer's second language. Repo: the type chain |
+| **Resistance** | Type effectiveness chain |
+| **Retreat** | Profile: account age. Repo: open issue queue |
+| **Rarity** (8 tiers) | Composite score, on the Pokémon TCG ladder |
+| **Serial number** | Sequential by generation order, immutable once assigned |
 
-A raridade não muda só o símbolo: a partir de `rare` a carta ganha foil, e os tiers de ilustração
-mudam o **tratamento de arte** — full-art em sangria, folheação prateada ou dourada. Ver
-[`docs/design-system.md`](docs/design-system.md).
+From `rare` upwards the card gains foil, and the illustration tiers change the **art treatment** —
+full-art bleed, silver or gold plating. See [`docs/design-system.md`](docs/design-system.md).
 
-O site acrescenta o que a imagem exportada não carrega, de propósito (RFC 9.6): abertura de
-pacote, foil especular seguindo o ponteiro, radar de assinatura do perfil e um painel de
-derivações mostrando de onde cada número saiu. O PNG que viaja para o README de outra pessoa
-continua limpo.
+The site adds what the exported image deliberately does not carry (RFC 9.6): pack opening, specular
+foil that follows the pointer, a signature radar for the profile, and a derivations panel showing
+where each number came from. The PNG that travels into someone else's README stays clean.
 
-E fala a língua da carta em vez de ser um invólucro em volta dela: display e títulos usam a
-**mesma face** que o Satori desenha na carta (M PLUS Rounded 1c, 28 KB em dois pesos WOFF2), e o
-tipo da carta tinge a superfície da página inteira — 7% no fundo das caixas, 22% nas bordas. Uma
-página de Fogo e uma de Água já não são a mesma página cinza com duas palavras trocadas.
+It also speaks the card's language instead of being a wrapper around it: display and headings use
+the **same typeface** Satori draws on the card (M PLUS Rounded 1c, 28 KB in two WOFF2 weights), and
+the card's type tints the whole page — 7% on box backgrounds, 22% on borders. A Fire page and a
+Water page are no longer the same grey page with two words swapped.
 
-## Levar a carta embora
+## Taking the card with you
 
-Três saídas, para três destinos:
-
-| Saída | Para onde |
+| Output | Where it goes |
 |---|---|
-| **Baixar PNG** | Feed social, onde o arquivo é o produto inteiro e não há site em volta |
-| **Compartilhar** | Folha nativa do celular, com o arquivo quando o navegador aceita e o link quando não; no desktop, copia o link |
-| **Snippet de markdown** | README de outra pessoa |
+| **Download PNG** | Social feeds, where the file is the whole product and there is no site around it |
+| **Share** | The phone's native sheet, with the file when the browser accepts it and the link when it doesn't; on desktop, copies the link |
+| **Markdown snippet** | Someone else's README |
 
-Colar a URL da página em qualquer lugar que leia Open Graph rende uma prévia em **paisagem**
-(`/api/card-og/<id>`), com a carta inteira ao lado dos números. A carta é 5:7 e as prévias de link
-são 1.91:1 — apontar o `og:image` direto para o `/<id>.png` fazia o corte comer o cabeçalho e o
-rodapé. A prévia embute o PNG real renderizado por `renderCard`, não uma segunda composição: o
-projeto só tem uma carta, e é assim que continua tendo.
+Pasting the page URL anywhere that reads Open Graph produces a **landscape** preview
+(`/api/card-og/<id>`), with the whole card next to the numbers. The card is 5:7 and link previews
+are 1.91:1 — pointing `og:image` straight at `/<id>.png` made the crop eat the header and the
+footer. The preview embeds the real PNG rendered by `renderCard`, not a second composition: this
+project has one card, and that is how it stays.
 
-## Rodando
+## Running locally
 
 ```bash
 npm install
-cp .env.example .env.local   # preencha GITHUB_TOKEN
+cp .env.example .env.local   # fill in GITHUB_TOKEN
 npm run dev
 ```
 
-`GITHUB_TOKEN` é um token de leitura pública qualquer (5.000 req/h). Sem ele, as rotas de imagem
-devolvem uma carta de erro dizendo isso.
+`GITHUB_TOKEN` is any public-read token (5,000 req/h). Without it the image routes return an error
+card that says so.
 
-`REDIS_URL` é opcional em desenvolvimento, mas com duas consequências diferentes: o **cache** cai
-para um fallback por processo (funciona, só gasta mais rate limit), e as cartas saem **sem número
-de série**. O segundo é deliberado — em serverless, um contador em memória daria números
-diferentes por instância, e carta sem número é honesta enquanto carta com número errado, já
-embutida no README de alguém, não é. Em produção o Redis é obrigatório (RFC 11).
+Full command table, environment notes and the e2e modes are in
+[CONTRIBUTING.md](CONTRIBUTING.md#getting-set-up).
 
-| Comando | O que faz |
-|---|---|
-| `npm run dev` | Servidor de desenvolvimento |
-| `npm test` | Testes unitários (fórmulas, batalha, renderização, i18n) |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` | ESLint (`eslint . --max-warnings=0`) |
-| `npm run test:e2e` | Playwright (precisa de `npx playwright install chromium`) |
-| `PREVIEW=<dir> npm test` | Grava os PNGs renderizados em disco para inspeção visual |
-| `npm run assets` | Regenera molduras, foil, metal e ícones de energia |
-| `npm run fonts` | Baixa e subseta a fonte da carta — TTF para o Satori, WOFF2 para o site |
+## Architecture
 
-No PowerShell, a variável de preview vai antes, separada: `$env:PREVIEW="out"; npm test`.
-
-O `test:e2e` tem dois modos. Sem `E2E_BASE_URL` ele sobe o `npm run dev` e testa contra ele —
-esse é o modo que precisa de `GITHUB_TOKEN` no ambiente. Com `E2E_BASE_URL` apontando para um
-deployment, o Playwright só fala HTTP e o token fica onde ele já vive, no servidor. É assim que o
-CI roda.
-
-A arte e as fontes são versionadas — `assets` e `fonts` só precisam rodar quando o desenho ou o
-repertório de caracteres mudar. Quando o **formato** da carta muda (campo novo, valor de enum que
-deixa de existir), suba `CARD_VERSION` em `lib/cards/index.ts`: ele entra na chave de cache, e sem
-isso uma carta velha em cache quebra ao renderizar, não ao compilar.
-
----
-
-## Stack (travada no RFC, seção 5)
-
-| Camada | Escolha |
+| Layer | Choice |
 |---|---|
 | Framework | Next.js 16 (App Router) + React 19 |
-| Geração da imagem | `next/og` (`ImageResponse` / Satori) + `sharp` para composição |
-| Cache de dados | Redis via `ioredis` |
-| Cache da imagem | HTTP `Cache-Control` na CDN — **sem** Blob/object storage |
-| Auth GitHub | Token de app no servidor (5.000 req/h), sem login do visitante |
-| Hospedagem | Vercel |
+| Image generation | `next/og` (`ImageResponse` / Satori) + `sharp` for composition |
+| Data cache | Redis via `ioredis` |
+| Image cache | HTTP `Cache-Control` on the CDN — **no** Blob/object storage |
+| GitHub auth | Server-side app token (5,000 req/h), no visitor login |
+| Hosting | Vercel |
 
-**Princípio central (RFC 4.3):** a complexidade visual é resolvida *antes*, como arte estática
-pré-renderizada, não em runtime. O servidor só compõe — posiciona texto e cola uma imagem
-recortada sobre uma moldura PNG. Nada de browser headless.
+**Core principle (RFC 4.3):** visual complexity is resolved *ahead of time*, as pre-rendered static
+art, not at runtime. The server only composes — it positions text and pastes a cropped image over a
+PNG frame. No headless browser.
 
-**Corolário do Satori:** ele não implementa `min-width: auto`, `text-overflow: ellipsis` nem
-`mask-image`. Larguras são explícitas em `layout.json`, texto é truncado na origem, e qualquer
-recorte suave é assado em `sharp` antes de entrar na composição.
+**Satori's corollary:** it implements neither `min-width: auto`, `text-overflow: ellipsis` nor
+`mask-image`. Widths are explicit in `layout.json`, text is truncated at the source, and any soft
+clipping is baked in `sharp` before it enters the composition.
 
-## Estrutura de pastas
+<details>
+<summary><b>Folder structure</b></summary>
 
 ```
 app/
-  [owner]/                     rota raiz dinâmica — serve perfil e repositório
-    page.tsx                   carta de perfil (web, interativa)
-    [repo]/                    carta de repositório (web, interativa)
-    vs/[...opponent]/          batalha 1v1 (RFC 7)
-  battle/[battleId]/           resultado imutável e compartilhável de uma batalha
+  [owner]/                     dynamic root route — serves profile and repository
+    page.tsx                   profile card (web, interactive)
+    [repo]/                    repository card (web, interactive)
+    vs/[...opponent]/          1v1 battle (RFC 7)
+  battle/[battleId]/           immutable, shareable result of a battle
   api/
-    card-image/[owner]/        rota de imagem do perfil    → reescrita de /<user>.png
-    card-image/[owner]/[repo]/ rota de imagem do repo      → reescrita de /<owner>/<repo>.png
-    card-og/[owner]/           prévia de link em paisagem  → só o og:image aponta para cá
+    card-image/[owner]/        profile image route     → rewritten from /<user>.png
+    card-image/[owner]/[repo]/ repo image route        → rewritten from /<owner>/<repo>.png
+    card-og/[owner]/           landscape link preview  → only og:image points here
     card-og/[owner]/[repo]/
-    battle/[battleId]/image/   pôster do resultado         → reescrita de /battle/<id>.png
+    battle/[battleId]/image/   result poster           → rewritten from /battle/<id>.png
 
 components/
-  card/                        carta interativa: tilt 3D, foil ao vivo, abertura de pacote,
-                               radar de assinatura, painel de derivações, ícone de tipo
-  battle/                      animação de turnos e placar
-  ui/                          primitivas compartilhadas, toggle PT/EN, faixa de apoio
+  card/                        interactive card: 3D tilt, live foil, pack opening,
+                               signature radar, derivations panel, type icon
+  battle/                      turn animation and scoreboard
+  ui/                          shared primitives, PT/EN toggle, support band
 
 lib/
-  github/                      cliente da API do GitHub + erros tipados
-  cards/                       scoring: HP, tipo, ataques, fraqueza, recuo, raridade
-    profile.ts / repo.ts       as duas fórmulas de carta (RFC 6.1 e 6.2)
-    rarity.ts                  8 tiers, símbolo, foil e tratamento de arte
-    serial.ts                  número de série — único dado durável, atribuído por script Lua
-    ratings.ts                 os 5 eixos do radar (assinatura, não medição)
-    layout.json                geometria da carta em pixels — fonte única
-    palette.json               cor dos 18 tipos — fonte única, extraída dos ícones
-  battle/                      motor de simulação turno-a-turno (RFC 7.3)
+  github/                      GitHub API client + typed errors
+  cards/                       scoring: HP, type, attacks, weakness, retreat, rarity
+    profile.ts / repo.ts       the two card formulas (RFC 6.1 and 6.2)
+    rarity.ts                  8 tiers, symbol, foil and art treatment
+    serial.ts                  serial number — the only durable data, assigned by a Lua script
+    ratings.ts                 the 5 radar axes (signature, not measurement)
+    layout.json                card geometry in pixels — single source
+    palette.json               colour of the 18 types — single source, extracted from the icons
+  battle/                      turn-by-turn simulation engine (RFC 7.3)
   og/                          renderCard, renderCardOg, renderBattle, renderError
-  metadata.ts                  tags de prévia de link, compartilhadas por perfil e repo
-  cache/                       Redis, com fallback em memória para dev
-  i18n/                        dicionários PT/EN (obrigatório desde a v1, RFC 9.1)
-  config.ts                    URLs e políticas de cache — sem domínio hardcoded
+  metadata.ts                  link preview tags, shared by profile and repo
+  cache/                       Redis, with an in-memory fallback for dev
+  i18n/                        PT/EN dictionaries (required since v1, RFC 9.1)
+  config.ts                    URLs and cache policies — no hardcoded domain
 
 scripts/
-  build-assets.mjs             gera moldura, full-art, foil, metal e energia (SVG → PNG)
-  build-fonts.mjs              baixa e subseta a fonte da carta (TTF + WOFF2)
-  assets/types/                os 18 ícones de tipo, entrada de build — não gerados por código
-  lib/art.mjs                  as primitivas de desenho usadas pelo build
+  build-assets.mjs             generates frame, full-art, foil, metal and energy (SVG → PNG)
+  build-fonts.mjs              downloads and subsets the card font (TTF + WOFF2)
+  assets/types/                the 18 type icons, build input — not generated by code
+  lib/art.mjs                  the drawing primitives the build uses
 
 public/assets/
-  frames/                      18 molduras por tipo + 18 full-art + 6 foil + 2 metais — ORIGINAIS
-  energy/                      18 ícones de custo de energia (PNG, para o Satori)
-  types/                       os mesmos 18 ícones em SVG, para a interface web
-  icons/                       ícone de recuo
-  fonts/                       M PLUS Rounded 1c, subsetada (SIL OFL 1.1)
+  frames/                      18 type frames + 18 full-art + 6 foil + 2 metals — ORIGINALS
+  energy/                      18 energy cost icons (PNG, for Satori)
+  types/                       the same 18 icons in SVG, for the web interface
+  icons/                       retreat icon
+  fonts/                       M PLUS Rounded 1c, subset (SIL OFL 1.1)
 
-docs/                          RFC + specs derivadas
-reference/                     material de consulta (não é código de produção)
+docs/                          RFC + derived specs
+reference/                     reference material (not production code)
 tests/                         unit + e2e (Playwright)
 ```
 
-Os símbolos de raridade (`● ◆ ★`) não são assets: são glifos cobertos pelo subset da fonte.
+The rarity symbols (`● ◆ ★`) are not assets: they are glyphs covered by the font subset.
 
-### Notas de rota
+</details>
 
-- `/<user>.png`, `/<owner>/<repo>.png` e `/battle/<id>.png` são **rewrites** em `next.config.ts`
-  apontando para as rotas em `app/api/`. A extensão `.png` na URL pública é cosmética — é o que
-  torna o link colável em Markdown. A ordem importa: `/battle/<id>.png` precisa casar antes do
-  genérico `/<a>/<b>.png`.
-- `app/[owner]/` é um único segmento dinâmico servindo perfil **e** dono de repositório: o App
-  Router não permite dois segmentos dinâmicos irmãos no mesmo nível, então `[username]` e
-  `[owner]` do RFC colapsam num só.
-- A rota de batalha `/<a>/vs/<b>` **não pode ter cache duro** (a simulação é aleatória).
-  Ela sorteia e redireciona; só `/battle/<battle-id>.png` é cacheável, porque representa um
-  resultado já sorteado (RFC 7.3).
+<details>
+<summary><b>Route notes</b></summary>
 
-## Documentação
+- `/<user>.png`, `/<owner>/<repo>.png` and `/battle/<id>.png` are **rewrites** in `next.config.ts`
+  pointing at the routes under `app/api/`. The `.png` extension in the public URL is cosmetic — it
+  is what makes the link pasteable in Markdown. Order matters: `/battle/<id>.png` has to match
+  before the generic `/<a>/<b>.png`.
+- `app/[owner]/` is a single dynamic segment serving both a profile **and** a repository owner: the
+  App Router does not allow two sibling dynamic segments at the same level, so the RFC's
+  `[username]` and `[owner]` collapse into one.
+- The battle route `/<a>/vs/<b>` **cannot be hard-cached** (the simulation is random). It draws and
+  redirects; only `/battle/<battle-id>.png` is cacheable, because it represents an already-drawn
+  result (RFC 7.3).
 
-| Arquivo | Conteúdo |
+</details>
+
+## Documentation
+
+> The documents below are written in **Portuguese**, as are code comments and test names. See
+> [CONTRIBUTING.md](CONTRIBUTING.md#language) for why, and for what is written in English.
+
+| File | Contents |
 |---|---|
-| [`docs/rfc-001-gitmon-cards.md`](docs/rfc-001-gitmon-cards.md) | RFC completo, aprovado — fonte da verdade, com adendos de supersessão onde foi revisto |
-| [`docs/decisions.md`](docs/decisions.md) | Decisões tomadas fora do RFC e questões ainda abertas |
-| [`docs/design-system.md`](docs/design-system.md) | Cores, tipografia, os 18 tipos e a escada de tratamento de arte |
-| [`docs/layout-spec.md`](docs/layout-spec.md) | Posições em pixel da composição da carta e a tabela de tipos |
-| [`docs/data-mapping.md`](docs/data-mapping.md) | Fórmulas GitHub → campos da carta |
-| [`docs/assets-brief.md`](docs/assets-brief.md) | Briefing da arte original (molduras, energia, raridade) |
-| [`docs/foil-especular.md`](docs/foil-especular.md) | O efeito de foil ao vivo, e por que ele é camada sobre o PNG |
-| [`docs/gaps-revalidacao.md`](docs/gaps-revalidacao.md) | Placar de pendências conhecidas, com justificativa |
-| [`docs/revamp-visual.md`](docs/revamp-visual.md) | Plano do revamp visual de carta e site — direção travada, nada implementado |
-| [`PRODUCT.md`](PRODUCT.md) | Verdade de produto durável: usuários, posicionamento, restrições e compromissos de marca |
-| [`docs/handoff.md`](docs/handoff.md) | Estado do trabalho em andamento e o contexto que não está no código |
+| [`docs/rfc-001-gitmon-cards.md`](docs/rfc-001-gitmon-cards.md) | Full approved RFC — the source of truth, with supersession notes where it was revised |
+| [`docs/decisions.md`](docs/decisions.md) | Decisions taken outside the RFC, and questions still open |
+| [`docs/design-system.md`](docs/design-system.md) | Colours, typography, the 18 types and the art treatment ladder |
+| [`docs/layout-spec.md`](docs/layout-spec.md) | Pixel positions of the card composition and the type table |
+| [`docs/data-mapping.md`](docs/data-mapping.md) | GitHub → card field formulas |
+| [`docs/assets-brief.md`](docs/assets-brief.md) | Brief for the original art (frames, energy, rarity) |
+| [`docs/foil-especular.md`](docs/foil-especular.md) | The live foil effect, and why it is a layer over the PNG |
+| [`docs/gaps-revalidacao.md`](docs/gaps-revalidacao.md) | Scoreboard of known gaps, with justification |
+| [`docs/revamp-visual.md`](docs/revamp-visual.md) | Visual revamp plan — direction locked, nothing implemented |
+| [`PRODUCT.md`](PRODUCT.md) | Durable product truth: users, positioning, constraints and brand commitments |
+| [`docs/handoff.md`](docs/handoff.md) | State of work in progress and the context that is not in the code |
 
-A RFC é a fonte de verdade declarada. Onde uma decisão posterior a substituiu, a seção original
-fica no lugar com um **adendo de supersessão** logo abaixo — o histórico da decisão vale tanto
-quanto a decisão.
+The RFC is the declared source of truth. Where a later decision replaced one, the original section
+stays in place with a **supersession note** right below it — the history of a decision is worth as
+much as the decision.
 
-## Contribuindo
+## Contributing
 
-Issues e PRs são bem-vindos. O projeto é pequeno e opinativo — esta seção existe para que uma
-contribuição não esbarre em regra não escrita.
+Issues and pull requests are welcome. Everything you need is in
+**[CONTRIBUTING.md](CONTRIBUTING.md)**: setup, the commands CI runs, the domain rules that are
+locked by the RFC, and what to expect when your PR comes from a fork.
 
-### Antes de abrir o PR
+The one rule worth repeating here: **layout only breaks when you look at it.** If your PR touches
+the card, render it and say in the PR what you saw.
 
-```bash
-npm run lint
-npm run typecheck
-npm test
-```
+## Copyright
 
-O CI roda esses três em todo PR e **bloqueia o deploy** se algum falhar. Rodar antes é para não
-descobrir no runner o que o seu terminal contava em dez segundos.
+No assets from The Pokémon Company, no fan icons from the reference repositories. All frame, type
+and energy art in this project is original. See `docs/assets-brief.md`.
 
-O que a esteira faz, em `.github/workflows/`:
+The tier names `Illustration Rare`, `Special Illustration Rare` and `Hyper Rare` are product
+terminology from The Pokémon Company, adopted here as TCG vocabulary. This is an open question —
+see `docs/gaps-revalidacao.md` (3.2).
 
-| Quando | O que |
-|---|---|
-| PR | lint + typecheck + unitários → deploy de preview na Vercel → **e2e contra o preview** → comentário no PR com a URL |
-| Push em `main` | os mesmos gates → deploy de produção → smoke das rotas de imagem contra o que subiu |
-| Tag `v*` | GitHub Release com o corpo tirado do `CHANGELOG.md` |
-
-O e2e do CI não roda contra `next dev`: ele aponta `E2E_BASE_URL` para o deployment de preview, o
-que exercita o ambiente serverless de verdade — Redis, rewrites, `outputFileTracingIncludes`. É a
-diferença entre provar que o código funciona e provar que o deploy funciona.
-
-O deploy é orquestrado pelo Actions, não pela integração Git da Vercel (desligada em
-`vercel.json`). A ordem importa aqui mais que no projeto médio: a carta é servida com
-`s-maxage=86400` de dentro do README de outra pessoa, então um deploy quebrado não é uma página
-que o visitante recarrega — é arte errada, em cache, no repositório de terceiro.
-
-**O que o CI não cobre continua sendo seu:** ele não olha a carta. O comentário do bot no PR traz
-a URL do preview justamente para isso.
-
-### Renderize e olhe
-
-A regra mais cara aprendida aqui: **o que quebra em layout só quebra olhando.** Já passaram por
-typecheck e suíte verde o dano do ataque sumindo da carta, o título duplicado, a coluna direita
-vazando da viewport e o alvo de clique que nunca assentava. Nenhum foi pego por teste; todos por
-screenshot.
-
-Se o PR mexe na carta, rode `PREVIEW=<dir> npm test` e olhe os PNGs. Se mexe na página, suba o
-`npm run dev` e olhe. Descreva no PR o que você viu.
-
-Dois avisos que economizam uma hora de depuração:
-
-- **O cache mascara mudança de domínio.** Em desenvolvimento o cache de cartas é em memória e
-  sobrevive ao hot reload. Toda vez que uma mudança no domínio "não apareceu", a causa foi essa —
-  reinicie o servidor.
-- **Há um terceiro cache: o navegador.** A rota de imagem responde `max-age=3600`, então o PNG na
-  tela pode ser de uma hora atrás enquanto o HTML ao redor já é novo. Se a página e a carta
-  discordarem, recarregue o PNG com `?bust=<agora>` antes de suspeitar do domínio.
-
-### Regras do domínio
-
-- **Mudou o formato da carta, sobe `CARD_VERSION`** (`lib/cards/index.ts`). Campo novo, ou valor
-  de enum que deixou de existir: sem a subida, uma carta velha em cache quebra ao renderizar, não
-  ao compilar — e em desenvolvimento isso passa despercebido até produção.
-- **As fórmulas são travadas na RFC**, não preferência de quem está editando. Mexer num peso de
-  `profile.ts` ou `repo.ts` exige atualizar a RFC 6.1/6.2 no mesmo PR, com o motivo.
-- **A imagem exportada é limpa (RFC 9.6).** Explicação, radar e afordância de navegação vivem só
-  no site. É por isso que `derivations` e `ratings` são opcionais no domínio: o renderizador de
-  imagem nunca os lê. Um PR que os fizer serem lidos derruba a promessa junto.
-- **Tom técnico-neutro (RFC 9.2).** O dado fala por si. Nomes de ataque são nomes de repositório
-  ou logins reais; o rodapé é template a partir dos números. Sem piada, sem humanização, sem
-  flavor text inventado no estilo TCG.
-- **`layout.json` e `palette.json` são fonte única**, lidas pelo build e pelo runtime. Duplicar um
-  valor deles em CSS ou em componente é o tipo de divergência que só aparece meses depois.
-
-### i18n
-
-`MessageKey` é derivado do dicionário `pt`, e `en` é tipado como `Record<MessageKey, string>`.
-Adicionar uma chave só em português **quebra o typecheck**, de propósito — não existe caminho para
-o site sair meio traduzido.
-
-Chaves com sujeito diferente ganham prefixo próprio em vez de reuso: `why.*` fala com a pessoa
-("sua linguagem dominante"), `why.repo.*` fala do repositório. Reusar economizaria linha e faria o
-site tratar um repositório por você.
-
-### Arte
-
-Toda moldura, ícone de tipo e ícone de energia é original. **Nenhum asset da Pokémon Company,
-nenhum ícone de fã** dos repositórios de referência — nem como placeholder temporário. As
-molduras, o foil e os metais são gerados por `npm run assets`; os 18 ícones de tipo são entrada de
-build em `scripts/assets/types/`, e a paleta de `palette.json` é extraída deles, não o contrário.
-
-### Commits
-
-Prefixo, minúsculas, sem acento no assunto: `feat:`, `docs:`, `chore:`. O corpo é onde mora o
-valor — explique **por que**, não o que o diff já mostra. Restrição descoberta, alternativa
-descartada e armadilha encontrada valem mais que um resumo das linhas alteradas.
-
-A RFC não se reescreve. Onde uma decisão posterior a substitui, a seção original fica no lugar com
-um adendo de supersessão logo abaixo, e a decisão nova entra em `docs/decisions.md`.
-
-Documentação, comentários e nomes de teste são em português. A API do código — tipos, funções
-exportadas, chaves de i18n — é em inglês.
-
-### Nunca commite
-
-`.env.local` (está no `.gitignore`, e o `.env.example` documenta as variáveis sem valores).
-Tokens do GitHub em teste, fixture ou mensagem de commit.
-
-## Direitos autorais
-
-Nenhum asset da Pokémon Company, nenhum ícone de fã dos repositórios de referência.
-Toda arte de moldura, tipo e energia deste projeto é original. Ver `docs/assets-brief.md`.
-
-Os nomes de tier `Illustration Rare`, `Special Illustration Rare` e `Hyper Rare` são terminologia
-do produto da Pokémon Company, adotada aqui como vocabulário de TCG. É uma questão em aberto —
-ver `docs/gaps-revalidacao.md` (3.2).
-
-## Licença
+## License
 
 MIT © Matheus Scalabrin
