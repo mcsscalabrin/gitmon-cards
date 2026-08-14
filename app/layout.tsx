@@ -10,8 +10,14 @@ export const metadata: Metadata = {
   },
   description:
     "Cartas de trading card game geradas a partir de dados reais do GitHub. Uma URL de imagem, sem login, embutível em qualquer README.",
+  /*
+    Um desenho só para a marca, em `public/assets/brand/`. O favicon aponta para
+    o mesmo arquivo que o `mask-image` de `.brand-mark` consome, então aba e
+    cabeçalho não podem divergir. O `app/icon.svg` da convenção do Next saiu
+    junto: dois arquivos para o mesmo símbolo é onde a divergência nasce.
+  */
   icons: {
-    icon: "/icon.svg",
+    icon: "/assets/brand/gitmon-mark.svg",
   },
   openGraph: {
     type: "website",

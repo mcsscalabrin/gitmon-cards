@@ -202,12 +202,30 @@ select {
   text-decoration: none;
 }
 
+/*
+  O emblema do verso da carta, o mesmo arquivo que serve de favicon. Entra por
+  `mask-image` e não por `<img>`: assim a cor sai de `--accent`, em vez de ficar
+  congelada dentro do SVG — o desenho é da marca, a cor é do tema.
+
+  Quadrado, porque o emblema é circular. Os dois marcadores eram retângulos com
+  um corte diagonal, a silhueta da carta inteira; aqui o ícone é só o centro
+  dela.
+
+  Os dois usos ficam na mesma regra de propósito, mesmo morando em seções
+  distantes do arquivo: a URL do asset escrita duas vezes é onde a marca do
+  cabeçalho e a do pacote começariam a divergir. Cada um define só o tamanho,
+  lá embaixo — `.pack-mark` em `.pack-body`.
+*/
+.brand-mark,
+.pack-mark {
+  background: var(--accent);
+  -webkit-mask: url("/assets/brand/gitmon-mark.svg") center / contain no-repeat;
+  mask: url("/assets/brand/gitmon-mark.svg") center / contain no-repeat;
+}
+
 .brand-mark {
-  width: 20px;
-  height: 26px;
-  border-radius: 4px;
-  border: 2px solid var(--accent);
-  background: linear-gradient(160deg, var(--accent) 0 42%, transparent 42%);
+  width: 24px;
+  height: 24px;
 }
 
 .shell-actions {
@@ -680,12 +698,18 @@ select {
   );
 }
 
+/*
+  Mesmo emblema do cabeçalho e do favicon; o desenho e a máscara vêm da regra
+  agrupada com `.brand-mark`, aqui fica só a medida. Bem maior que os 24px de
+  lá porque o pacote é uma superfície grande e a marca é o único elemento
+  gráfico dele: a 46px ela fica tímida no meio da face vazia, e a 72 começa a
+  disputar com o próprio pacote e a apertar o rótulo embaixo. 58 é onde a
+  largura do emblema encosta na do "PACOTE DE EXPANSÃO" e os dois viram um
+  bloco só.
+*/
 .pack-mark {
-  width: 34px;
-  height: 44px;
-  border-radius: 6px;
-  border: 3px solid var(--accent);
-  background: linear-gradient(160deg, var(--accent) 0 42%, transparent 42%);
+  width: 58px;
+  height: 58px;
 }
 
 .pack-brand {
