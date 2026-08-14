@@ -16,9 +16,13 @@ concurrency:
 permissions:
   contents: read
 
+# A CLI da Vercel lê `VERCEL_TOKEN` do ambiente sozinha. Passar por env em vez de
+# `--token=...` não é estilo: com o secret vazio, a flag vira `--token=` e o erro
+# é "You defined --token, but it's missing a value", que não diz onde procurar.
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   quality:
@@ -30,16 +34,16 @@ jobs:
     outputs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
 
       # `.next/cache` entre builds, como a doc de CI do Next recomenda.
       - name: Cache do build do Next
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.npm
@@ -48,29 +52,42 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
 
+      # Falha cedo e por escrito. Um secret ausente ou em branco quebraria três
+      # passos adiante, com mensagem da CLI que não menciona os secrets.
+      - name: Conferir as credenciais da Vercel
+        run: |
+          faltando=""
+          [ -n "$VERCEL_TOKEN" ]      || faltando="$faltando VERCEL_TOKEN"
+          [ -n "$VERCEL_ORG_ID" ]     || faltando="$faltando VERCEL_ORG_ID"
+          [ -n "$VERCEL_PROJECT_ID" ] || faltando="$faltando VERCEL_PROJECT_ID"
+          if [ -n "$faltando" ]; then
+            echo "::error::Secret ausente ou vazio:$faltando — grave em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       - name: Instalar a CLI da Vercel
         run: npm i -g vercel@latest
 
       - name: Puxar o ambiente de Preview
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=preview
 
       # `vercel build` resolve o `outputFileTracingIncludes` de next.config.ts
       # aqui, no runner — é o que faz `public/assets/**` chegar nas funções de
       # imagem. O `--prebuilt` do passo seguinte sobe exatamente este output.
       - name: Build
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build
 
       - name: Deploy
         id: deploy
-        run: echo "url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
+        run: echo "url=$(vercel deploy --prebuilt)" >> "$GITHUB_OUTPUT"
 
   e2e:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -89,7 +106,7 @@ jobs:
           E2E_BASE_URL: ${{ needs.deploy.outputs.url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -106,7 +123,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v9
         env:
           PREVIEW_URL: ${{ needs.deploy.outputs.url }}
           E2E_RESULT: ${{ needs.e2e.result }}

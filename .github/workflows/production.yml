@@ -18,9 +18,11 @@ concurrency:
 permissions:
   contents: read
 
+# Ver o comentário equivalente em preview.yml: token por env, não por `--token=`.
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   quality:
@@ -35,15 +37,15 @@ jobs:
     outputs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
 
       - name: Cache do build do Next
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.npm
@@ -52,18 +54,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
 
+      - name: Conferir as credenciais da Vercel
+        run: |
+          faltando=""
+          [ -n "$VERCEL_TOKEN" ]      || faltando="$faltando VERCEL_TOKEN"
+          [ -n "$VERCEL_ORG_ID" ]     || faltando="$faltando VERCEL_ORG_ID"
+          [ -n "$VERCEL_PROJECT_ID" ] || faltando="$faltando VERCEL_PROJECT_ID"
+          if [ -n "$faltando" ]; then
+            echo "::error::Secret ausente ou vazio:$faltando — grave em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       - name: Instalar a CLI da Vercel
         run: npm i -g vercel@latest
 
       - name: Puxar o ambiente de Production
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production
 
       - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod
 
       - name: Deploy
         id: deploy
-        run: echo "url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
+        run: echo "url=$(vercel deploy --prebuilt --prod)" >> "$GITHUB_OUTPUT"
 
   # Recorte deliberado: só o describe "rotas de imagem" de tests/e2e/smoke.spec.ts.
   #
@@ -76,9 +89,9 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -94,7 +107,7 @@ jobs:
           E2E_BASE_URL: ${{ needs.deploy.outputs.url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report-prod
