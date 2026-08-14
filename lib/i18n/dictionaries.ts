@@ -113,6 +113,9 @@ const pt = {
 
   "radar.title": "Assinatura do perfil",
   "radar.caption": "Forma comparativa, não medição — os números exatos estão ao lado.",
+  "radar.axis": "Eixo",
+  "radar.values": "Valores por eixo",
+  "radar.normalized": "índice 0–99, escala logarítmica",
   "axis.reach": "Alcance",
   "axis.community": "Comunidade",
   "axis.volume": "Volume",
@@ -181,6 +184,10 @@ const pt = {
   "battle.skip": "Pular animação",
   "battle.radar": "Assinatura do perfil",
   "battle.radarCaption": "Sobreposição dos dois oponentes",
+  "battle.axisCompare": "Comparação por eixo",
+  "battle.lead": "vantagem",
+  "battle.tie": "empate",
+  "battle.hpLeft": "PS restantes",
 } as const;
 
 export type MessageKey = keyof typeof pt;
@@ -268,6 +275,9 @@ const en: Record<MessageKey, string> = {
 
   "radar.title": "Profile signature",
   "radar.caption": "Comparative shape, not measurement — exact numbers are alongside.",
+  "radar.axis": "Axis",
+  "radar.values": "Values by axis",
+  "radar.normalized": "0–99 index, logarithmic scale",
   "axis.reach": "Reach",
   "axis.community": "Community",
   "axis.volume": "Volume",
@@ -332,6 +342,10 @@ const en: Record<MessageKey, string> = {
   "battle.skip": "Skip animation",
   "battle.radar": "Profile signature",
   "battle.radarCaption": "Both opponents overlaid",
+  "battle.axisCompare": "Axis by axis",
+  "battle.lead": "lead",
+  "battle.tie": "tie",
+  "battle.hpLeft": "HP left",
 };
 
 const DICTIONARIES: Record<Locale, Record<MessageKey, string>> = { pt, en };

@@ -324,8 +324,16 @@ select {
   stroke-linejoin: round;
 }
 
+/*
+ * Anel de 2px na cor do fundo. O vértice cai em cima da linha do polígono e, nos
+ * eixos fortes, em cima de um anel da grade — sem o anel ele deixa de ser um
+ * ponto e vira um engrossamento da linha. Quem separa é o fundo, nunca uma borda
+ * desenhada em volta da marca.
+ */
 .radar-vertex {
   fill: var(--element, var(--accent));
+  stroke: var(--bg);
+  stroke-width: 2;
 }
 
 /* Rótulo em token de texto, nunca na cor da série. */
@@ -362,39 +370,114 @@ select {
 
 .radar-hitzone {
   cursor: pointer;
-  outline: none;
 }
 
-.radar-tooltip {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%) translateY(calc(100% + 8px));
-  z-index: 10;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-raised);
-  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.4);
-  text-align: center;
-  pointer-events: none;
-  animation: pop .16s cubic-bezier(.16,1,.3,1) both;
+/* Foco visível: o setor é transparente, então o contorno é a única prova de onde
+   o teclado está. `outline: none` aqui seria tirar a navegação por teclado. */
+.radar-hitzone:focus-visible {
+  outline: 2px solid var(--element, var(--accent));
+  outline-offset: -2px;
 }
 
-.radar-tooltip-label {
-  font-size: 10px;
+/* ------------------------------------------- valores por eixo (tabela visível) */
+
+/*
+ * A tabela que antes era `visually-hidden`. É `<table>` de verdade — mesma
+ * marcação de antes, mesmo `<th scope="row">` — e agora também é o gráfico:
+ * cada eixo ganha uma barra proporcional ao índice normalizado, que é a leitura
+ * "este eixo é o mais forte deste perfil" sem ter que estimar a área do polígono.
+ */
+.radar-values {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.radar-values caption {
+  text-align: left;
+  padding-bottom: 8px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--text-faint);
 }
 
-.radar-tooltip-value {
+/* A escala vem escrita, e não implícita: o índice é log e o número cru está ao
+   lado, então a legenda tem que dizer qual dos dois a barra desenha. */
+.radar-values caption span {
+  display: block;
   margin-top: 2px;
-  font-size: 19px;
-  font-weight: 900;
-  color: var(--element, var(--accent));
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-faint);
+}
+
+.radar-values tr {
+  transition: opacity .25s ease;
+}
+
+.radar-values tr[data-dim] {
+  opacity: 0.4;
+}
+
+.radar-values th[scope="row"] {
+  padding: 5px 10px 5px 0;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.radar-values tr[data-active] th[scope="row"] {
+  color: var(--text);
+}
+
+.radar-meter-cell {
+  width: 100%;
+  padding: 5px 10px;
+}
+
+/* Trilho num passo mais claro da própria cor, não em cinza neutro: assim a barra
+   inteira pertence ao tipo e o vazio ainda lê como parte da mesma escala. */
+.radar-meter {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--element, var(--accent)) 16%, var(--bg-sunken));
+  overflow: hidden;
+}
+
+/* Quadrado na linha de base, arredondado na ponta do dado — a ponta é onde o
+   valor termina, e é ela que precisa ser legível como fim. */
+.radar-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 3px 3px 0;
+  background: var(--element, var(--accent));
+  transition: width .3s cubic-bezier(.22,1,.36,1);
+}
+
+/* Rótulo seletivo: só o eixo mais forte ganha ênfase. Um destaque em toda linha
+   não é destaque. */
+.radar-values tr[data-peak] .radar-meter-fill {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--element, var(--accent)) 60%, transparent);
+}
+
+.radar-raw {
+  padding: 5px 0;
+  text-align: right;
+  font-weight: 700;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.radar-values tr[data-active] .radar-raw,
+.radar-values tr[data-peak] .radar-raw {
+  color: var(--text);
 }
 
 .visually-hidden {
@@ -1416,6 +1499,52 @@ select {
   order: 3;
 }
 
+/*
+ * A tabela de valores também espelha, pela mesma razão que as derivações: nesta
+ * coluna tudo mira a carta, e uma tabela lendo da esquerda para a direita no
+ * meio de um bloco alinhado à direita denuncia que ela foi colada depois.
+ *
+ * `direction: rtl` na tabela e `ltr` nas células inverte a **ordem das colunas**
+ * sem mexer no DOM — a marcação continua rótulo → barra → valor, que é a ordem
+ * que o leitor de tela deve ouvir. Reordenar de verdade só para o olho custaria
+ * a semântica da tabela.
+ */
+.card-aside-left .radar-values {
+  direction: rtl;
+}
+
+.card-aside-left .radar-values th,
+.card-aside-left .radar-values td,
+.card-aside-left .radar-values caption {
+  direction: ltr;
+}
+
+.card-aside-left .radar-values caption,
+.card-aside-left .radar-values th[scope="row"] {
+  text-align: right;
+}
+
+.card-aside-left .radar-values th[scope="row"] {
+  padding: 5px 0 5px 10px;
+}
+
+/*
+ * O número **não** vai para a borda de fora como o valor das derivações vai.
+ * Coluna de número alinha pela direita, espelhada ou não: encostados na barra os
+ * dígitos empilham; jogados na borda esquerda, "254.470" e "2" ficam pendurados
+ * em pontos diferentes e não dá para comparar ordem de grandeza de relance.
+ */
+.card-aside-left .radar-raw {
+  padding: 5px 0 5px 10px;
+}
+
+/* A barra cresce da borda de fora para dentro, mirando a carta como o resto da
+   coluna. A ponta arredondada acompanha: é ela que marca onde o dado termina. */
+.card-aside-left .radar-meter-fill {
+  margin-left: auto;
+  border-radius: 3px 0 0 3px;
+}
+
 /* Embed e batalha voltam a ocupar a largura toda, abaixo das três colunas. */
 .card-panel > .card-side {
   grid-column: 1 / -1;
@@ -1448,6 +1577,30 @@ select {
     order: 0;
     text-align: right;
     justify-content: flex-end;
+  }
+
+  /* Coluna única: o espelho se desfaz aqui também, senão a tabela fica sendo a
+     única coisa da página lendo da direita para a esquerda. */
+  .card-aside-left .radar-values {
+    direction: ltr;
+  }
+
+  .card-aside-left .radar-values caption,
+  .card-aside-left .radar-values th[scope="row"] {
+    text-align: left;
+  }
+
+  .card-aside-left .radar-values th[scope="row"] {
+    padding: 5px 10px 5px 0;
+  }
+
+  .card-aside-left .radar-raw {
+    padding: 5px 0;
+  }
+
+  .card-aside-left .radar-meter-fill {
+    margin-left: 0;
+    border-radius: 0 3px 3px 0;
   }
 }
 
@@ -1687,14 +1840,21 @@ select {
 .fighter-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
+  gap: 7px;
+  max-width: 100%;
 }
 
 .fighter-head strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* O marcador do lado — mesma forma dos vértices do radar e das linhas do log.
+   `flex: none` para não achatar em elipse quando o nome é longo. */
+.side-mark {
+  flex: none;
 }
 
 .fighter-won {
@@ -1722,17 +1882,65 @@ select {
   color: var(--text-faint);
 }
 
+.fighter-hp small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/*
+ * O medidor de PS.
+ *
+ * Trilho num passo mais claro da cor do lado, e não no cinza da borda: com o
+ * trilho neutro a barra é uma listra colorida em cima de um fundo qualquer, e
+ * "quase morto" difere de "quase inteiro" só pelo comprimento dessa listra. Com
+ * o trilho tingido, a barra inteira pertence ao lutador e o estado se lê de
+ * ponta a ponta.
+ */
 .fighter-track {
-  height: 8px;
-  border-radius: 4px;
-  background: var(--border);
+  position: relative;
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--side, var(--accent)) 18%, var(--bg-sunken));
   overflow: hidden;
 }
 
-.fighter-fill {
+.fighter-fill,
+.fighter-ghost {
+  position: absolute;
+  inset: 0 auto 0 0;
   height: 100%;
-  border-radius: 4px;
+  /* Quadrada na base, arredondada na ponta do dado. */
+  border-radius: 0 5px 5px 0;
+}
+
+.fighter-fill {
+  background: var(--side, var(--accent));
   transition: width 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * O rastro do golpe: o pedaço que estava vivo até o turno anterior, desenhado
+ * onde ele estava e apagando em seguida.
+ *
+ * Sem ele, um golpe de 10 e um de 60 têm a mesma aparência — a barra encolhe nos
+ * dois casos, e o que mudou já passou quando o olho chega. O rastro é o dano do
+ * turno, na escala da barra, no lugar de onde ele saiu. `key={turn}` no React
+ * remonta o elemento a cada turno, que é o que reinicia a animação.
+ */
+.fighter-ghost {
+  background: color-mix(in srgb, var(--side, var(--accent)) 55%, transparent);
+  animation: hp-hit 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  pointer-events: none;
+}
+
+@keyframes hp-hit {
+  0% { opacity: 1; }
+  35% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 .replay-log {
@@ -1745,13 +1953,35 @@ select {
   font-size: 14px;
 }
 
+/*
+ * Trilho de 2px na cor de quem está atacando, na borda de dentro.
+ *
+ * O log é o único lugar da página onde os dois lados se alternam na mesma
+ * coluna, e sem marca de autoria cada linha lê como texto corrido — era preciso
+ * ler o nome até o fim para saber de quem era o turno. Com o trilho, a
+ * alternância de quem bate se vê antes de ler qualquer palavra.
+ */
 .replay-log li {
   display: flex;
-  gap: 12px;
+  align-items: baseline;
+  gap: 10px;
   padding: 9px 12px;
   border-radius: 8px;
   background: var(--bg-raised);
+  box-shadow: inset 2px 0 0 var(--turn-side, transparent);
   animation: log-in 260ms ease both;
+}
+
+.replay-log li[data-side="a"] {
+  --turn-side: var(--side-a);
+}
+
+.replay-log li[data-side="b"] {
+  --turn-side: var(--side-b);
+}
+
+.replay-log .side-mark {
+  align-self: center;
 }
 
 @keyframes log-in {
@@ -1855,12 +2085,22 @@ select {
   text-align: center;
 }
 
+/* Legenda sempre presente — são duas séries, e nenhuma identidade neste gráfico
+   pode depender de o leitor casar duas cores de memória. */
 .battle-radar-legend {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 8px 20px;
 }
 
+/*
+ * O nome vai em token de texto, nunca na cor da série: azul e laranja funcionam
+ * como marca de 10px e são ruins como texto de 13px sobre a superfície escura.
+ * Quem carrega a identidade é o marcador ao lado — e ele é a **mesma forma**
+ * desenhada nos vértices do radar, não uma bolinha genérica, senão a legenda
+ * não explica a segunda pista.
+ */
 .battle-radar-legend-item {
   display: flex;
   align-items: center;
@@ -1870,11 +2110,8 @@ select {
   color: var(--text-muted);
 }
 
-.battle-radar-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.battle-radar-legend-item svg {
+  flex: none;
 }
 
 .battle-radar-svg-wrap {
@@ -1890,53 +2127,190 @@ select {
 }
 
 .battle-radar-shape {
-  fill-opacity: 0.28;
-  stroke-width: 1.4;
+  stroke-width: 2;
   stroke-linejoin: round;
   transition: fill-opacity .25s ease, stroke-opacity .25s ease;
 }
 
+/* Anel de 2px na superfície: os dois conjuntos de vértices se cruzam, e sem o
+   anel dois marcadores encostados viram uma mancha só. */
+.battle-radar-marker {
+  stroke: var(--bg-raised);
+  stroke-width: 2;
+  transition: opacity .25s ease;
+}
+
+/* O setor em destaque marca um **eixo**, não um lado — por isso neutro. Pintá-lo
+   com a cor de um dos dois diria que aquele eixo pertence a alguém. */
 .battle-radar-sector {
+  fill: var(--text);
+  fill-opacity: 0.07;
+  stroke: var(--border-strong);
   stroke-width: 1;
   animation: pop .16s cubic-bezier(.16,1,.3,1) both;
 }
 
 .battle-radar-hitzone {
   cursor: pointer;
-  outline: none;
 }
 
-.battle-radar-tooltip {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%) translateY(calc(100% + 8px));
-  z-index: 10;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-raised);
-  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.4);
-  text-align: center;
-  pointer-events: none;
-  animation: pop .16s cubic-bezier(.16,1,.3,1) both;
+.battle-radar-hitzone:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
-.battle-radar-tooltip-label {
-  font-size: 10px;
+/* --------------------------------------------------- comparação eixo a eixo */
+
+/*
+ * A tabela é o gráfico, e o gráfico é a tabela.
+ *
+ * O radar mostra *que* os dois perfis têm formatos diferentes; ele é ruim para
+ * dizer *quanto*, porque comparar duas áreas irregulares a olho não funciona e
+ * nos eixos empatados os polígonos se encavalam. Cada linha aqui põe os dois
+ * valores numa régua só, ligados por um traço: o comprimento do traço **é** a
+ * vantagem, e ela se lê sem hover e sem estimar área.
+ */
+.axis-compare {
+  width: 100%;
+  max-width: 460px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.axis-compare caption {
+  padding-bottom: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--text-faint);
+  text-align: center;
 }
 
-.battle-radar-tooltip-values {
-  display: flex;
-  gap: 12px;
-  margin-top: 4px;
-  font-size: 13px;
+.axis-compare caption span {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.axis-compare thead th {
+  padding: 0 8px 6px;
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* O nome do oponente pode ser longo; a coluna é estreita de propósito, então ele
+   trunca em vez de esticar a régua. A legenda acima já traz o nome inteiro. */
+.axis-compare-name {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.axis-compare thead th:first-child {
+  text-align: left;
+}
+
+.axis-compare tbody tr {
+  transition: opacity .25s ease;
+}
+
+.axis-compare tbody tr[data-dim] {
+  opacity: 0.4;
+}
+
+.axis-compare th[scope="row"] {
+  padding: 7px 10px 7px 0;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.axis-compare tr[data-active] th[scope="row"] {
+  color: var(--text);
+}
+
+/*
+ * O número de quem lidera fica em tinta cheia e peso alto; o outro recua. A
+ * vantagem não é marcada com cor de série — a cor já está nos pontos da régua ao
+ * lado, e número colorido é justamente o que não se lê nesta superfície.
+ */
+.axis-compare-value {
+  padding: 7px 8px;
+  text-align: center;
+  color: var(--text-faint);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.axis-compare-value[data-lead] {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.axis-compare-track-cell {
+  width: 100%;
+  padding: 7px 10px;
+}
+
+.axis-compare-track {
+  position: relative;
+  display: block;
+  height: 14px;
+}
+
+/* Régua de 0 a 99, hairline e uma sombra acima da superfície: é estrutura. */
+.axis-compare-rail {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+.axis-compare-link {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: 1px;
+  background: var(--border-strong);
+}
+
+/*
+ * Os dois pontos da régua. Anel de 2px na cor da superfície porque nos eixos
+ * empatados eles se sobrepõem — sem o anel viram um ponto só, que é exatamente a
+ * leitura errada ("um dos dois sumiu" em vez de "estão empatados").
+ */
+.axis-compare-dot {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  box-shadow: 0 0 0 2px var(--bg-raised);
+}
+
+.axis-compare-dot[data-shape="circle"] {
+  border-radius: 50%;
+}
+
+/* O losango é o mesmo quadrado girado — a segunda pista de identidade, a que
+   sobrevive a cinza, a daltonismo e a `forced-colors`. */
+.axis-compare-dot[data-shape="diamond"] {
+  border-radius: 1px;
+  transform: rotate(45deg);
 }
 
 @keyframes pop {
