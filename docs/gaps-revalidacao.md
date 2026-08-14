@@ -323,3 +323,56 @@ que flaka bloqueia o deploy junto.
 que o teste afirma verificar, e o comentário dele diz isso), ou subir o
 `testTimeout` em `vitest.config.ts`. A primeira ataca a causa; a segunda só
 compra tempo.
+
+**Atualização:** passou no runner Linux nas quatro execuções do CI, em ~40s de
+job inteiro. Confirma que é lentidão de disco no Windows, não defeito — mas a
+margem continua fina e o veredito segue valendo.
+
+### 7.2 O e2e está vermelho por Deployment Protection, não por código
+
+O `preview.yml` chega até o fim: `quality`, `deploy` e `comment` passam, e o
+preview sobe. O `e2e` falha porque a Vercel intercepta todo request ao
+deployment com um `302` para `vercel.com/sso-api`, e o Playwright segue o
+redirecionamento e recebe HTML onde esperava PNG:
+
+```
+Expected: "image/png"
+Received: "text/html; charset=utf-8"
+```
+
+Não é a carta de erro (que seria PNG com 404) nem falta de `GITHUB_TOKEN` — é a
+proteção respondendo antes de a aplicação existir. Verificado à mão:
+`HEAD /torvalds.png` no preview devolve `302` com
+`location: https://vercel.com/sso-api?...`.
+
+**O código já está pronto para as duas saídas.** `playwright.config.ts` manda
+`x-vercel-protection-bypass` e `x-vercel-set-bypass-cookie` quando
+`VERCEL_AUTOMATION_BYPASS_SECRET` existe, e ignora quando não existe.
+
+**Decisão sua:** gerar o *Protection Bypass for Automation* em Project Settings
+→ Deployment Protection e gravá-lo como secret (previews seguem privados), ou
+desligar a Vercel Authentication no Preview (um clique, mas cada preview vira
+URL pública, e quem achar consome o token do GitHub e o Redis de preview).
+
+Adiado conscientemente. Enquanto isso o `e2e` fica vermelho por motivo
+conhecido — o que ele **não** está provando é justamente o que ele existe para
+provar, então não vale tratar esse vermelho como ruído de fundo.
+
+---
+
+## 8. Restrições descobertas rodando a esteira
+
+Duas coisas que só apareceram na primeira execução real, e que custam uma hora
+cada se forem redescobertas do zero:
+
+1. **Token da Vercel restrito a um projeto não funciona com o CLI.** Menor
+   privilégio era o instinto certo, mas `vercel pull` precisa resolver
+   `/v2/user`, e um token limitado a um projeto não consegue — `vercel whoami`
+   responde `User not found` e o `pull` morre em `Could not retrieve Project
+   Settings`. O detalhe cruel: **um token inválido produz exatamente os mesmos
+   dois erros**, então o sintoma não distingue "escopo errado" de "valor
+   errado". O token precisa ser de escopo do time com acesso a *All Projects*.
+2. **As actions oficiais estavam quatro majors atrás** do que eu fixei de
+   memória (v4 contra v7 de `checkout`/`setup-node`/`upload-artifact`). O runner
+   avisava que elas apontam para Node 20, deprecado. Vale conferir o release
+   mais recente em vez de escrever a versão de cabeça.
