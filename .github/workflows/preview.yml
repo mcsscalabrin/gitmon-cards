@@ -1,0 +1,157 @@
+# Preview por PR, com o e2e rodando contra o deployment de verdade.
+#
+# O `playwright.config.ts` desliga o `webServer` quando `E2E_BASE_URL` existe, e
+# é isso que este workflow explora: os testes batem no ambiente serverless real —
+# com Redis, com os rewrites de `next.config.ts` valendo — em vez de num
+# `next dev`. Nenhum teste precisou mudar para isso.
+name: preview
+
+on:
+  pull_request:
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  deploy:
+    needs: quality
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `.next/cache` entre builds, como a doc de CI do Next recomenda.
+      - name: Cache do build do Next
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**', 'components/**', 'lib/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
+
+      - name: Instalar a CLI da Vercel
+        run: npm i -g vercel@latest
+
+      - name: Puxar o ambiente de Preview
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      # `vercel build` resolve o `outputFileTracingIncludes` de next.config.ts
+      # aqui, no runner — é o que faz `public/assets/**` chegar nas funções de
+      # imagem. O `--prebuilt` do passo seguinte sobe exatamente este output.
+      - name: Build
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        id: deploy
+        run: echo "url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
+
+  e2e:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Instalar o Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Nenhum GITHUB_TOKEN aqui, de propósito: com E2E_BASE_URL definido o
+      # Playwright só fala HTTP com o deployment. Quem chama a API do GitHub é a
+      # função serverless, com o token que vive na Vercel.
+      - name: E2E contra o preview
+        run: npm run test:e2e
+        env:
+          E2E_BASE_URL: ${{ needs.deploy.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # "O que quebra em layout só quebra olhando" (README). O e2e verde não fecha
+  # essa lacuna — este comentário é o que coloca a página renderizada a um clique
+  # de quem revisa.
+  comment:
+    needs: [deploy, e2e]
+    if: always() && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ needs.deploy.outputs.url }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+        with:
+          script: |
+            const url = process.env.PREVIEW_URL;
+            const e2e = process.env.E2E_RESULT;
+            const marker = '<!-- gitmon-preview -->';
+            const status = e2e === 'success'
+              ? '✅ e2e verde contra este deployment.'
+              : `⚠️ e2e \`${e2e}\` — o preview subiu, mas os testes não passaram.`;
+
+            const body = [
+              marker,
+              `### Preview: ${url}`,
+              '',
+              status,
+              '',
+              '| Olhar | Link |',
+              '|---|---|',
+              `| Carta de perfil (pacote, foil, radar) | ${url}/torvalds |`,
+              `| Carta de repositório | ${url}/torvalds/linux |`,
+              `| PNG exportado | ${url}/torvalds.png |`,
+              `| PNG de repositório | ${url}/torvalds/linux.png |`,
+              `| Prévia de link (1200×630) | ${url}/api/card-og/torvalds |`,
+              '',
+              '> Se o PR mexe na carta ou na página, descreva no corpo do PR o que você viu aqui.',
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find((c) => c.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

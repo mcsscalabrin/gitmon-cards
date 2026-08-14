@@ -1,0 +1,33 @@
+version: 2
+
+updates:
+  # Patch e minor chegam num PR só; major do framework vem separado, porque é
+  # trabalho de verdade e não deve viajar de carona com atualização de rotina.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      framework:
+        patterns: ["next", "react", "react-dom", "@types/react", "@types/react-dom"]
+      dev:
+        dependency-type: development
+        update-types: ["minor", "patch"]
+      prod:
+        dependency-type: production
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]

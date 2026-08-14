@@ -1,0 +1,102 @@
+# Produção, só a partir de main e só depois do gate.
+#
+# O produto é uma URL de imagem que vive dentro do README de outra pessoa,
+# servida com `s-maxage=86400`. Um deploy quebrado não é uma página que o
+# visitante recarrega — é arte errada, em cache, no repositório de terceiro. Por
+# isso o deploy espera os testes em vez de correr ao lado deles.
+name: production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  deploy:
+    needs: quality
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Cache do build do Next
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-${{ hashFiles('app/**', 'components/**', 'lib/**') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
+
+      - name: Instalar a CLI da Vercel
+        run: npm i -g vercel@latest
+
+      - name: Puxar o ambiente de Production
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        id: deploy
+        run: echo "url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
+
+  # Recorte deliberado: só o describe "rotas de imagem" de tests/e2e/smoke.spec.ts.
+  #
+  # São os casos que provam que produção está de fato ligada — PNG com o
+  # Cache-Control da RFC 4.2, carta de repo, prévia em 1200x630, carta de erro
+  # com max-age curto e o recorte de /assets/ no rewrite. Os demais ficam de
+  # fora porque os testes de batalha gravariam registros reais no Redis de
+  # produção, com TTL de 30 dias, a cada push em main.
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Instalar o Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke das rotas de imagem
+        run: npm run test:e2e -- -g "rotas de imagem"
+        env:
+          E2E_BASE_URL: ${{ needs.deploy.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-prod
+          path: playwright-report/
+          retention-days: 14
