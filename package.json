@@ -29,10 +29,10 @@
     "@types/node": "^22.15.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "eslint": "^10.8.1",
+    "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.1",
     "subset-font": "^2.5.0",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "vitest": "^3.2.0"
   },
   "engines": {
