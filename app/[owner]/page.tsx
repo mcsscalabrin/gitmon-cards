@@ -44,7 +44,7 @@ export default async function ProfilePage({ params }: Params) {
 
   return (
     <Shell locale={locale}>
-      <CardPanel card={card} locale={locale}>
+      <CardPanel card={card} locale={locale} flippable>
         <BattleForm
           challenger={owner}
           label={t("home.battle")}

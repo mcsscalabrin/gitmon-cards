@@ -108,6 +108,8 @@ const pt = {
   "card.type": "Tipo",
   "card.attacks": "Ataques",
   "card.rarityLabel": "Raridade",
+  "card.flip": "Virar carta",
+  "card.flipBack": "Virar de volta",
 
   "radar.title": "Assinatura do perfil",
   "radar.caption": "Forma comparativa, não medição — os números exatos estão ao lado.",
@@ -261,6 +263,8 @@ const en: Record<MessageKey, string> = {
   "card.type": "Type",
   "card.attacks": "Attacks",
   "card.rarityLabel": "Rarity",
+  "card.flip": "Flip card",
+  "card.flipBack": "Flip back",
 
   "radar.title": "Profile signature",
   "radar.caption": "Comparative shape, not measurement — exact numbers are alongside.",

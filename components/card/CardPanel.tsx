@@ -17,10 +17,13 @@ import { TypeIcon } from "./TypeIcon";
 export function CardPanel({
   card,
   locale,
+  flippable = false,
   children,
 }: {
   card: Card;
   locale: Locale;
+  /** Liga o flip da carta. Só o perfil vira; o repositório e a home não. */
+  flippable?: boolean;
   children?: React.ReactNode;
 }) {
   const t = translator(locale);
@@ -66,6 +69,8 @@ export function CardPanel({
           alt={`${card.name} — ${t(elementKey(card.element))}`}
           priority
           rarity={card.rarity}
+          flippable={flippable}
+          locale={locale}
         />
         <div className="card-headline">
           <h1>{card.name}</h1>
