@@ -4,6 +4,23 @@
 # é isso que este workflow explora: os testes batem no ambiente serverless real —
 # com Redis, com os rewrites de `next.config.ts` valendo — em vez de num
 # `next dev`. Nenhum teste precisou mudar para isso.
+#
+# ## PR vindo de fork
+#
+# O GitHub não entrega secrets para workflow disparado por fork, e é a decisão
+# certa: o PR traz código que ninguém revisou ainda. A consequência aqui é que
+# `deploy`, `e2e` e `comment` não têm como funcionar — sem `VERCEL_TOKEN` o
+# primeiro passo do deploy morre, e sem `pull-requests: write` o comentário
+# também.
+#
+# Sem o gate de origem abaixo, isso vira um PR vermelho na cara de quem
+# contribuiu de fora pela primeira vez, por um motivo que não é dele e que ele
+# não tem como resolver. `quality` não usa secret nenhum, então roda sempre: é
+# ele que responde a pergunta que o contribuidor de fato fez — lint, typecheck e
+# os testes passam?
+#
+# O preview de um PR de fork continua possível quando alguém quiser: o
+# mantenedor puxa a branch para o repositório e abre o PR de lá.
 name: preview
 
 on:
@@ -25,11 +42,14 @@ env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
+  # Sem `if`: é o gate que vale para todo mundo, e o único que roda em PR de
+  # fork. Ver o cabeçalho.
   quality:
     uses: ./.github/workflows/quality.yml
 
   deploy:
     needs: quality
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     outputs:
       url: ${{ steps.deploy.outputs.url }}
@@ -81,6 +101,32 @@ jobs:
       - name: Puxar o ambiente de Preview
         run: vercel pull --yes --environment=preview
 
+      # O `pull` acabou de escrever o ambiente resolvido em disco; conferir aqui
+      # é a última chance de nomear uma variável ausente antes que ela vire
+      # sintoma. Sem `GITHUB_TOKEN` o deploy sobe inteiro, e a rota de carta
+      # responde a carta de erro — um PNG de verdade, com texto dizendo que falta
+      # token. O e2e falha no `expect(status).toBe(200)` e acusa a rota, que está
+      # certa. Perde-se o deploy inteiro para descobrir isso.
+      #
+      # `REDIS_URL` é aviso e não erro: sem ele o preview funciona, só sai sem
+      # número de série e gastando mais rate limit (ver .env.example).
+      - name: Conferir o ambiente de Preview
+        run: |
+          env_file=".vercel/.env.preview.local"
+          if [ ! -f "$env_file" ]; then
+            echo "::error::$env_file não existe — o vercel pull não escreveu o ambiente."
+            exit 1
+          fi
+
+          if ! grep -q '^GITHUB_TOKEN=..' "$env_file"; then
+            echo "::error::GITHUB_TOKEN não está definido no ambiente Preview da Vercel. Toda carta do preview vai sair como carta de erro e o e2e vai falhar acusando as rotas de imagem. Grave em Vercel > Project Settings > Environment Variables, marcando Preview."
+            exit 1
+          fi
+
+          if ! grep -q '^REDIS_URL=..' "$env_file"; then
+            echo "::warning::REDIS_URL não está definido no ambiente Preview. O preview funciona, mas as cartas saem sem número de série e o cache cai para o fallback por processo."
+          fi
+
       # `vercel build` resolve o `outputFileTracingIncludes` de next.config.ts
       # aqui, no runner — é o que faz `public/assets/**` chegar nas funções de
       # imagem. O `--prebuilt` do passo seguinte sobe exatamente este output.
@@ -91,6 +137,9 @@ jobs:
         id: deploy
         run: echo "url=$(vercel deploy --prebuilt)" >> "$GITHUB_OUTPUT"
 
+  # Sem `if` de origem aqui, e não é esquecimento: job cuja dependência foi
+  # pulada é pulado junto. Repetir a condição em cada job daria a impressão de
+  # que ela é o que segura o e2e, quando quem segura é o `needs`.
   e2e:
     needs: deploy
     runs-on: ubuntu-latest
@@ -123,9 +172,23 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  # Diz em voz alta o que foi pulado, para quem abriu o PR de fora. Um job
+  # ausente da lista de checks é indistinguível de um job que ninguém escreveu:
+  # sem isto, o contribuidor fica esperando um preview que não vem.
+  aviso-de-fork:
+    if: github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Por que não há preview neste PR
+        run: |
+          echo "::notice title=Preview skipped for fork PR::Deploy and e2e need repository secrets, which GitHub does not share with forks. The quality gate (lint, typecheck, unit tests) ran and is the check that matters for review. A maintainer can produce a preview by pushing this branch to the repository."
+
   # "O que quebra em layout só quebra olhando" (README). O e2e verde não fecha
   # essa lacuna — este comentário é o que coloca a página renderizada a um clique
   # de quem revisa.
+  #
+  # `always()` faz este job rodar mesmo com `deploy` pulado; quem o desliga em PR
+  # de fork é o `needs.deploy.result == 'success'`, que não vale para `skipped`.
   comment:
     needs: [deploy, e2e]
     if: always() && needs.deploy.result == 'success'

@@ -8,7 +8,15 @@ function pngSize(buffer: Buffer): { width: number; height: number } {
   return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
 }
 
-test.describe("rotas de imagem", () => {
+/*
+ * `@smoke` é o recorte que `production.yml` roda contra o deployment recém-subido:
+ * os casos que provam que produção está de fato ligada, sem escrever nada.
+ *
+ * A tag existe porque o recorte era `-g "rotas de imagem"`, casando pelo título
+ * em português deste describe. Renomear o describe desligava o smoke de produção
+ * em silêncio, e nada nos dois lados do acoplamento dizia que ele existia.
+ */
+test.describe("rotas de imagem", { tag: "@smoke" }, () => {
   test("serve a carta de perfil em /<user>.png com o cache da RFC 4.2", async ({ request }) => {
     const response = await request.get("/torvalds.png");
 
@@ -256,7 +264,13 @@ test.describe("site", () => {
   });
 });
 
-test.describe("batalha", () => {
+/*
+ * `@stateful`: estes gravam. Cada execução cria um registro de batalha no Redis
+ * com `BATTLE_TTL_SECONDS` (30 dias), e é por isso que produção roda só `@smoke`
+ * — o motivo estava comentado em `production.yml`, do lado de lá do recorte, e
+ * agora está aqui, do lado que o causa.
+ */
+test.describe("batalha", { tag: "@stateful" }, () => {
   test("sorteia, redireciona para um resultado estável e serve o pôster", async ({
     page,
     request,
