@@ -36,6 +36,7 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     outputs:
       url: ${{ steps.deploy.outputs.url }}
+      public_url: ${{ steps.deploy.outputs.public_url }}
     steps:
       - uses: actions/checkout@v7
 
@@ -102,9 +103,36 @@ jobs:
       - name: Build
         run: vercel build --prod
 
+      # Duas URLs saem daqui, e o smoke precisa da segunda.
+      #
+      # `url` é o que o deploy imprime: a URL única daquele deployment
+      # (`gitmon-cards-<hash>-<escopo>.vercel.app`). Ela serve para o link do
+      # environment do GitHub, mas **está atrás da Deployment Protection** — a
+      # Standard Protection isenta o domínio de produção, não a URL de
+      # deployment. O smoke apontado para ela recebia o 302 para
+      # `vercel.com/sso-api` e falhava acusando as rotas de imagem.
+      #
+      # `public_url` é o alias estável de produção, tirado de
+      # NEXT_PUBLIC_BASE_URL, que é o mesmo endereço que vai dentro do README de
+      # terceiro. Testar produção em qualquer outro endereço é testar um lugar
+      # onde ninguém vai olhar.
       - name: Deploy
         id: deploy
-        run: echo "url=$(vercel deploy --prebuilt --prod)" >> "$GITHUB_OUTPUT"
+        run: |
+          url=$(vercel deploy --prebuilt --prod)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+          # Avisa e cai para a URL de deployment em vez de derrubar o deploy: o
+          # produto já subiu quando esta linha roda, e perder o deploy por causa
+          # do endereço que o *teste* usa seria trocar um problema pequeno por um
+          # grande. Sem o alias o smoke falha como falhava antes, com a diferença
+          # de que agora o log diz por quê.
+          public_url=$(grep -m1 '^NEXT_PUBLIC_BASE_URL=' .vercel/.env.production.local 2>/dev/null | cut -d= -f2- | tr -d '"' || true)
+          if [ -z "$public_url" ]; then
+            echo "::warning::NEXT_PUBLIC_BASE_URL não veio no vercel pull; o smoke vai usar a URL de deployment, que está atrás da Deployment Protection e responde 302 para vercel.com/sso-api. Para corrigir, grave o endereço público como variável do repositório e leia-a aqui."
+            public_url="$url"
+          fi
+          echo "public_url=$public_url" >> "$GITHUB_OUTPUT"
 
   # Recorte deliberado: só o que está marcado `@smoke` em tests/e2e/smoke.spec.ts.
   #
@@ -133,11 +161,14 @@ jobs:
       - name: Instalar o Chromium
         run: npx playwright install --with-deps chromium
 
+      # O alias público, não a URL de deployment. Ver o comentário no passo de
+      # deploy. Sem bypass, de propósito: se o endereço que as pessoas embutem
+      # no README precisar de secret para responder, o produto está quebrado e é
+      # isto que tem que falhar.
       - name: Smoke das rotas de imagem
         run: npm run test:e2e -- --grep @smoke
         env:
-          E2E_BASE_URL: ${{ needs.deploy.outputs.url }}
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          E2E_BASE_URL: ${{ needs.deploy.outputs.public_url }}
 
       - uses: actions/upload-artifact@v7
         if: failure()

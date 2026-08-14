@@ -17,13 +17,45 @@ function pngSize(buffer: Buffer): { width: number; height: number } {
  * em silêncio, e nada nos dois lados do acoplamento dizia que ele existia.
  */
 test.describe("rotas de imagem", { tag: "@smoke" }, () => {
-  test("serve a carta de perfil em /<user>.png com o cache da RFC 4.2", async ({ request }) => {
+  test("serve a carta de perfil em /<user>.png", async ({ request }) => {
     const response = await request.get("/torvalds.png");
 
     expect(response.status()).toBe(200);
     expect(response.headers()["content-type"]).toBe("image/png");
-    expect(response.headers()["cache-control"]).toContain("s-maxage=86400");
+    // A janela do navegador é a única do header que sobrevive à CDN. Ver abaixo.
+    expect(response.headers()["cache-control"]).toContain("max-age=3600");
     expect((await response.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
+  });
+
+  /*
+   * Este teste afirmava `s-maxage=86400` no header recebido, e falhava contra uma
+   * produção onde a política estava valendo.
+   *
+   * A Vercel **consome** `s-maxage` e `stale-while-revalidate` para o próprio
+   * cache de borda e não repassa nenhum dos dois ao cliente: a resposta chega
+   * como `public, max-age=3600`, com um `x-vercel-cache` ao lado. A asserção
+   * pedia para ver uma coisa que a plataforma esconde por construção — e o
+   * sintoma da falha (`Received: "public, max-age=3600"`) parecia com a rota
+   * servindo a política errada.
+   *
+   * A política em si passou a ser conferida onde é visível, em
+   * `tests/unit/cache-control.test.ts`, sobre a constante que a declara. Aqui
+   * fica o que só o e2e pode provar, e que aquele teste não alcança: que a borda
+   * de fato cacheou. Duas requisições, e a segunda tem que vir de lá.
+   */
+  test("é cacheada na borda, e não regerada a cada visita", async ({ request }) => {
+    test.skip(
+      !process.env.E2E_BASE_URL,
+      "só vale contra um deployment: o `next dev` não tem CDN na frente",
+    );
+
+    await request.get("/torvalds.png");
+    const segunda = await request.get("/torvalds.png");
+
+    // HIT ou STALE: os dois significam servido pela borda. Um MISS na segunda
+    // volta é o que este teste existe para pegar — carta regerada por visita
+    // esgota o rate limit do token e devolve a lentidão que o cache evita.
+    expect(segunda.headers()["x-vercel-cache"]).toMatch(/HIT|STALE/);
   });
 
   test("serve a carta de repositório em /<owner>/<repo>.png", async ({ request }) => {
@@ -283,6 +315,13 @@ test.describe("batalha", { tag: "@stateful" }, () => {
     const battleId = page.url().split("/").pop();
     const poster = await request.get(`/battle/${battleId}.png`);
 
+    /*
+     * Este 200 depende de `REDIS_URL`, e é a única asserção da suíte que
+     * depende. Sem Redis o resultado sorteado fica no fallback em memória de
+     * uma instância, e o pedido do pôster cai noutra: 404. Não é falha de
+     * cache nem de rota — é o comportamento que `.env.example` descreve para
+     * serverless, aparecendo onde ele aparece de verdade.
+     */
     expect(poster.status()).toBe(200);
     expect((await poster.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
     // Resultado já sorteado não muda nunca.
