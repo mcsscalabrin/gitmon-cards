@@ -86,6 +86,7 @@ embutida no README de alguém, não é. Em produção o Redis é obrigatório (R
 | `npm run dev` | Servidor de desenvolvimento |
 | `npm test` | Testes unitários (fórmulas, batalha, renderização, i18n) |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint (`eslint . --max-warnings=0`) |
 | `npm run test:e2e` | Playwright (precisa de `npx playwright install chromium`) |
 | `PREVIEW=<dir> npm test` | Grava os PNGs renderizados em disco para inspeção visual |
 | `npm run assets` | Regenera molduras, foil, metal e ícones de energia |
@@ -93,8 +94,10 @@ embutida no README de alguém, não é. Em produção o Redis é obrigatório (R
 
 No PowerShell, a variável de preview vai antes, separada: `$env:PREVIEW="out"; npm test`.
 
-> `npm run lint` **está quebrado** e o projeto não tem lint rodando. O script ainda chama
-> `next lint`, removido no Next 16. Pendência conhecida — ver `docs/gaps-revalidacao.md` (1.2).
+O `test:e2e` tem dois modos. Sem `E2E_BASE_URL` ele sobe o `npm run dev` e testa contra ele —
+esse é o modo que precisa de `GITHUB_TOKEN` no ambiente. Com `E2E_BASE_URL` apontando para um
+deployment, o Playwright só fala HTTP e o token fica onde ele já vive, no servidor. É assim que o
+CI roda.
 
 A arte e as fontes são versionadas — `assets` e `fonts` só precisam rodar quando o desenho ou o
 repertório de caracteres mudar. Quando o **formato** da carta muda (campo novo, valor de enum que
@@ -221,14 +224,33 @@ contribuição não esbarre em regra não escrita.
 ### Antes de abrir o PR
 
 ```bash
+npm run lint
 npm run typecheck
 npm test
-npm run test:e2e
 ```
 
-**Não há CI.** `.github/workflows/` está vazio de propósito enquanto o projeto não é publicado, o
-que significa que esses três comandos são a única rede — se você não rodar, ninguém roda. E ignore
-`npm run lint`: ele está quebrado e o projeto não tem lint (ver acima).
+O CI roda esses três em todo PR e **bloqueia o deploy** se algum falhar. Rodar antes é para não
+descobrir no runner o que o seu terminal contava em dez segundos.
+
+O que a esteira faz, em `.github/workflows/`:
+
+| Quando | O que |
+|---|---|
+| PR | lint + typecheck + unitários → deploy de preview na Vercel → **e2e contra o preview** → comentário no PR com a URL |
+| Push em `main` | os mesmos gates → deploy de produção → smoke das rotas de imagem contra o que subiu |
+| Tag `v*` | GitHub Release com o corpo tirado do `CHANGELOG.md` |
+
+O e2e do CI não roda contra `next dev`: ele aponta `E2E_BASE_URL` para o deployment de preview, o
+que exercita o ambiente serverless de verdade — Redis, rewrites, `outputFileTracingIncludes`. É a
+diferença entre provar que o código funciona e provar que o deploy funciona.
+
+O deploy é orquestrado pelo Actions, não pela integração Git da Vercel (desligada em
+`vercel.json`). A ordem importa aqui mais que no projeto médio: a carta é servida com
+`s-maxage=86400` de dentro do README de outra pessoa, então um deploy quebrado não é uma página
+que o visitante recarrega — é arte errada, em cache, no repositório de terceiro.
+
+**O que o CI não cobre continua sendo seu:** ele não olha a carta. O comentário do bot no PR traz
+a URL do preview justamente para isso.
 
 ### Renderize e olhe
 

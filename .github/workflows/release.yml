@@ -1,0 +1,46 @@
+# Release a partir de tag. Não publica pacote — package.json é `private`.
+# O corpo sai do CHANGELOG.md, que já segue Conventional Commits.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # As seções do CHANGELOG são `## [0.2.0](2026-08-12)`. Extrai da seção da
+      # tag até o próximo `## [`, e cai nas notas geradas pelo GitHub se a versão
+      # não estiver no arquivo — um release sem corpo é pior que um automático.
+      - name: Extrair a seção do CHANGELOG
+        id: notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+
+          if [ -s release-notes.md ]; then
+            echo "generate=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "CHANGELOG.md não tem seção para $version." >&2
+            echo "generate=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Criar o release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ steps.notes.outputs.generate }}" = "true" ]; then
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+          fi

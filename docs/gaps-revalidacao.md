@@ -15,7 +15,7 @@ build limpos.
 | # | Gap | Estado |
 |---|---|---|
 | 1.1 | `.superdesign/` ignorado e referenciado pelo código | ✅ resolvido |
-| 1.2 | `npm run lint` quebrado | ⬜ decisão sua |
+| 1.2 | `npm run lint` quebrado | ✅ resolvido |
 | 1.3 | Documentação contradiz o código | ✅ resolvido |
 | 2.1 | `serial.ts` sem teste, Lua nunca executado | 🟡 parcial |
 | 2.2 | Abertura de pacote sem teste, bloqueia interação | ✅ resolvido |
@@ -61,19 +61,39 @@ não documentação.
 `.superdesign/`. Não apontavam — só o `TiltCard`. Escrevi de memória em vez de
 verificar.
 
-### 1.2 `npm run lint` não funciona
+### 1.2 `npm run lint` não funciona — RESOLVIDO
 
-```
-> next lint
-Invalid project directory provided, no such directory: D:\GHRepos\gitmon\lint
-```
+Decidido pela primeira alternativa: ESLint direto, em flat config.
+`eslint.config.mjs` espalha `eslint-config-next/core-web-vitals` e
+`eslint-config-next/typescript`, e o script virou `eslint . --max-warnings=0`.
+O lint entrou no gate do CI junto com typecheck e unitários.
 
-`next lint` foi removido no Next 16. O script em `package.json` nunca foi
-atualizado, então **o projeto não tem lint rodando** — e não tinha antes desta
-sessão também. É pré-existente, não regressão.
+`--max-warnings=0` é deliberado: aviso que não quebra é aviso que ninguém lê. Ou
+a regra vale e fica ligada, ou não vale e é desligada em `eslint.config.mjs` com
+o motivo escrito. Duas foram desligadas assim, e nenhuma por preguiça:
 
-**Decisão:** migrar para ESLint direto (`eslint .` com flat config) ou assumir
-que o projeto não tem lint e remover o script, para não dar falsa sensação.
+- `@next/next/no-img-element` — `<img>` cru é decisão do projeto nos quatro
+  lugares onde aparece (carta já em 500x700 vinda de rota de API, ícones de tipo
+  em SVG local, avatar já dimensionado da CDN do GitHub).
+- `jsx-a11y/alt-text`, só em `lib/og/**` — aquele JSX não vira DOM, vira PNG via
+  Satori. Não há leitor de tela do outro lado.
+
+**O que a primeira execução encontrou**, e vale registrar porque nenhum dos dois
+é ruído (2 erros, 16 avisos no total):
+
+1. `components/card/TiltCard.tsx` — `react-hooks/immutability` no laço de rAF que
+   se reagenda (`requestAnimationFrame(tick)` dentro do próprio `tick`). A regra
+   avisa que o laço em curso chamaria um `tick` velho se ele mudasse. Neste
+   componente ele não muda: `paint` é `useCallback(..., [])`, então `tick` tem
+   uma única identidade em toda a vida do componente. Suprimido no local, com o
+   argumento escrito ao lado.
+2. `components/ui/LocaleToggle.tsx` — a mesma regra em `document.cookie = ...`,
+   sugerindo mover para um efeito. Aqui ela erra o alvo: num efeito a escrita
+   aconteceria **depois** do `router.refresh()`, e a árvore voltaria no idioma
+   antigo. Suprimido no local, também com o motivo.
+
+Se um dia esses dois virarem refatoração de verdade, os comentários dizem contra
+o que ela precisa provar.
 
 ### 1.3 A documentação contradiz o código
 
@@ -271,15 +291,88 @@ quem consegue resolver:
 
 **Decisões de produto, só suas:**
 
-3. **1.2** — ESLint de verdade (dependência nova) ou remover o script quebrado.
-4. **3.1** — pôster de batalha mostra raridade e serial, ou fica como está.
-5. **3.2** — manter a terminologia específica do TCG Pokémon.
-6. **3.4** — o pacote continuar tocando em toda visita.
+3. **3.1** — pôster de batalha mostra raridade e serial, ou fica como está.
+4. **3.2** — manter a terminologia específica do TCG Pokémon.
+5. **3.4** — o pacote continuar tocando em toda visita.
 
 **Trabalho meu, quando você quiser:**
 
-7. **2.3** — teste do `SupportBand`, incluindo o caminho sem contador.
-8. **3.3** — medir a distribuição num conjunto maior e menos enviesado que os 8
+6. **2.3** — teste do `SupportBand`, incluindo o caminho sem contador.
+7. **3.3** — medir a distribuição num conjunto maior e menos enviesado que os 8
    perfis célebres que escolhi.
-9. **5.2** — mais uma rodada no estágio 3 do canvas, com a ressalva de sempre: o
+8. **5.2** — mais uma rodada no estágio 3 do canvas, com a ressalva de sempre: o
    placeholder cinza limita o que dá para julgar lá.
+
+---
+
+## 7. Achado ao montar o CI
+
+### 7.1 `elements.test.ts` encosta no timeout lendo assets
+
+O caso "tem os assets de todo tipo no disco" usa `readFileSync` para checar
+existência: 72 arquivos, ~4 MB de PNG, lidos por inteiro dentro do orçamento
+padrão de 5s do Vitest. Nesta máquina (Windows) a leitura sozinha leva ~4s, e o
+teste **falha por timeout** — reproduzível, não é sorte de agendamento.
+
+Não é regressão e não é do diff do CI: o teste lê o mesmo que sempre leu, só que
+agora há mais assets no disco que quando ele foi escrito. Deve passar no runner
+Linux do CI, onde não há antivírus no caminho — mas com margem fina, e um teste
+que flaka bloqueia o deploy junto.
+
+**Decisão sua:** trocar `readFileSync` por `statSync`/`existsSync` (é existência
+que o teste afirma verificar, e o comentário dele diz isso), ou subir o
+`testTimeout` em `vitest.config.ts`. A primeira ataca a causa; a segunda só
+compra tempo.
+
+**Atualização:** passou no runner Linux nas quatro execuções do CI, em ~40s de
+job inteiro. Confirma que é lentidão de disco no Windows, não defeito — mas a
+margem continua fina e o veredito segue valendo.
+
+### 7.2 O e2e está vermelho por Deployment Protection, não por código
+
+O `preview.yml` chega até o fim: `quality`, `deploy` e `comment` passam, e o
+preview sobe. O `e2e` falha porque a Vercel intercepta todo request ao
+deployment com um `302` para `vercel.com/sso-api`, e o Playwright segue o
+redirecionamento e recebe HTML onde esperava PNG:
+
+```
+Expected: "image/png"
+Received: "text/html; charset=utf-8"
+```
+
+Não é a carta de erro (que seria PNG com 404) nem falta de `GITHUB_TOKEN` — é a
+proteção respondendo antes de a aplicação existir. Verificado à mão:
+`HEAD /torvalds.png` no preview devolve `302` com
+`location: https://vercel.com/sso-api?...`.
+
+**O código já está pronto para as duas saídas.** `playwright.config.ts` manda
+`x-vercel-protection-bypass` e `x-vercel-set-bypass-cookie` quando
+`VERCEL_AUTOMATION_BYPASS_SECRET` existe, e ignora quando não existe.
+
+**Decisão sua:** gerar o *Protection Bypass for Automation* em Project Settings
+→ Deployment Protection e gravá-lo como secret (previews seguem privados), ou
+desligar a Vercel Authentication no Preview (um clique, mas cada preview vira
+URL pública, e quem achar consome o token do GitHub e o Redis de preview).
+
+Adiado conscientemente. Enquanto isso o `e2e` fica vermelho por motivo
+conhecido — o que ele **não** está provando é justamente o que ele existe para
+provar, então não vale tratar esse vermelho como ruído de fundo.
+
+---
+
+## 8. Restrições descobertas rodando a esteira
+
+Duas coisas que só apareceram na primeira execução real, e que custam uma hora
+cada se forem redescobertas do zero:
+
+1. **Token da Vercel restrito a um projeto não funciona com o CLI.** Menor
+   privilégio era o instinto certo, mas `vercel pull` precisa resolver
+   `/v2/user`, e um token limitado a um projeto não consegue — `vercel whoami`
+   responde `User not found` e o `pull` morre em `Could not retrieve Project
+   Settings`. O detalhe cruel: **um token inválido produz exatamente os mesmos
+   dois erros**, então o sintoma não distingue "escopo errado" de "valor
+   errado". O token precisa ser de escopo do time com acesso a *All Projects*.
+2. **As actions oficiais estavam quatro majors atrás** do que eu fixei de
+   memória (v4 contra v7 de `checkout`/`setup-node`/`upload-artifact`). O runner
+   avisava que elas apontam para Node 20, deprecado. Vale conferir o release
+   mais recente em vez de escrever a versão de cabeça.
