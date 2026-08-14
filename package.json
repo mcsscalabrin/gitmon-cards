@@ -32,7 +32,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.1",
     "subset-font": "^2.5.0",
-    "typescript": "^5.9.0",
+    "typescript": "^7.0.2",
     "vitest": "^3.2.0"
   },
   "engines": {
