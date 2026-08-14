@@ -13,7 +13,7 @@ A static image URL, no login, embeddable in any README, that keeps itself up to 
 
 <img src=".github/assets/types.png" alt="The 18 energy types: normal, fire, water, grass, electric, ice, fighting, poison, ground, flying, psychic, bug, rock, ghost, dragon, dark, steel and fairy" width="760">
 
-<sub>Eighteen types, one per dominant language. Every icon here is original art — see <a href="docs/assets-brief.md">the brief</a>.</sub>
+<sub>Eighteen types, one per dominant language. The discs are original art; the glyphs are <a href="https://lucide.dev">Lucide</a> (ISC) — see <a href="docs/assets-brief.md">the brief</a>.</sub>
 
 <br>
 
@@ -225,8 +225,11 @@ the card, render it and say in the PR what you saw.
 
 ## Copyright
 
-No assets from The Pokémon Company, no fan icons from the reference repositories. All frame, type
-and energy art in this project is original. See `docs/assets-brief.md`.
+No assets from The Pokémon Company, no fan icons from the reference repositories. The frames, the
+foils, the metals and the coloured discs of the type icons are original. The glyph inside each disc
+comes from [Lucide](https://lucide.dev), used under the ISC licence — Copyright (c) for portions of
+Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT); all other copyright (c) for Lucide
+are held by Lucide Contributors 2022. See `docs/assets-brief.md`.
 
 The tier names `Illustration Rare`, `Special Illustration Rare` and `Hyper Rare` are product
 terminology from The Pokémon Company, adopted here as TCG vocabulary. This is an open question —

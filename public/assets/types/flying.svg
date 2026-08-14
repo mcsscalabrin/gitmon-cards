@@ -1,16 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="flying">
   <defs>
-    <style>
-      .cls-1 {
-        fill: #fff;
-      }
-
-      .cls-2 {
-        fill: #74aad0;
-      }
-    </style>
+    <linearGradient id="sh-flying" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"></stop>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.04"></stop>
+      <stop offset="0.72" stop-color="#000000" stop-opacity="0.06"></stop>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.26"></stop>
+    </linearGradient>
+    <radialGradient id="hl-flying" cx="0.32" cy="0.2" r="0.75">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"></stop>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"></stop>
+    </radialGradient>
   </defs>
-  <circle class="cls-2" cx="128" cy="128" r="128"/>
-  <path class="cls-1" d="M151.78,148.43c-15.72,18.66-36.72,18.54-56.82,20.49-.88,.09-1.72,.46-2.36,1.09-10.27,10.09-15.84,24.13-28,33.64-.55,.43-1.39,.2-1.63-.45-2.25-6.09-1.57-11.4-.81-16.39,4.26-28.02,11.13-55.4,21.88-81.66,5.83-14.23,15.13-24.51,31.59-27.2,24.36-3.98,47.33-13.03,70.58-20.97,2.96-1.01,6.05-1.96,9.13-.76,.97,.38,1.74,1.18,2.02,2.18,.91,3.25-.92,5.89-2.54,8.68-13.5,23.36-34.25,37.51-58.92,46.81-3.54,1.33-7.9,2.81-10.91,5.61-.32,.3-.08,.86,.35,.88,17.48,.74,32.76-5.7,48.82-9.24,.55-.12,1.04,.45,.84,.98-7.05,17.94-23.79,26.99-39.9,32.15-6.3,2.02-9.35,2.46-20.33,3.46-.37,.03-.41,.49-.11,.57,15.87,4,21.78-.55,36.34-1.55,.83-.06,1.3,1.02,.77,1.66Z"/>
+  <circle cx="32" cy="32" r="32" fill="#35BFF5"></circle>
+  <circle cx="32" cy="32" r="32" fill="url(#hl-flying)"></circle>
+  <circle cx="32" cy="32" r="32" fill="url(#sh-flying)"></circle>
+  <circle cx="32" cy="32" r="31" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1.4"></circle>
+  <g transform="translate(12 13.4) scale(1.6667)" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z"></path><path d="M16 8 2 22"></path><path d="M17.5 15H9"></path></g>
+  <g transform="translate(12 12) scale(1.6667)" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z"></path><path d="M16 8 2 22"></path><path d="M17.5 15H9"></path></g>
 </svg>
