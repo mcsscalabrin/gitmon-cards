@@ -33,7 +33,7 @@ Dark-only. Sem modo claro.
 
 São 18, não os 7 elementos da RFC 4.4 — ver o adendo naquela seção.
 
-`normal #828282` · `fire #E4613E` · `water #3099E1` · `grass #439837` · `electric #DFBC28` · `ice #47C8C8` · `fighting #E49021` · `poison #9354CB` · `ground #A4733C` · `flying #74AAD0` · `psychic #E96C8C` · `bug #9F9F28` · `rock #A9A481` · `ghost #6F4570` · `dragon #576FBC` · `dark #4F4747` · `steel #74B0CB` · `fairy #E18CE1`
+`normal #8FA0B3` · `fire #FF3B14` · `water #1E90FF` · `grass #14C445` · `electric #FFCC00` · `ice #17DCDC` · `fighting #FF6A00` · `poison #A733FF` · `ground #E08A2E` · `flying #35BFF5` · `psychic #FF2E7E` · `bug #B8E000` · `rock #D4A72C` · `ghost #8A45E8` · `dragon #2E5BFF` · `dark #4A3846` · `steel #4FB2E0` · `fairy #FF7ED4`
 
 Nenhuma dessas cores foi escolhida à mão: cada `base` foi **extraída do disco
 colorido do ícone** do tipo em `scripts/assets/types/`. É o que garante que o

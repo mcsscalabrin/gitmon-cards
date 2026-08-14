@@ -38,6 +38,25 @@ compor na carta e uma cópia do SVG em `public/assets/types/` para a interface w
 usar sem rasterizar. A paleta de `palette.json` foi extraída deles, e não o
 contrário.
 
+### Revisão v2
+
+A segunda leva trocou os 18 ícones. O disco continua original — cor chapada,
+realce radial no alto à esquerda, sombra vertical e um aro branco a 22% —, mas o
+**glifo deixou de ser desenhado à mão e passou a vir do [Lucide](https://lucide.dev)**,
+sob licença ISC. É a única arte de terceiros no projeto, e o crédito está no
+README junto do aviso de copyright.
+
+Duas consequências que valem registro:
+
+- Os SVGs vêm em `width`/`viewBox` de **64**, não de 256 como a v1. O PNG de
+  energia não herda mais esse número: `build-assets.mjs` fixa o lado em
+  `ENERGY_PX`, senão trocar a arte mudaria em silêncio a resolução do que o
+  Satori compõe.
+- Os discos da v2 são bem mais saturados que os da v1 (`fire` foi de `#E4613E`
+  para `#FF3B14`). Como `palette.json` é extraída do disco, **as molduras
+  mudaram junto** — a regra de fonte única foi mantida, e é ela que fez a carta
+  inteira acompanhar a troca dos ícones.
+
 ## Caminho escolhido — a decidir
 
 O RFC seção 8 deixou três caminhos abertos e **recomenda começar pelo C**:

@@ -18,7 +18,7 @@ export function TypeIcon({
   size = 18,
 }: {
   element: Element;
-  /** Lado do disco em px. O SVG é quadrado (viewBox 256×256). */
+  /** Lado do disco em px. O SVG é quadrado (viewBox 64×64). */
   size?: number;
 }) {
   return (
@@ -29,7 +29,7 @@ export function TypeIcon({
       aria-hidden="true"
       width={size}
       height={size}
-      // `loading="eager"`: são 18 arquivos de ~1KB e no máximo três aparecem por
+      // `loading="eager"`: são 18 arquivos de ~2KB e no máximo três aparecem por
       // página. Adiar carrega depois do primeiro quadro e o disco aparece
       // pulando, que é pior do que o custo de carregar junto.
       loading="eager"

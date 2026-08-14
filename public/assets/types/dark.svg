@@ -1,17 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="dark">
   <defs>
-    <style>
-      .cls-1 {
-        fill: #fff;
-      }
-
-      .cls-2 {
-        fill: #4f4747;
-      }
-    </style>
+    <linearGradient id="sh-dark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"></stop>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.04"></stop>
+      <stop offset="0.72" stop-color="#000000" stop-opacity="0.06"></stop>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.26"></stop>
+    </linearGradient>
+    <radialGradient id="hl-dark" cx="0.32" cy="0.2" r="0.75">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"></stop>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"></stop>
+    </radialGradient>
   </defs>
-  <circle class="cls-2" cx="128" cy="128" r="128"/>
-  <path class="cls-1" d="M74.46,84.24c7.49,7.56,17.75,14.95,27.04,16.93-1.38,2.84-1.88,5.07-2.37,8.23-2.78,17.82-1.19,34.63,12.15,48.3,10.06,10.31,23.45,10.28,33.51-.09,13.29-13.71,14.91-30.51,12.01-48.33-.43-2.62-1.93-9.15-1.88-9.24,.1-.18,0-.08,1-.38,6.48-1.51,18.62-7.99,26.05-15.5,15.36,11.88,23.65,36.91,14.18,56.85-12.94,27.24-43.16,51.76-81.43,43.96-29.15-5.94-49.04-24.49-57.95-53.21-4.14-13.33,1.67-35.98,17.7-47.52Z"/>
-  <path class="cls-1" d="M139.92,124.38c-.27,5.3-.79,12.61-6.05,18.45-4.12,4.57-7.96,4.83-11.66-.03-7.43-9.75-7.46-20.89-4.48-32.19,1.96-7.42,2.86-7.9,10.26-7.9,7.41,0,7.97,.58,10.38,7.85,1.28,3.88,1.58,7.78,1.56,13.83Z"/>
+  <circle cx="32" cy="32" r="32" fill="#4A3846"></circle>
+  <circle cx="32" cy="32" r="32" fill="url(#hl-dark)"></circle>
+  <circle cx="32" cy="32" r="32" fill="url(#sh-dark)"></circle>
+  <circle cx="32" cy="32" r="31" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1.4"></circle>
+  <g transform="translate(12 13.4) scale(1.6667)" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></g>
+  <g transform="translate(12 12) scale(1.6667)" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></g>
 </svg>

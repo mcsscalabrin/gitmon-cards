@@ -1,16 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="rock">
   <defs>
-    <style>
-      .cls-1 {
-        fill: #fff;
-      }
-
-      .cls-2 {
-        fill: #a9a481;
-      }
-    </style>
+    <linearGradient id="sh-rock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"></stop>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.04"></stop>
+      <stop offset="0.72" stop-color="#000000" stop-opacity="0.06"></stop>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.26"></stop>
+    </linearGradient>
+    <radialGradient id="hl-rock" cx="0.32" cy="0.2" r="0.75">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"></stop>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"></stop>
+    </radialGradient>
   </defs>
-  <circle class="cls-2" cx="128" cy="128" r="128"/>
-  <path class="cls-1" d="M199.67,98.23l-19.62-19.62,3.55,23.38c.03,.19-.2,.31-.34,.17l-29.18-29.18c-.14-.14-.02-.37,.17-.34l23.38,3.55-19.87-19.87s-.09-.06-.14-.06h-59.26c-.05,0-.1,.02-.14,.06l-41.9,41.9s-.06,.09-.06,.14v59.26c0,.05,.02,.1,.06,.14l19.53,19.53-9.71-45.05c-.04-.19,.2-.32,.34-.18l57.77,57.77c.14,.14,.01,.38-.18,.34l-45.05-9.71,19.21,19.21s.09,.06,.14,.06h59.26c.05,0,.1-.02,.14-.06l19.24-19.24-45.14,9.75c-.19,.04-.32-.2-.18-.34l57.76-57.76c.14-.14,.38-.01,.34,.18l-9.75,45.14,19.64-19.64s.06-.09,.06-.14v-59.26c0-.05-.02-.1-.06-.14Z"/>
+  <circle cx="32" cy="32" r="32" fill="#D4A72C"></circle>
+  <circle cx="32" cy="32" r="32" fill="url(#hl-rock)"></circle>
+  <circle cx="32" cy="32" r="32" fill="url(#sh-rock)"></circle>
+  <circle cx="32" cy="32" r="31" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1.4"></circle>
+  <g transform="translate(12 13.4) scale(1.6667)" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></g>
+  <g transform="translate(12 12) scale(1.6667)" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path></g>
 </svg>

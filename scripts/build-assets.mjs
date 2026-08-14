@@ -36,10 +36,15 @@ const elements = Object.keys(palette).filter((key) => !key.startsWith("_"));
  * custa nada. Nas molduras seria o contrário: são gradientes largos e suaves,
  * exatamente onde 256 cores viram faixas.
  */
-async function emit(relativePath, svg, { palette = false } = {}) {
+async function emit(relativePath, svg, { palette = false, width } = {}) {
   const target = join(root, "public/assets", relativePath);
   await mkdir(dirname(target), { recursive: true });
-  const { size } = await sharp(Buffer.from(svg))
+  const pipeline = sharp(Buffer.from(svg));
+  // `resize` sobre um SVG não amplia bitmap: o sharp rasteriza de novo no tamanho
+  // pedido. É por isso que o lado do ícone de energia pode ser fixado na chamada
+  // em vez de depender do `width` que o desenhista escreveu no arquivo.
+  if (width) pipeline.resize(width, width);
+  const { size } = await pipeline
     .png({ compressionLevel: 9, palette, effort: palette ? 10 : undefined })
     .toFile(target);
   console.log(`  ${relativePath.padEnd(44)} ${(size / 1024).toFixed(1)} KB`);
@@ -100,12 +105,19 @@ for (const [tier, bands] of Object.entries(foil.bands)) {
  *
  * Cada um vira duas coisas: um PNG para o Satori compor na carta, e uma cópia do
  * SVG em `public/assets/types/` para a interface web usar direto, sem rasterizar.
+ *
+ * O lado do PNG é fixado aqui, não herdado do SVG. O desenho é vetor e cada
+ * revisão dos ícones pode chegar com outro `width` no arquivo — a v2 veio em 64,
+ * a v1 vinha em 256. Sem o número fixo, trocar a arte mudaria em silêncio a
+ * resolução do que o Satori compõe na carta.
  */
-console.log("\nenergia (a partir dos ícones de tipo)");
+const ENERGY_PX = 256;
+
+console.log(`\nenergia (a partir dos ícones de tipo, ${ENERGY_PX}px)`);
 const typesDir = join(root, "scripts/assets/types");
 for (const element of elements) {
   const svg = await readFile(join(typesDir, `${element}.svg`), "utf8");
-  await emit(`energy/${element}.png`, svg);
+  await emit(`energy/${element}.png`, svg, { width: ENERGY_PX });
 
   const webTarget = join(root, "public/assets/types", `${element}.svg`);
   await mkdir(dirname(webTarget), { recursive: true });
