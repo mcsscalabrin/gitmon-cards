@@ -1,0 +1,70 @@
+version: 2
+
+# O que este arquivo NÃO resolve, e é bom deixar escrito: em 14/08/2026 as PRs
+# #11 (eslint 10) e #12 (typescript 7) entraram em `main` com o job `quality`
+# vermelho. O gate tinha acusado as duas quebras — não havia proteção de branch
+# exigindo que ele passasse. Nenhum agrupamento conserta merge por cima de CI
+# vermelho; quem conserta é exigir `quality` em Settings > Branches.
+#
+# O que está aqui embaixo é o segundo nível: diminuir a chance de uma major
+# chegar sozinha e parecer inofensiva.
+
+updates:
+  # Patch e minor chegam num PR só; major do framework vem separado, porque é
+  # trabalho de verdade e não deve viajar de carona com atualização de rotina.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+
+    ignore:
+      # `@types/node` descreve a API de um runtime, e o runtime aqui é o do
+      # `.nvmrc` — Node 22. Tipar contra o 26 libera chamada que não existe em
+      # produção sem o `tsc` reclamar, porque para ele passa a existir. Quando o
+      # `.nvmrc` subir, esta regra sobe junto; não é para ficar para sempre.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+
+    groups:
+      framework:
+        patterns: ["next", "react", "react-dom", "@types/react", "@types/react-dom"]
+
+      # eslint e typescript não têm major própria: quem decide se ela passa é o
+      # `eslint-config-next` e o `typescript-eslint` que ele embute. Foi
+      # exatamente assim que as duas quebraram — o typescript-eslint recusa a TS
+      # 7 por design, e o `eslint-plugin-react` de dentro do config-next chama
+      # uma API que o ESLint 10 removeu. Separadas, cada PR parecia um bump de
+      # rotina. Juntas, ou o conjunto passa no gate ou nenhuma entra.
+      #
+      # Vem antes de `dev` de propósito: a primeira regra que casa é a que vale,
+      # e `dev` engoliria estas se viesse primeiro.
+      ferramental-lint:
+        patterns:
+          - "eslint"
+          - "eslint-config-next"
+          - "typescript"
+          - "typescript-eslint"
+          - "@typescript-eslint/*"
+        update-types: ["major", "minor", "patch"]
+
+      dev:
+        dependency-type: development
+        update-types: ["minor", "patch"]
+      prod:
+        dependency-type: production
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]

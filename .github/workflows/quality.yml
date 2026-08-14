@@ -1,0 +1,36 @@
+# Gate de qualidade, chamado por preview.yml e production.yml.
+#
+# Não roda `next build`: o `vercel build` do job de deploy é superset dele e roda
+# logo em seguida, antes de qualquer merge. Um build a mais só dobraria o passo
+# mais caro da esteira.
+name: quality
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # `MessageKey` é derivado do dicionário `pt` e `en` é tipado contra ele:
+      # uma chave só em português quebra aqui, de propósito (ver README, i18n).
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testes unitários
+        run: npm test

@@ -161,6 +161,15 @@ export function TiltCard({
     }
 
     paint(node, c);
+    /*
+     * Laço de rAF que se reagenda: `tick` se referencia antes de estar
+     * declarado, e a regra avisa que o laço em curso continuaria chamando um
+     * `tick` velho se ele mudasse. Aqui ele não muda — `paint` é
+     * `useCallback(..., [])` logo acima, então a única dependência de `tick` é
+     * estável para sempre e existe uma única identidade dele em toda a vida do
+     * componente. Reescrever isso com ref só trocaria a garantia por indireção.
+     */
+    // eslint-disable-next-line react-hooks/immutability
     frame.current = settled ? null : requestAnimationFrame(tick);
   }, [paint]);
 
@@ -234,7 +243,6 @@ export function TiltCard({
       >
         <div className="tilt-inner" data-flipped={flipped || undefined}>
           <div className="tilt-face tilt-face-front">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={src}
               alt={alt}
@@ -253,7 +261,6 @@ export function TiltCard({
           */}
           {flippable ? (
             <div className="tilt-face tilt-face-back" aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={back} alt="" width={500} height={700} />
             </div>
           ) : null}
