@@ -68,6 +68,16 @@ jobs:
       - name: Instalar a CLI da Vercel
         run: npm i -g vercel@latest
 
+      # Diagnostico, nao gate. "Could not retrieve Project Settings" no passo
+      # seguinte significa token valido que nao enxerga o projeto — quase sempre
+      # escopo errado. Saber a qual escopo o token responde separa isso de um
+      # ID errado sem precisar deduzir.
+      - name: A que escopo este token responde
+        continue-on-error: true
+        run: |
+          vercel whoami
+          vercel teams ls
+
       - name: Puxar o ambiente de Preview
         run: vercel pull --yes --environment=preview
 
