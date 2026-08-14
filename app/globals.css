@@ -1103,8 +1103,9 @@ select {
 }
 
 /*
- * O verso é 300×397 e a carta é 500×700: em vez de esticar a arte, `cover`
- * corta as bordas que sobram sem distorcer.
+ * O verso é vetorial e já vem em 500×700, o mesmo 5:7 da frente, então não há
+ * nada para cortar nem para esticar. O `cover` fica como cinto de segurança: se
+ * um dia a arte voltar noutra proporção, ela recorta em vez de distorcer.
  */
 .tilt-face-back img {
   width: 100%;

@@ -58,7 +58,7 @@ export function TiltCard({
   priority = false,
   rarity,
   flippable = false,
-  back = "/assets/backs/card-back.png",
+  back = "/assets/backs/card-back.svg",
   locale,
 }: {
   src: string;
@@ -78,10 +78,9 @@ export function TiltCard({
   /**
    * Arte do verso. O mesmo PNG para qualquer carta — é o verso da marca.
    *
-   * O caminho tem três segmentos de propósito: a rewrite `/:owner/:repo.png`
-   * do `next.config.ts` engole qualquer `/x/y.png` de dois segmentos (e
-   * `/assets/card-back.png` virava uma carta de "assets/card-back" inexistente).
-   * Caminhos de três segmentos passam reto para `public/`.
+   * Qualquer caminho sob `/assets/` serve: a rewrite `/:owner/:repo.png` do
+   * `next.config.ts` recorta essa pasta explicitamente, então o request chega a
+   * `public/` sem virar carta de um repositório inexistente.
    */
   back?: string;
   /** Idioma dos rótulos de acessibilidade do flip. Obrigatório quando `flippable`. */

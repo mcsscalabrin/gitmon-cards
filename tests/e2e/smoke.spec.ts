@@ -63,6 +63,27 @@ test.describe("rotas de imagem", () => {
     // Erro não herda o cache longo da carta.
     expect(response.headers()["cache-control"]).toContain("max-age=60");
   });
+
+  /*
+   * O recorte de `/assets/` no rewrite. Sem ele, qualquer asset de dois segmentos
+   * casa com `/:owner/:repo.png` e a resposta é uma carta de erro: um PNG de
+   * verdade, com status 404, indistinguível dentro de um `<img>` de um arquivo
+   * que só mudou de lugar. O sintoma da regressão não é erro — é arte errada.
+   */
+  test("mantém /assets/ fora do rewrite: arquivo estático não vira carta", async ({
+    request,
+  }) => {
+    const asset = await request.get("/assets/backs/card-back.svg");
+
+    expect(asset.status()).toBe(200);
+    expect(asset.headers()["content-type"]).toContain("image/svg+xml");
+
+    // Este não existe no disco, e é o caso que o rewrite engolia: tem que morrer
+    // como arquivo ausente, não voltar como carta do dono "assets".
+    const ausente = await request.get("/assets/card-back.png");
+
+    expect(ausente.headers()["content-type"]).not.toContain("image/png");
+  });
 });
 
 /*
@@ -141,7 +162,7 @@ test.describe("virar a carta", () => {
     await expect(page.locator(".tilt-inner")).toHaveAttribute("data-flipped", "true");
     await expect(page.locator(".tilt-face-back img")).toHaveAttribute(
       "src",
-      "/assets/backs/card-back.png",
+      "/assets/backs/card-back.svg",
     );
 
     await card.click();
