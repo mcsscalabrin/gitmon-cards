@@ -164,6 +164,16 @@ test.describe("abertura de pacote", () => {
 
   test("Escape pula a abertura", async ({ page }) => {
     await page.goto("/torvalds");
+
+    /*
+     * Esperar o foco antes de digitar não é zelo: o overlay vem pronto no HTML,
+     * mas quem ouve o Escape é um listener que só existe depois da hidratação.
+     * Um Escape mandado antes dela não é adiado, é perdido — e o teste falha
+     * acusando o pacote, que estava certo. O foco no botão de rasgar é o sinal
+     * de que o componente montou, e é o mesmo que o teste de confinamento já
+     * espera antes de mandar Tab.
+     */
+    await expect(page.locator(".pack-wrapper")).toBeFocused();
     await page.keyboard.press("Escape");
 
     await expect(page.locator(".pack")).toHaveCount(0);
@@ -187,6 +197,48 @@ test.describe("abertura de pacote", () => {
     await page.keyboard.press("Shift+Tab");
     await expect(page.locator(".pack-skip")).toBeFocused();
   });
+});
+
+/*
+ * Rolagem lateral no telefone é falha silenciosa: nada quebra, nada some, a
+ * página só ganha uns 100px de vazio à direita e o polegar escorrega para lá.
+ * A origem era a auréola atrás da carta, um quadrado de 620px que sangra de
+ * propósito — e, por tabela, esticava o viewport de layout, tirando o pacote do
+ * centro da tela. Daí medir o documento, e não a auréola: o sintoma a evitar é
+ * a página larga demais, venha de onde vier.
+ */
+test.describe("largura no telefone", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  for (const path of ["/", "/torvalds", "/torvalds/linux"]) {
+    test(`${path} não rola de lado`, async ({ page }) => {
+      await page.goto(path);
+
+      // Com o pacote na frente e depois sem ele: o overlay é fixo e cobre a
+      // tela, então ele esconderia um vazamento da página atrás.
+      const larguras = async () =>
+        page.evaluate(() => ({
+          tela: document.documentElement.clientWidth,
+          documento: document.documentElement.scrollWidth,
+        }));
+
+      const comPacote = await larguras();
+      expect(comPacote.documento).toBe(comPacote.tela);
+
+      if (await page.locator(".pack").count()) {
+        // O overlay vem no HTML, mas só ouve o teclado depois de hidratar — e
+        // quem avisa que isso aconteceu é o foco que ele próprio move para o
+        // botão de rasgar. Sem esperar por ele, o Escape se perde e o pacote
+        // fica na tela.
+        await expect(page.locator(".pack-wrapper")).toBeFocused();
+        await page.keyboard.press("Escape");
+        await expect(page.locator(".pack")).toHaveCount(0);
+      }
+
+      const semPacote = await larguras();
+      expect(semPacote.documento).toBe(semPacote.tela);
+    });
+  }
 });
 
 test.describe("virar a carta", () => {
