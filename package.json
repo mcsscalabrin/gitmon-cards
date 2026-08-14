@@ -33,7 +33,7 @@
     "eslint-config-next": "^16.3.1",
     "subset-font": "^2.5.0",
     "typescript": "^6.0.3",
-    "vitest": "^3.2.0"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=20.9.0"
