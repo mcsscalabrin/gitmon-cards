@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <title>Marca Gitmon</title>
+
+  <!--
+    A marca é o **centro do verso da carta** (`public/assets/backs/card-back.svg`)
+    recortado do contexto da carta: disco, anel, quatro espículas nos eixos e o
+    glifo de branch/merge vazado. Fora ficaram a moldura retangular e os cantos
+    de circuito; aquilo é a carta, não o ícone.
+
+    Este arquivo é o único desenho da marca. É lido em dois lugares:
+      · favicon, via `icons.icon` em `app/layout.tsx`;
+      · `.brand-mark` do cabeçalho, via `mask-image`. Lá o amarelo abaixo é
+        descartado e a cor vem do token de accent, então a marca segue o tema.
+
+    ## Por que as medidas não são as do verso escaladas
+
+    O verso é lido a 500 px de largura; a marca é lida a 16 ou 24. Nessa faixa o
+    canvas de 400 vale 25 unidades por pixel a 16 px, e a geometria original
+    entrega traços abaixo de um pixel: o anel de 19 dá 0.76 px e o vão de 16
+    entre disco e anel dá 0.64 px. Os dois somem, e o emblema fecha num disco só.
+
+    Por isso cada espessura foi reaberta até valer pelo menos um pixel a 16 px.
+    O que mudou foi espessura, nunca desenho (verso → aqui → a 16 px):
+
+      disco                   r 137 → r 116 → ø 9.3 px
+      vão entre disco e anel     16 →     26 →  1.04 px
+      anel                     w 19 →   w 30 →  1.20 px
+      traço do glifo             19 →     30 →  1.20 px
+      espícula acima do anel     18 →     24 →  0.96 px
+
+    Uma cor só, sobre transparente, e o glifo continua **vazado** por máscara,
+    nunca pintado com a cor do fundo. É o que deixa a marca cair sobre a aba
+    clara do navegador e sobre o escuro do site sem precisar de duas versões.
+
+    Aviso para quem editar estes comentários: XML proíbe hífen duplo dentro de
+    comentário, então nomes de custom property CSS não podem ser citados aqui.
+    O sharp, que renderiza os assets nas rotas de imagem, rejeita o arquivo
+    inteiro com "corrupt header" quando isso escapa.
+  -->
+
+  <defs>
+    <!--
+      O glifo cresce um pouco em relação ao disco: 78% da altura dele, contra
+      72% no verso. É o mesmo motivo das espessuras. Com o traço engrossado,
+      manter a proporção original apertaria os nós contra o centro e o desenho
+      viraria um borrão; crescer o glifo devolve o ar entre as hastes.
+    -->
+    <mask id="glifo-git" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="400">
+      <rect width="400" height="400" fill="#fff" />
+      <g fill="none" stroke="#000" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M149 155v30l51 51" />
+        <path d="M251 155v30l-51 51" />
+        <path d="M200 236v38" />
+      </g>
+      <circle cx="149" cy="155" r="31" fill="#000" />
+      <circle cx="251" cy="155" r="31" fill="#000" />
+      <circle cx="200" cy="274" r="31" fill="#000" />
+    </mask>
+
+    <!--
+      Espícula: ponta em r=196 e base em r=150, dentro da faixa do anel (142 a
+      172), como no verso e pelo mesmo motivo. A base é reta e o anel é curvo;
+      apoiada na borda externa ela tocaria só no eixo e abriria duas frestas nos
+      cantos. Enterrada, nasce do anel. O excedente é invisível: mesma cor,
+      dentro do sólido.
+    -->
+    <path id="espicula" d="M200 4l32 46h-64z" />
+  </defs>
+
+  <g fill="#f2c94c">
+    <!-- Quatro espículas e só quatro, nos eixos. No verso não há ponta nas diagonais. -->
+    <use href="#espicula" />
+    <use href="#espicula" transform="rotate(90 200 200)" />
+    <use href="#espicula" transform="rotate(180 200 200)" />
+    <use href="#espicula" transform="rotate(270 200 200)" />
+
+    <circle cx="200" cy="200" r="157" fill="none" stroke="#f2c94c" stroke-width="30" />
+    <circle cx="200" cy="200" r="116" mask="url(#glifo-git)" />
+  </g>
+</svg>
