@@ -21,6 +21,10 @@ import { defineConfig, devices } from "@playwright/test";
  * os testes falham de um jeito que não parece proteção — parece bug. O
  * `set-bypass-cookie` não é redundante com o header: sem o cookie, os `page.goto`
  * passariam pelo header no documento e esbarrariam na proteção nos subrecursos.
+ *
+ * Estes headers resolvem o caso em que o secret existe. Quando ele falta, quem
+ * fala é o `globalSetup`: mandar a suíte inteira contra a tela de login produz
+ * vinte falhas que acusam as rotas de imagem, e nenhuma que acuse a proteção.
  */
 const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 const protectionHeaders = bypass
@@ -29,8 +33,10 @@ const protectionHeaders = bypass
       "x-vercel-set-bypass-cookie": "true",
     }
   : undefined;
+
 export default defineConfig({
   testDir: "./tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
