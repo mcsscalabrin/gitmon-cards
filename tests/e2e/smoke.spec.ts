@@ -164,6 +164,16 @@ test.describe("abertura de pacote", () => {
 
   test("Escape pula a abertura", async ({ page }) => {
     await page.goto("/torvalds");
+
+    /*
+     * Esperar o foco antes de digitar não é zelo: o overlay vem pronto no HTML,
+     * mas quem ouve o Escape é um listener que só existe depois da hidratação.
+     * Um Escape mandado antes dela não é adiado, é perdido — e o teste falha
+     * acusando o pacote, que estava certo. O foco no botão de rasgar é o sinal
+     * de que o componente montou, e é o mesmo que o teste de confinamento já
+     * espera antes de mandar Tab.
+     */
+    await expect(page.locator(".pack-wrapper")).toBeFocused();
     await page.keyboard.press("Escape");
 
     await expect(page.locator(".pack")).toHaveCount(0);
