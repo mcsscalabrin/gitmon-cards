@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src=".github/assets/mark.png" alt="" width="104">
+
 # Gitmon Cards
 
 **Trading card game cards generated from real GitHub data.**
@@ -8,6 +10,12 @@ A static image URL, no login, embeddable in any README, that keeps itself up to 
 [![quality](https://github.com/mcsscalabrin/gitmon-cards/actions/workflows/production.yml/badge.svg)](https://github.com/mcsscalabrin/gitmon-cards/actions/workflows/production.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-f2c94c)](LICENSE)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
+
+<img src=".github/assets/types.png" alt="The 18 energy types: normal, fire, water, grass, electric, ice, fighting, poison, ground, flying, psychic, bug, rock, ghost, dragon, dark, steel and fairy" width="760">
+
+<sub>Eighteen types, one per dominant language. Every icon here is original art — see <a href="docs/assets-brief.md">the brief</a>.</sub>
+
+<br>
 
 <img src=".github/assets/rarity-ladder.png" alt="The same profile card at three rarity tiers: rare, special illustration rare and ultra rare" width="900">
 
@@ -154,6 +162,7 @@ public/assets/
   frames/                      18 type frames + 18 full-art + 6 foil + 2 metals — ORIGINALS
   energy/                      18 energy cost icons (PNG, for Satori)
   types/                       the same 18 icons in SVG, for the web interface
+  brand/                       the brand mark — favicon, header and pack, one drawing
   icons/                       retreat icon
   fonts/                       M PLUS Rounded 1c, subset (SIL OFL 1.1)
 

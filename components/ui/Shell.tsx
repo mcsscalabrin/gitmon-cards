@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AUTHOR, PROJECT_REPO_URL } from "@/lib/config";
+import { AUTHORS, PROJECT_REPO_URL } from "@/lib/config";
 import { translator, type Locale } from "@/lib/i18n/dictionaries";
 import { getProjectStars } from "@/lib/project";
 import { LocaleToggle } from "./LocaleToggle";
@@ -54,9 +54,19 @@ export async function Shell({
       <footer className="shell-footer">
         <span>
           {t("home.madeBy")}{" "}
-          <a href={AUTHOR.url} target="_blank" rel="noreferrer noopener">
-            {AUTHOR.handle}
-          </a>
+          {/*
+            Separador entre os dois e nenhum depois do último. Com `join` de
+            string a vírgula viraria texto dentro do link; aqui ela fica fora,
+            que é o que deixa o alvo de clique ser só o handle.
+          */}
+          {AUTHORS.map((author, i) => (
+            <span key={author.url}>
+              {i > 0 && <span aria-hidden="true"> · </span>}
+              <a href={author.url} target="_blank" rel="noreferrer noopener">
+                {author.handle}
+              </a>
+            </span>
+          ))}
         </span>
       </footer>
     </div>

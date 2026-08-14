@@ -41,7 +41,21 @@ export const BATTLE_IMAGE_CACHE_CONTROL =
 export const PROJECT_REPO = { owner: "mcsscalabrin", name: "gitmon-cards" } as const;
 export const PROJECT_REPO_URL = `https://github.com/${PROJECT_REPO.owner}/${PROJECT_REPO.name}`;
 export const SPONSOR_URL = `https://github.com/sponsors/${PROJECT_REPO.owner}`;
-export const AUTHOR = { handle: "@scalabrin.dev", url: "https://scalabrin.dev" } as const;
+
+/**
+ * Quem assina. Lista, e não um autor só, porque o projeto passou a ter mais de
+ * um — e o rodapé de um projeto aberto é o único lugar onde a atribuição é
+ * barata e permanente.
+ *
+ * Aponta para o perfil do GitHub, não para o site pessoal: o produto é feito de
+ * dados do GitHub e é lá que o visitante consegue seguir o fio. O crédito
+ * continua sendo atribuição e não chamada para ação (RFC 9.3) — quem quiser
+ * patrocinar tem a faixa acima.
+ */
+export const AUTHORS = [
+  { handle: "@mcsscalabrin", url: "https://github.com/mcsscalabrin" },
+  { handle: "@benogoulart", url: "https://github.com/benogoulart" },
+] as const;
 
 /**
  * A contagem de estrelas do próprio repositório envelhece devagar e não vale uma
