@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 /** Assinatura de arquivo PNG. */
 const PNG_MAGIC = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -389,5 +389,76 @@ test.describe("batalha", { tag: "@stateful" }, () => {
 
     // Por isso a URL de confronto não pode ter cache duro (RFC 7.3/11).
     expect(first).not.toBe(second);
+  });
+});
+
+/*
+ * `@stateful`: como o de batalha, este grava — cada execução cria um
+ * `duel:v1:<id>` no Redis com `DUEL_TTL_SECONDS` (30 dias).
+ *
+ * O duelo é dirigido: a casa do visitante escolhe por turno, e a IA responde
+ * sozinha (timer de 1s no DuelBoard). O que este e2e joga é o visitante — toda
+ * vez que o painel de ações aparece, é a vez dele, e o primeiro botão resolve.
+ */
+test.describe("duelo", { tag: "@stateful" }, () => {
+  const RESULTADO = /\/duel\/[0-9a-f]{16}$/;
+
+  async function jogar(page: Page) {
+    await page.goto("/duel/torvalds/vs/sindresorhus");
+
+    // O confronto é uma ação; o resultado é que tem página (RFC 7.3).
+    const final = page.waitForURL(RESULTADO, { timeout: 120_000 });
+
+    // 20 turnos no pior caso, e cada resposta da IA custa 1s. O loop perde no
+    // polling barato e deixa o `waitForURL` segurar o prazo de verdade.
+    for (let i = 0; i < 200; i++) {
+      if (RESULTADO.test(page.url())) break;
+      if (await page.locator(".duel-actions .duel-action").count()) {
+        await page.locator(".duel-actions .duel-action").first().click();
+      }
+      await page.waitForTimeout(250);
+    }
+
+    await final;
+  }
+
+  test("sorteia, redireciona para um resultado estável e serve o pôster", async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(150_000);
+
+    await jogar(page);
+
+    const duelId = page.url().split("/").pop();
+    const poster = await request.get(`/duel/${duelId}.png`);
+
+    // Mesma ressalva do pôster de batalha: o 200 depende de `REDIS_URL`.
+    expect(poster.status()).toBe(200);
+    expect((await poster.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
+    // Resultado já arbitrado não muda nunca.
+    expect(poster.headers()["cache-control"]).toContain("immutable");
+  });
+
+  test("dois confrontos seguidos geram resultados distintos", async ({ page }) => {
+    test.setTimeout(300_000);
+
+    await jogar(page);
+    const first = page.url();
+
+    await jogar(page);
+    const second = page.url();
+
+    // A URL de confronto não pode ter cache duro: a segunda visita tem que
+    // sortear de novo, não repetir o duelo anterior (RFC 7.3/11).
+    expect(first).not.toBe(second);
+  });
+
+  test("pôster devolve carta de erro para duelo que nunca existiu", async ({ request }) => {
+    const poster = await request.get("/duel/0000000000000000.png");
+
+    expect(poster.status()).toBe(404);
+    // O ponto: um embed num chat precisa dizer que o duelo expirou.
+    expect((await poster.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
   });
 });

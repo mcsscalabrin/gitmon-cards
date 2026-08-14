@@ -2400,3 +2400,404 @@ select {
   color: var(--text-faint);
   font-size: 14px;
 }
+
+
+/* ------------------------------------------------------------ duelo (v2) */
+/* Estilos do sistema de duelo dirigido. Separados do replay de batalha acima. */
+
+.duel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 640px;
+}
+
+.duel-monster {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--side, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+
+/* O lado cuja vez é destaca — a única pista de quem joga quando não há animação
+   no meio do tabuleiro. */
+.duel-monster[data-turn] {
+  border-left-color: var(--side);
+  box-shadow: 0 0 0 1px var(--side);
+}
+
+.duel-monster[data-destroyed] {
+  opacity: 0.55;
+}
+
+.duel-monster-img,
+.duel-card-back {
+  flex: none;
+  width: 84px;
+  height: 118px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
+}
+
+/* Dorso de carta: sem imagem, um padrão estável que não finge ser dado. */
+.duel-card-back {
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--side) 30%, transparent) 0 30%, transparent 31%),
+    linear-gradient(160deg, color-mix(in srgb, var(--side) 22%, var(--bg)) 0 45%, var(--bg) 45% 55%, color-mix(in srgb, var(--side) 18%, var(--bg)) 55%);
+}
+
+.duel-monster-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.duel-monster-head strong {
+  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duel-pos {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+.duel-pos[data-pos="attack"] {
+  color: var(--danger);
+}
+
+.duel-pos[data-pos="defense"] {
+  color: var(--accent);
+}
+
+.duel-stats {
+  display: flex;
+  gap: 18px;
+  margin-left: auto;
+}
+
+.duel-stats span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.duel-stats i {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-faint);
+}
+
+.duel-stats b,
+.duel-lp b {
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+}
+
+.duel-lp {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.duel-lp b {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.duel-lp i {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-faint);
+}
+
+.duel-destroyed {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--danger);
+}
+
+.duel-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 96px;
+  padding: 0 4px;
+}
+
+.duel-narration {
+  margin: 0;
+  font-size: 15px;
+  text-align: center;
+  color: var(--text);
+}
+
+.duel-status,
+.duel-saving {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.duel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.duel-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 14px;
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+
+.duel-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------ replay do duelo */
+
+.duel-replay {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 640px;
+}
+
+.duel-replay-fighters {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.duel-replay-vs {
+  align-self: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-faint);
+}
+
+.duel-fighter {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  transition: border-color .25s ease;
+}
+
+.duel-fighter[data-won] {
+  border-color: var(--side);
+}
+
+.duel-fighter-img,
+.duel-fighter-back {
+  width: 112px;
+  height: 157px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
+}
+
+.duel-fighter-back {
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--side) 30%, transparent) 0 30%, transparent 31%),
+    linear-gradient(160deg, color-mix(in srgb, var(--side) 22%, var(--bg)) 0 45%, var(--bg) 45% 55%, color-mix(in srgb, var(--side) 18%, var(--bg)) 55%);
+}
+
+.duel-fighter-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.duel-fighter-head strong {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.duel-fighter-won,
+.duel-fighter-destroyed {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.duel-fighter-won {
+  color: var(--side);
+}
+
+.duel-fighter-destroyed {
+  color: var(--danger);
+}
+
+.duel-fighter-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.duel-fighter-stats span {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.duel-fighter-stats i {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-faint);
+}
+
+.duel-fighter-stats b {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.duel-fighter-lp {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.duel-fighter-lp b {
+  font-size: 22px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.duel-fighter-lp i {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+.duel-fighter-track {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.duel-fighter-fill,
+.duel-fighter-ghost {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+}
+
+.duel-fighter-fill {
+  background: var(--side);
+}
+
+.duel-fighter-ghost {
+  background: color-mix(in srgb, var(--side) 35%, transparent);
+  animation: duel-ghost-out .4s ease both;
+}
+
+@keyframes duel-ghost-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Log animado: a cor do trilho de cada linha segue o atacante, como no replay
+   de batalha — a única coluna onde os dois lados se alternam. */
+.duel-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.duel-log li {
+  --turn-side: var(--text-faint);
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 12px;
+  border-left: 3px solid var(--turn-side);
+  background: var(--bg-raised);
+  border-radius: 0 10px 10px 0;
+  animation: log-in 260ms ease both;
+}
+
+.duel-log li[data-side="a"] {
+  --turn-side: var(--side-a);
+}
+
+.duel-log li[data-side="b"] {
+  --turn-side: var(--side-b);
+}
+
+.duel-replay-result {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.duel-replay-result em {
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+

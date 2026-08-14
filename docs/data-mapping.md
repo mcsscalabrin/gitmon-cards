@@ -78,3 +78,20 @@ turno; dano `×` efetividade de tipo (`×2` / `×0.5`, tabela em [`layout-spec.m
 (vence maior % de HP restante).
 
 O resultado gera um `battle-id` imutável — é ele, e não o par de usuários, que é cacheável.
+
+## Motor de duelo
+
+Sistema v2, dirigido: o visitante escolhe a ação por turno e a IA responde. V1 é
+só perfil vs perfil. Regras: 8000 LP por lado, um Gitmon em campo, posições
+`attack`/`defense`/`face-down` (face-down vira e deita em defesa ao ser atacado);
+`ATK = 5×(reach+volume)`, `DEF = 5×(community+veterancy+breadth)`, o ataque soma o
+dano impresso; dano `ATK vs ATK/DEF` com mínimo 1 e efetividade de tipo
+(`×2`/`×0.5`, tabela em `layout-spec.md`); destruição → ataque direto ao LP; teto
+de 20 turnos → vence maior % de LP restante.
+
+Como na batalha, o resultado gera um `duel-id` imutável (`duel:v1:<id>`, TTL
+`DUEL_TTL_SECONDS`), e é ele — não o par de usuários — que é cacheável
+(`/duel/<id>.png`, com `immutable`). O client é o controle e o servidor o juiz: o
+client roda o mesmo motor na mesma semente e, ao fim, envia as ações para
+`POST /api/duel`, que re-executa e persiste — o lockstep entre os dois é garantido
+por `duelSession(seed)`, que faz o starter consumir o primeiro número do PRNG.
