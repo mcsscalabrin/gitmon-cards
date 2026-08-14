@@ -16,6 +16,19 @@ export interface RadarVertex {
 
 export interface RadarLabel extends RadarVertex {
   label: string;
+  /**
+   * `text-anchor` do rótulo.
+   *
+   * Ancorar tudo em `middle` centraliza o texto **sobre o ponto do eixo**, e o
+   * ponto do eixo está a poucos pixels da grade: um rótulo longo num eixo
+   * lateral cresce metade para fora e metade para dentro, e a metade de dentro
+   * cai em cima do polígono ("COMUNIDADE" encostava na aresta). Com `start` à
+   * direita e `end` à esquerda, o texto cresce sempre para fora.
+   *
+   * `middle` fica só para os eixos perto da vertical, onde não há lado de fora
+   * horizontal para onde crescer.
+   */
+  anchor: "start" | "middle" | "end";
 }
 
 export interface RadarGeometry {
@@ -23,6 +36,14 @@ export interface RadarGeometry {
   radius: number;
   /** Corners of the data polygon, one per axis. */
   vertices: RadarVertex[];
+  /**
+   * Outer end of each axis, at the full radius — where the spokes stop.
+   *
+   * Separate from `vertices` because the grid is structure, not data: a spoke
+   * that stops at the data point makes the grid change shape with the profile,
+   * and the rings (always drawn full) stop agreeing with it.
+   */
+  axes: RadarVertex[];
   /** SVG `points` attribute for the data polygon. */
   points: string;
   /** Concentric polygon outlines at the given fractions of the radius. */
@@ -99,12 +120,23 @@ export function radarGeometry(
     center,
     radius,
     vertices,
+    axes: Array.from({ length: sides }, (_, i) => at(center, radius, i, sides)),
     points: vertices.map((v) => `${v.x},${v.y}`).join(" "),
     rings: RING_FRACTIONS.map((f) => polygonPoints(sides, radius * f, center)),
     sectors: Array.from({ length: sides }, (_, i) => radarSector(center, radius, i, sides)),
-    labels: labels.map((label, i) => ({
-      label,
-      ...at(center, radius + size * LABEL_GAP_SHARE, i, sides),
-    })),
+    labels: labels.map((label, i) => {
+      const cos = Math.cos(angleFor(i, sides));
+      return {
+        label,
+        // 0.3 é o mesmo corte que `labelPosition` já usava: abaixo dele o eixo
+        // está perto o bastante da vertical para o texto centrado não invadir
+        // nada de lado.
+        anchor: (Math.abs(cos) < 0.3 ? "middle" : cos > 0 ? "start" : "end") as
+          | "start"
+          | "middle"
+          | "end",
+        ...at(center, radius + size * LABEL_GAP_SHARE, i, sides),
+      };
+    }),
   };
 }
