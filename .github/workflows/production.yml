@@ -71,6 +71,34 @@ jobs:
       - name: Puxar o ambiente de Production
         run: vercel pull --yes --environment=production
 
+      # Os dois pesam diferente, e o passo trata cada um como o código trata.
+      #
+      # `GITHUB_TOKEN` é fatal: sem ele **toda** carta vira carta de erro, e o
+      # deploy sobe verde servindo um produto que não funciona.
+      #
+      # `REDIS_URL` é aviso. A tentação é exigir, já que a RFC 11 o chama de
+      # obrigatório em produção, mas o código discorda por escrito: sem Redis a
+      # carta sai sem número de série, e `.env.example` argumenta que carta sem
+      # número é honesta enquanto carta com número errado, já embutida no README
+      # de alguém, não é. Degradar assim é a decisão de projeto — bloquear o
+      # deploy aqui seria endurecê-la por conta própria.
+      - name: Conferir o ambiente de Production
+        run: |
+          env_file=".vercel/.env.production.local"
+          if [ ! -f "$env_file" ]; then
+            echo "::error::$env_file não existe — o vercel pull não escreveu o ambiente."
+            exit 1
+          fi
+
+          if ! grep -q '^GITHUB_TOKEN=..' "$env_file"; then
+            echo "::error::GITHUB_TOKEN não está definido no ambiente Production da Vercel. Toda carta serviria a carta de erro. Grave em Project Settings > Environment Variables."
+            exit 1
+          fi
+
+          if ! grep -q '^REDIS_URL=..' "$env_file"; then
+            echo "::warning::REDIS_URL não está definido em Production: as cartas vão sair sem número de série e o cache da API cai para o fallback por processo (RFC 11, .env.example)."
+          fi
+
       - name: Build
         run: vercel build --prod
 
@@ -78,13 +106,17 @@ jobs:
         id: deploy
         run: echo "url=$(vercel deploy --prebuilt --prod)" >> "$GITHUB_OUTPUT"
 
-  # Recorte deliberado: só o describe "rotas de imagem" de tests/e2e/smoke.spec.ts.
+  # Recorte deliberado: só o que está marcado `@smoke` em tests/e2e/smoke.spec.ts.
   #
   # São os casos que provam que produção está de fato ligada — PNG com o
   # Cache-Control da RFC 4.2, carta de repo, prévia em 1200x630, carta de erro
   # com max-age curto e o recorte de /assets/ no rewrite. Os demais ficam de
   # fora porque os testes de batalha gravariam registros reais no Redis de
   # produção, com TTL de 30 dias, a cada push em main.
+  #
+  # Era `-g "rotas de imagem"`, que casava pelo título do describe: renomear o
+  # describe desligava este smoke sem que nada apontasse para cá. A tag é
+  # declarada no teste, do lado de quem decide se ele escreve ou não.
   smoke:
     needs: deploy
     runs-on: ubuntu-latest
@@ -102,7 +134,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Smoke das rotas de imagem
-        run: npm run test:e2e -- -g "rotas de imagem"
+        run: npm run test:e2e -- --grep @smoke
         env:
           E2E_BASE_URL: ${{ needs.deploy.outputs.url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
