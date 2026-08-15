@@ -108,6 +108,12 @@ const pt = {
   "card.type": "Tipo",
   "card.attacks": "Ataques",
   "card.rarityLabel": "Raridade",
+  /*
+   * A tag em si (ORIGIN, HUB, MONO, LTS, POLY) **não** tem chave aqui e não é
+   * traduzida: é vocabulário de Git, como `commit` e `fork`, e é a mesma palavra
+   * nos dois idiomas. O que precisa de tradução é o rótulo e a frase de motivo.
+   */
+  "card.tagLabel": "Tag",
   "card.flip": "Virar carta",
   "card.flipBack": "Virar de volta",
 
@@ -136,6 +142,16 @@ const pt = {
   "why.rarity": "{score} pontos — estrelas ×2 + seguidores ×3 + repositórios + anos ×5.",
 
   /*
+   * Uma frase por eixo. A tag é ortogonal à raridade: diz em que eixo o perfil é
+   * mais forte contra o topo do GitHub, não quão raro ele é.
+   */
+  "why.tag.reach": "Seu eixo mais forte é alcance — o total de estrelas nos seus repositórios.",
+  "why.tag.community": "Seu eixo mais forte é comunidade — o número de seguidores.",
+  "why.tag.volume": "Seu eixo mais forte é volume — a quantidade de repositórios públicos.",
+  "why.tag.veterancy": "Seu eixo mais forte é veterania — o tempo de conta no GitHub.",
+  "why.tag.breadth": "Seu eixo mais forte é amplitude — quantas linguagens diferentes você escreve.",
+
+  /*
    * Frases da carta de repositório. Separadas das de perfil porque lá o sujeito
    * é quem está lendo ("sua linguagem dominante") e aqui é o repositório.
    */
@@ -159,6 +175,17 @@ const pt = {
     "{score} pontos — {stars} estrelas ×2 + {forks} forks ×3, sem bônus: o último push passou de 90 dias.",
   "why.repo.rarity.archived":
     "{score} pontos — {stars} estrelas ×2 + {forks} forks ×3. Repositório arquivado não recebe bônus de atividade.",
+
+  /*
+   * O repositório usa métricas próprias nos eixos — ver `dominantAxisForRepo`.
+   * `breadth` não aparece: um repositório tem uma linguagem dominante por
+   * construção, então POLY é tag exclusiva de perfil.
+   */
+  "why.repo.tag.reach": "O eixo mais forte é alcance — o total de estrelas do repositório.",
+  "why.repo.tag.community": "O eixo mais forte é comunidade — quantos forks o projeto tem.",
+  "why.repo.tag.volume": "O eixo mais forte é volume — o tamanho da fila de issues abertas.",
+  "why.repo.tag.veterancy": "O eixo mais forte é veterania — há quanto tempo o repositório existe.",
+  "why.repo.tag.breadth": "Amplitude não se aplica a um repositório: ele tem uma linguagem dominante.",
 
   "pack.label": "Abrindo o pacote de {name}",
   "pack.brand": "PACOTE DE EXPANSÃO",
@@ -270,6 +297,7 @@ const en: Record<MessageKey, string> = {
   "card.type": "Type",
   "card.attacks": "Attacks",
   "card.rarityLabel": "Rarity",
+  "card.tagLabel": "Tag",
   "card.flip": "Flip card",
   "card.flipBack": "Flip back",
 
@@ -297,6 +325,12 @@ const en: Record<MessageKey, string> = {
   "why.retreat": "Account is {years} years old: 1 pip every 2 years, capped at 4.",
   "why.rarity": "{score} points — stars ×2 + followers ×3 + repositories + years ×5.",
 
+  "why.tag.reach": "Your strongest axis is reach — total stars across your repositories.",
+  "why.tag.community": "Your strongest axis is community — your follower count.",
+  "why.tag.volume": "Your strongest axis is volume — how many public repositories you have.",
+  "why.tag.veterancy": "Your strongest axis is veterancy — how long you have been on GitHub.",
+  "why.tag.breadth": "Your strongest axis is breadth — how many different languages you write.",
+
   "why.repo.element": "The repository's main language is {language}.",
   "why.repo.element.none": "GitHub reports no main language for this repository.",
   "why.repo.element.unmapped":
@@ -317,6 +351,12 @@ const en: Record<MessageKey, string> = {
     "{score} points — {stars} stars ×2 + {forks} forks ×3, no bonus: last push is over 90 days old.",
   "why.repo.rarity.archived":
     "{score} points — {stars} stars ×2 + {forks} forks ×3. An archived repository earns no activity bonus.",
+
+  "why.repo.tag.reach": "The strongest axis is reach — the repository's total stars.",
+  "why.repo.tag.community": "The strongest axis is community — how many forks the project has.",
+  "why.repo.tag.volume": "The strongest axis is volume — the size of the open issue queue.",
+  "why.repo.tag.veterancy": "The strongest axis is veterancy — how long the repository has existed.",
+  "why.repo.tag.breadth": "Breadth does not apply to a repository: it has one dominant language.",
 
   "pack.label": "Opening {name}'s pack",
   "pack.brand": "EXPANSION PACK",

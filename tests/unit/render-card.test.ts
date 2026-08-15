@@ -3,6 +3,8 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderCard } from "@/lib/og/renderCard";
 import { renderCardOg } from "@/lib/og/renderCardOg";
+import { CARD_NAME_CHARS } from "@/lib/cards/format";
+import { AXES } from "@/lib/cards/ratings";
 import { ELEMENTS, RARITIES, type Card } from "@/lib/cards/types";
 
 /**
@@ -29,6 +31,7 @@ const BASE: Card = {
   resistance: "grass",
   retreat: 3,
   rarity: "hyper_rare",
+  axis: "reach",
   // Fixado, não nulo: é o único caminho que exercita a renderização do serial.
   serial: 42,
   artUrl: "https://avatars.githubusercontent.com/u/1024025",
@@ -149,6 +152,36 @@ describe("renderCard", () => {
   }, 120_000);
 
   /*
+   * A matriz que passou a importar: **8 tiers × 5 eixos**, não 8 tiers.
+   *
+   * A escada sozinha respondia "quão raro" e deixava duas cartas do mesmo tier
+   * idênticas. Com o eixo escolhendo o padrão do foil, a pergunta de verificação
+   * mudou: não é só se os tiers se distinguem entre si, é se **duas cartas do
+   * mesmo tier com eixos diferentes** se distinguem — e isso só se vê olhando os
+   * cinco lado a lado, no mesmo tier.
+   *
+   * 40 PNGs é muito para inspecionar um a um, e não é para isso que servem: são
+   * para montar a grade e varrer. Só roda com PREVIEW, porque sem gravar em
+   * disco eles não verificam nada que os outros testes já não cubram.
+   */
+  it.runIf(PREVIEW)(
+    "renderiza a matriz de tiers × eixos",
+    async () => {
+      for (const rarity of RARITIES) {
+        for (const axis of AXES) {
+          const png = await toPng(
+            { ...BASE, rarity, axis, name: axis },
+            "en",
+            `matriz/${rarity}--${axis}.png`,
+          );
+          expect(isPng(png)).toBe(true);
+        }
+      }
+    },
+    300_000,
+  );
+
+  /*
    * Um por tratamento visual: full-art puro, full-art prata, full-art ouro e
    * folheada sobre layout padrão. Se a moldura full-art recortar errado ou a
    * camada de metal cobrir o texto, quebra aqui.
@@ -180,6 +213,25 @@ describe("renderCard", () => {
       },
       "pt",
       "rodape-longo.png",
+    );
+    expect(isPng(png)).toBe(true);
+  }, 60_000);
+
+  /*
+   * Pior caso do cabeçalho, que é o bloco mais disputado da carta desde que
+   * ganhou a tag à esquerda e o ícone de tipo à direita.
+   *
+   * Tudo no máximo ao mesmo tempo: nome no limite de `CARD_NAME_CHARS`, a tag
+   * mais larga do conjunto (`ORIGIN`), HP de três dígitos e o rótulo em
+   * português, que é o idioma mais verboso. Se o orçamento horizontal de 500px
+   * não fechar, fecha aqui — e não em produção, com o nome de alguém cortado no
+   * meio da palavra.
+   */
+  it("acomoda nome no limite, tag e ícone de tipo no mesmo cabeçalho", async () => {
+    const png = await toPng(
+      { ...BASE, name: "a".repeat(CARD_NAME_CHARS), hp: 250, axis: "reach" },
+      "pt",
+      "cabecalho-cheio.png",
     );
     expect(isPng(png)).toBe(true);
   }, 60_000);

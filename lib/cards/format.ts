@@ -57,11 +57,15 @@ export const FOOTER_CHARS = 36;
 /**
  * Orçamento do nome no cabeçalho da carta.
  *
- * `nameSize` em `lib/og/renderCard.tsx` encolhe o corpo em três degraus e para
- * em 19px; daí para frente, `layout.name.maxWidth` corta a seco. 26 é onde o
- * último degrau ainda cabe nos 280px.
+ * `nameSize` em `lib/og/renderCard.tsx` encolhe o corpo em degraus e para no
+ * menor; daí para frente, `layout.name.maxWidth` corta a seco.
+ *
+ * Caiu de 26 para 20 quando o cabeçalho passou a carregar a tag à esquerda e o
+ * ícone de tipo à direita: o orçamento do nome desceu de 280px para 205, e 26
+ * caracteres no último degrau não cabem mais. O número muda junto com
+ * `layout.name`, nunca sozinho.
  */
-export const CARD_NAME_CHARS = 26;
+export const CARD_NAME_CHARS = 20;
 
 /**
  * Trunca sem cortar palavra no meio quando dá, e usa reticências de um caractere

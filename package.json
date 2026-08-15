@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "assets": "node scripts/build-assets.mjs",
+    "sheet": "node scripts/contact-sheet.mjs",
     "fonts": "node scripts/build-fonts.mjs"
   },
   "dependencies": {

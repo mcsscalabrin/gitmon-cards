@@ -13,10 +13,14 @@ import {
   edgeSvg,
   EDGE_STYLES,
   foilSvg,
+  FOIL_PATTERNS,
   frameSvg,
   metalSvg,
   METAL_TONES,
+  patternSvg,
   retreatSvg,
+  textureSvg,
+  TEXTURED_TIERS,
 } from "./lib/art.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -63,9 +67,12 @@ for (const element of elements) {
   );
 }
 
+// Duas variantes, como na moldura e no foil: no full-art o lustro tem que parar
+// onde o scrim de baixo começa, senão lava justamente o fundo que segura o texto.
 console.log("\nmetal");
 for (const tone of METAL_TONES) {
   await emit(`frames/metal-${tone}.png`, metalSvg(layout, tone));
+  await emit(`frames/fullart-metal-${tone}.png`, metalSvg(layout, tone, { fullArt: true }));
 }
 
 // Dois arquivos para os oito tiers, sem elemento: é a RFC 8 caminho C outra vez
@@ -91,6 +98,35 @@ for (const [tier, bands] of Object.entries(foil.bands)) {
   const profile = { intensity: foil.intensity[tier], bands };
   await emit(`frames/foil-${tier}.png`, foilSvg(layout, profile), { palette: true });
   await emit(`frames/fullart-foil-${tier}.png`, foilSvg(layout, profile, { fullArt: true }), {
+    palette: true,
+  });
+}
+
+/*
+ * Padrão do foil, um por eixo (`AXIS_PATTERNS` em lib/cards/tag.ts).
+ *
+ * **Sem tier no nome, e é o ponto todo.** O padrão é ortogonal à intensidade: a
+ * força entra em tempo de composição, com `opacity` no <img> do renderizador.
+ * Assar uma cópia por tier daria 5 × 6 × 2 = 60 arquivos para descrever cinco
+ * desenhos. Duas variantes por padrão, como na moldura e no foil, porque a janela
+ * do full-art é outra e o recuo depende dela.
+ */
+console.log("\npadrão do foil");
+for (const pattern of FOIL_PATTERNS) {
+  await emit(`patterns/${pattern}.png`, patternSvg(layout, pattern), { palette: true });
+  await emit(`patterns/fullart-${pattern}.png`, patternSvg(layout, pattern, { fullArt: true }), {
+    palette: true,
+  });
+}
+
+/*
+ * Textura gravada — só nos três tiers do topo, onde o TCG tem relevo tátil.
+ * Aqui a raridade manda mesmo, ao contrário do padrão acima.
+ */
+console.log("\ntextura gravada");
+for (const tier of TEXTURED_TIERS) {
+  await emit(`textures/${tier}.png`, textureSvg(layout, tier), { palette: true });
+  await emit(`textures/fullart-${tier}.png`, textureSvg(layout, tier, { fullArt: true }), {
     palette: true,
   });
 }

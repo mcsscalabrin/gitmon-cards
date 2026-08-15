@@ -45,11 +45,13 @@ export type Element = (typeof ELEMENTS)[number];
  * símbolo, não só por tamanho — ver `raritySymbol`/`raritySymbolColor` em
  * `./rarity.ts`.
  *
- * Ressalva conhecida: no TCG, `illustration_rare`, `ultra_rare` e
- * `special_illustration_rare` se distinguem por tratamento de arte (arte
- * alternativa, full-art texturizada). Aqui a arte é sempre o avatar do GitHub
- * dentro da mesma moldura, então esses três hoje diferem só pelo símbolo. Só um
- * segundo tratamento de arte no pipeline resolve isso de verdade.
+ * A ressalva antiga dizia que `illustration_rare`, `ultra_rare` e
+ * `special_illustration_rare` diferiam só pelo símbolo, porque a arte é sempre o
+ * mesmo avatar na mesma moldura. Isso deixou de ser verdade em duas etapas: o
+ * tratamento por tier (`cardTreatment`) separou layout, metal e borda, e a
+ * textura gravada separou os três tiers do topo. O que a raridade ainda **não**
+ * faz é diferenciar duas cartas do mesmo tier — esse é trabalho do eixo, em
+ * `./tag.ts`, que é ortogonal a esta escada.
  */
 export const RARITIES = [
   "common",
@@ -91,6 +93,16 @@ export interface Card {
   /** Pips de custo de recuo, 1 a 4. */
   retreat: number;
   rarity: Rarity;
+  /**
+   * Eixo em que a carta é mais forte — o segundo eixo do sistema, ortogonal à
+   * raridade. Decide a **tag** impressa ao lado do nome e o **padrão** do foil.
+   *
+   * O que fica guardado é o eixo e não a tag já resolvida, de propósito: o eixo
+   * é o dado, a palavra e a geometria são apresentação. Trocar `ORIGIN` por
+   * outra palavra em `./tag.ts` passa a valer para as cartas já em cache, em vez
+   * de precisar de um bump de `CARD_VERSION` só para renomear um rótulo.
+   */
+  axis: Axis;
   /**
    * Número de série sequencial, atribuído na primeira vez que a carta é gerada e
    * imutável depois disso. `null` quando o store durável não respondeu — carta
@@ -137,7 +149,7 @@ export interface Derivation {
   reasonParams?: Record<string, string | number>;
 }
 
-import type { AxisRating } from "./ratings";
+import type { Axis, AxisRating } from "./ratings";
 
 export interface CardStat {
   /** Chave do dicionário i18n, não o rótulo já traduzido. */

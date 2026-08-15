@@ -57,8 +57,13 @@ export interface AxisRating {
  * viraria um ponto no centro. Em log, a diferença entre 5 e 50 estrelas ocupa
  * tanto espaço quanto entre 50k e 250k, que é como as pessoas de fato percebem
  * a diferença.
+ *
+ * Exportada porque `./tag.ts` deriva o eixo dominante da mesma normalização.
+ * Comparar eixos de unidades diferentes só é honesto se todos passarem pela
+ * mesma curva — duplicar a função ali deixaria as duas livres para divergir, que
+ * é exatamente o defeito que `foil.json` foi criado para fechar no foil.
  */
-function normalize(value: number, ceiling: number): number {
+export function normalize(value: number, ceiling: number): number {
   if (!Number.isFinite(value) || value <= 0) return 0;
   const ratio = Math.log1p(value) / Math.log1p(ceiling);
   return Math.max(0, Math.min(99, Math.round(ratio * 99)));

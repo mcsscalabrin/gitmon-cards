@@ -19,6 +19,7 @@ function card(overrides: Partial<Card>): Card {
     resistance: null,
     retreat: 2,
     rarity: "rare",
+    axis: "reach",
     serial: null,
     artUrl: "https://avatars.githubusercontent.com/u/1024025",
     footer: "",
