@@ -29,6 +29,7 @@ function card(overrides: Partial<Card> = {}): Card {
     resistance: null,
     retreat: 1,
     rarity: "common",
+    axis: "reach",
     serial: null,
     artUrl: "",
     footer: "",
