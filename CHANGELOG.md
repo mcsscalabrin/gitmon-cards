@@ -11,6 +11,7 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 #### Features
 
+- navegação entre modos e arrastar-e-soltar por pointer events
 - updates logic
 - arena do speed duel estilo Duel Links (board, replay e poster)
 - sistema de duelo v2 (motor, arbitro, board, replay e poster)
@@ -48,27 +49,6 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - bump actions/checkout from 4 to 7 in the actions group
 
 
-### Lib
-
-#### Refactoring
-
-- removes test import and adds canDrag, zone and removes zone, hand
-
-
-### Tests
-
-#### Features
-
-- adds and import and adds hand, hint and removes hand, glow
-
-
-### App
-
-#### Features
-
-- adds Link, translator, ROSTER_LOGINS import and adds t, canDuel
-
-
 ### Home
 
 #### Features
@@ -104,17 +84,18 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - emblema do verso da carta como favicon, navbar e pacote
 
 
+### Ci
+
+#### Chores
+
+- mostra o escopo do token quando o pull falha
+
+
 ### General
 
 #### Features
 
-- adds and, useEffect import and removes useEffect import and adds rootRef, dragFromRef and removes handleDragStart, handleDragEnd
-- adds useEffect import and adds useMemo
 - credita os dois autores no rodape, e abre o README com a marca e os tipos
-
-#### Refactoring
-
-- adds useState
 
 #### Documentation
 
@@ -146,16 +127,11 @@ Thank you to 3 community contributors:
 - docs: registra por que o e2e esta vermelho e o que a esteira ensinou
 
 @benogoulart
+- feat(ygo): navegação entre modos e arrastar-e-soltar por pointer events
 - feat(duelo-yugioh): updates logic
 - feat(duelo-yugioh): arena do speed duel estilo Duel Links (board, replay e poster)
 - feat(duelo-yugioh): sistema de duelo v2 (motor, arbitro, board, replay e poster)
 - feat(pack): o rasgo revela o verso da carta, e a pagina atras fica borrada
-- feat: adds and, useEffect import and removes useEffect import and adds rootRef, dragFromRef and removes handleDragStart, handleDragEnd
-- refactor(lib): removes test import and adds canDrag, zone and removes zone, hand
-- feat(tests): adds and import and adds hand, hint and removes hand, glow
-- feat(app): adds Link, translator, ROSTER_LOGINS import and adds t, canDuel
-- feat: adds useEffect import and adds useMemo
-- refactor: adds useState
 
 @49699333
 - chore(deps-dev): bump typescript from 5.9.3 to 7.0.2
