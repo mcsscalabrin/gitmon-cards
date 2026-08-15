@@ -37,8 +37,14 @@ export { buildRepoCard } from "./repo";
  * anteriores, esta não quebra nada — carta v3 em cache só sai sem o painel de
  * explicação. Subiu mesmo assim porque uma hora de repositório sem as laterais
  * seria indistinguível do bug que este trabalho fecha.
+ *
+ * v5: campo `axis`, que decide a tag ao lado do nome e o padrão do foil. Volta a
+ * ser da família da v2 e da v3, não da v4 — uma carta v4 em cache não tem `axis`,
+ * e `AXIS_PATTERNS[undefined]` devolveria `undefined` no meio da composição, ou
+ * seja, um `patternUri` apontando para um arquivo que não existe. Quebra ao
+ * renderizar, não ao compilar, e só em produção, onde o Redis guarda por uma hora.
  */
-const CARD_VERSION = "v4";
+const CARD_VERSION = "v5";
 
 const LOGIN = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
 const REPO_NAME = /^[a-zA-Z0-9._-]{1,100}$/;

@@ -20,7 +20,7 @@ build limpos.
 | 2.1 | `serial.ts` sem teste, Lua nunca executado | 🟡 parcial |
 | 2.2 | Abertura de pacote sem teste, bloqueia interação | ✅ resolvido |
 | 2.3 | `SupportBand` sem teste | ⬜ aberto |
-| 3.1 | Pôster de batalha ignora raridade | ⬜ decisão sua |
+| 3.1 | Pôster de batalha ignora raridade | ✅ resolvido |
 | 3.2 | Terminologia do TCG Pokémon | ⬜ decisão sua |
 | 3.3 | Cauda da distribuição desconhecida | ⬜ decisão sua |
 | 3.4 | Pacote toca em toda visita | ⬜ decisão sua |
@@ -166,13 +166,24 @@ exercitado — só o caminho feliz, que eu vi ao vivo.
 
 ## 3. Decisões de produto em aberto
 
-### 3.1 O pôster de batalha ignora o sistema de raridade
+### 3.1 O pôster de batalha ignora o sistema de raridade — RESOLVIDO
 
-`lib/og/renderBattle.tsx` não referencia `rarity`, `serial`, `hasFoil` nem
-`cardTreatment`. As duas superfícies de imagem do produto agora divergem: a carta
-mostra tier, símbolo, foil, metal e serial; o pôster de batalha, nada disso.
+Resolvido na propagação do segundo eixo: o pôster passou a carregar **símbolo de
+raridade com a cor do metal, o nome do tier e a tag**, na mesma gramática do
+cabeçalho da carta (nome + sufixo pendurado na linha de base).
 
-Pode ser certo — batalha é sobre HP e dano, não sobre colecionar. Mas é uma
+A decisão que faltava foi de escopo, não de sim ou não: entrou **identidade**, e
+não a escada visual inteira. Foil, moldura, padrão e textura ficam de fora porque
+ali não há carta — há um painel de placar, e importar o tratamento de superfície
+para dentro dele faria o pôster competir com a carta em vez de apontar para ela.
+
+Registro do problema original:
+
+`lib/og/renderBattle.tsx` não referenciava `rarity`, `serial`, `hasFoil` nem
+`cardTreatment`. As duas superfícies de imagem do produto divergiam: a carta
+mostrava tier, símbolo, foil, metal e serial; o pôster de batalha, nada disso.
+
+Podia ser certo — batalha é sobre HP e dano, não sobre colecionar. Mas era uma
 divergência que ninguém decidiu de propósito.
 
 ### 3.2 Terminologia do TCG Pokémon

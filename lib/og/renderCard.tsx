@@ -4,11 +4,14 @@ import { formatCount } from "../cards/format";
 import layout from "../cards/layout.json";
 import {
   cardTreatment,
+  foilIntensity,
   hasFoil,
+  hasTexture,
   raritySymbol,
   raritySymbolColor,
   raritySymbolSize,
 } from "../cards/rarity";
+import { patternForAxis, tagForAxis } from "../cards/tag";
 import type { Attack, Card, Rarity } from "../cards/types";
 import { elementKey, rarityKey, translator, type Locale } from "../i18n/dictionaries";
 import {
@@ -20,7 +23,9 @@ import {
   frameUri,
   loadFonts,
   metalUri,
+  patternUri,
   retreatUri,
+  textureUri,
 } from "./assets";
 
 /**
@@ -34,6 +39,12 @@ import {
 const HP_RED = "#C0392B";
 /** Mesmo vermelho clareado, para sobreviver ao scrim escuro do full-art. */
 const HP_RED_ON_ART = "#FF7A66";
+/**
+ * Tinta do corpo no full-art. Não é branco puro: sobre um scrim que fecha em
+ * 0.95 e não em 1, branco puro vibra na borda das letras de 12px. Um branco
+ * levemente quebrado assenta.
+ */
+const INK_ON_ART = "#F4F1EC";
 
 export async function renderCard(card: Card, locale: Locale): Promise<ImageResponse> {
   const t = translator(locale);
@@ -50,6 +61,8 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
     energy,
     retreat,
     foil,
+    pattern,
+    texture,
     edge,
     metal,
     weaknessIcon,
@@ -61,11 +74,27 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
       energyUri(card.element),
       retreatUri(),
       hasFoil(card.rarity) ? foilUri(card.rarity, treatment.fullArt) : Promise.resolve(null),
+      // O padrão acompanha o foil: onde não há foil, não há o que padronizar.
+      hasFoil(card.rarity)
+        ? patternUri(patternForAxis(card.axis), treatment.fullArt)
+        : Promise.resolve(null),
+      hasTexture(card.rarity)
+        ? textureUri(card.rarity, treatment.fullArt)
+        : Promise.resolve(null),
       treatment.edge ? edgeUri(treatment.edge) : Promise.resolve(null),
-      treatment.metal ? metalUri(treatment.metal) : Promise.resolve(null),
+      treatment.metal ? metalUri(treatment.metal, treatment.fullArt) : Promise.resolve(null),
       card.weakness ? energyUri(card.weakness) : Promise.resolve(null),
       card.resistance ? energyUri(card.resistance) : Promise.resolve(null),
     ]);
+
+  /*
+   * No full-art a face inteira é arte, então tudo abaixo do cabeçalho passa a se
+   * apoiar no scrim escuro em vez de numa face clara. A tinta do texto inverte
+   * junto — é a mesma correção que o nome e o `HP_RED_ON_ART` já faziam em cima,
+   * agora estendida ao resto da carta.
+   */
+  const onArt = treatment.fullArt;
+  const bodyInk = onArt ? INK_ON_ART : colors.ink;
 
   const primaryStat = card.stats[0];
 
@@ -142,6 +171,44 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
         ) : null}
 
         {/*
+          Padrão por cima do foil, e com a força do tier aplicada aqui em vez de
+          assada no arquivo.
+
+          É o que sustenta a arquitetura de cinco arquivos: a geometria vem do
+          eixo, a intensidade vem da raridade, e as duas só se encontram neste
+          ponto. Assar a combinação daria 60 PNGs para descrever cinco desenhos.
+          O `opacity` do Satori foi medido antes de valer a decisão — ele é
+          linear e exato.
+        */}
+        {pattern ? (
+          <img
+            src={pattern}
+            width={layout.width}
+            height={layout.height}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              opacity: foilIntensity(card.rarity),
+            }}
+          />
+        ) : null}
+
+        {/*
+          Textura gravada, só nos três tiers do topo. Vem depois do padrão: o
+          relevo é da superfície da carta, e o padrão vive dentro do foil, abaixo
+          dela.
+        */}
+        {texture ? (
+          <img
+            src={texture}
+            width={layout.width}
+            height={layout.height}
+            style={{ position: "absolute", left: 0, top: 0 }}
+          />
+        ) : null}
+
+        {/*
           Metal por cima do foil, não por baixo: o folheado é a superfície mais
           externa da carta, e o brilho holográfico vem de dentro dela.
         */}
@@ -154,26 +221,53 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
           />
         ) : null}
 
-        {/* Nome */}
+        {/*
+          Nome + tag, no slot que o `ex` ocupa no TCG.
+
+          A tag é rótulo e não nome: corpo pequeno, peso alto, alinhada pela base
+          do nome e não pelo centro da caixa — pendurada nele, como um sufixo, e
+          não flutuando ao lado. Se competir com o nome, os dois perdem, que foi
+          exatamente a lição do HP contra o nome na fase anterior.
+        */}
         <div
           style={{
             position: "absolute",
             left: layout.name.x,
             top: layout.name.top,
             height: layout.name.boxHeight,
-            maxWidth: layout.name.maxWidth,
             display: "flex",
-            alignItems: "center",
-            fontSize: nameSize(card.name),
-            fontWeight: 900,
-            letterSpacing: -0.5,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
+            alignItems: "baseline",
+            gap: layout.tag.gap,
             // No full-art o nome se apoia no scrim escuro, não na faixa clara.
-            ...(treatment.fullArt ? { color: "#FFFFFF" } : {}),
+            color: treatment.fullArt ? "#FFFFFF" : colors.ink,
           }}
         >
-          {card.name}
+          <span
+            style={{
+              maxWidth: layout.name.maxWidth,
+              fontSize: nameSize(card.name),
+              fontWeight: 900,
+              letterSpacing: -0.5,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+            }}
+          >
+            {card.name}
+          </span>
+          <span
+            style={{
+              fontSize: layout.tag.size,
+              fontWeight: 900,
+              letterSpacing: layout.tag.letterSpacing,
+              // Não é tinta cheia: a tag informa, o nome identifica. Em opacidade
+              // total ela disputa a primeira leitura com um nome de 28px logo ao
+              // lado, e num thumbnail as duas viram uma mancha só.
+              opacity: 0.72,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {tagForAxis(card.axis)}
+          </span>
         </div>
 
         {/*
@@ -219,6 +313,23 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
           >
             {card.hp}
           </span>
+
+          {/*
+            O ícone de tipo, à direita do HP — é onde o TCG sempre o pôs, e a
+            carta não o tinha em lugar nenhum do cabeçalho. Ele saiu da faixa de
+            tipo para vir aqui: nos dois lugares seria a mesma informação duas
+            vezes, e aqui ela lê muito maior.
+
+            Alinhado pela base junto com o número, não pelo centro da caixa. O
+            HP tem 46px e o disco 28: centralizados, o disco flutuaria acima da
+            linha de base do número.
+          */}
+          <img
+            src={energy}
+            width={layout.hp.iconSize}
+            height={layout.hp.iconSize}
+            style={{ marginLeft: layout.hp.iconGap, marginBottom: 5 }}
+          />
         </div>
 
         {/* Faixa de tipo */}
@@ -235,12 +346,15 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
             padding: "0 12px",
             fontSize: layout.typeStrip.size,
             fontWeight: 700,
+            color: onArt ? INK_ON_ART : colors.ink,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <img src={energy} width={20} height={20} />
-            <span>{t(elementKey(card.element))}</span>
-          </div>
+          {/*
+            Sem ícone: ele subiu para o cabeçalho. O que fica é o nome do tipo
+            escrito, que é o que o disco sozinho não entrega e o que o i18n
+            precisa ter onde traduzir.
+          */}
+          <span>{t(elementKey(card.element))}</span>
           <span style={{ opacity: 0.75 }}>
             {t(card.kind === "profile" ? "card.profile" : "card.repo")}
           </span>
@@ -253,7 +367,7 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
             attack={attack}
             index={index}
             energy={energy}
-            ink={colors.ink}
+            ink={bodyInk}
           />
         ))}
 
@@ -266,7 +380,9 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
               top: layout.attacks.top + layout.attacks.boxHeight + layout.attacks.gap / 2,
               width: layout.attacks.right - layout.attacks.left - 24,
               height: 1,
-              background: colors.dark,
+              // Sobre o scrim escuro uma linha escura desaparece: a divisória
+              // inverte junto com a tinta, como as da moldura já fazem.
+              background: onArt ? INK_ON_ART : colors.dark,
               opacity: 0.25,
             }}
           />
@@ -281,6 +397,7 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
             width: layout.attacks.right - layout.attacks.left,
             height: layout.status.height,
             display: "flex",
+            color: bodyInk,
           }}
         >
           <StatusCell label={t("card.weakness")}>
@@ -323,6 +440,7 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
             width: footerTextWidth,
             display: "flex",
             flexDirection: "column",
+            color: bodyInk,
           }}
         >
           <span
@@ -375,7 +493,7 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
           </div>
         </div>
 
-        <Stamp rarity={card.rarity} serial={card.serial} ink={colors.ink} />
+        <Stamp rarity={card.rarity} serial={card.serial} ink={bodyInk} />
       </div>
     ),
     { width: layout.width, height: layout.height, fonts },
@@ -684,11 +802,20 @@ function Dash() {
   return <span style={{ fontSize: layout.status.valueSize, fontWeight: 700, opacity: 0.5 }}>—</span>;
 }
 
-/** Nome longo encolhe em vez de vazar por baixo do HP. */
+/**
+ * Nome longo encolhe em vez de vazar por baixo da tag.
+ *
+ * Quatro degraus e não três, e todos mais cedo: o orçamento do nome caiu de
+ * 280px para 205 quando o cabeçalho passou a carregar a tag à esquerda e o ícone
+ * de tipo à direita. A escada antiga parava em 19px porque 26 caracteres a 19px
+ * cabiam nos 280; em 205 não cabem, e o Satori corta a seco, no meio da palavra e
+ * sem reticências. O último degrau é 17px, calibrado com `CARD_NAME_CHARS = 20`.
+ */
 function nameSize(name: string): number {
-  if (name.length <= 14) return layout.name.size;
-  if (name.length <= 20) return layout.name.size - 5;
-  return layout.name.size - 9;
+  if (name.length <= 11) return layout.name.size;
+  if (name.length <= 15) return layout.name.size - 5;
+  if (name.length <= 18) return layout.name.size - 9;
+  return layout.name.size - 11;
 }
 
 export { layout as cardLayout };

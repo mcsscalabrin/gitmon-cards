@@ -209,7 +209,7 @@ describe("derivações", () => {
     return found as Derivation;
   }
 
-  it("explica os sete valores derivados da carta", () => {
+  it("explica os oito valores derivados da carta", () => {
     const card = buildRepoCard(repo(), [contributor()], NOW);
     expect(derivationsOf(card).map((item) => item.labelKey)).toEqual([
       "card.type",
@@ -219,6 +219,7 @@ describe("derivações", () => {
       "card.resistance",
       "card.retreat",
       "card.rarityLabel",
+      "card.tagLabel",
     ]);
   });
 

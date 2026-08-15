@@ -15,6 +15,7 @@ import {
 import { elementKey, rarityKey } from "../i18n/dictionaries";
 import { rarityForScore } from "./rarity";
 import { ratingsFor } from "./ratings";
+import { dominantAxisForProfile, tagForAxis } from "./tag";
 import type { Attack, Card, Element } from "./types";
 
 /**
@@ -66,6 +67,21 @@ export function buildProfileCard(
   const retreat = clamp(Math.round(accountAge / 2), 1, 4);
   const attacks = attacksFromRepos(owned);
 
+  /*
+   * O eixo é ortogonal ao score: `rarityForScore` soma tudo num número só e
+   * responde "quão raro", enquanto o eixo pergunta "mais forte em quê". Dois
+   * perfis com o mesmo score saem no mesmo tier e com tags diferentes, que é
+   * exatamente o ponto — a escada sozinha fazia duas cartas do mesmo tier serem
+   * a mesma carta.
+   */
+  const axis = dominantAxisForProfile({
+    stars: totalStars,
+    followers: user.followers,
+    repos: user.public_repos,
+    years: accountAge,
+    languages: languages.length,
+  });
+
   return {
     kind: "profile",
     id: user.login,
@@ -83,6 +99,7 @@ export function buildProfileCard(
     resistance,
     retreat,
     rarity,
+    axis,
     // Atribuído fora daqui: serial é I/O, e esta função é pura de propósito.
     // Ver `withSerial` em `./serial.ts`.
     serial: null,
@@ -160,6 +177,11 @@ export function buildProfileCard(
         value: rarityKey(rarity),
         reasonKey: "why.rarity",
         reasonParams: { score: Math.round(score) },
+      },
+      {
+        labelKey: "card.tagLabel",
+        value: tagForAxis(axis),
+        reasonKey: `why.tag.${axis}`,
       },
     ],
     sourceUrl: user.html_url,

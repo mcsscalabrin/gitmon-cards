@@ -147,6 +147,26 @@ export function hasFoil(rarity: Rarity): boolean {
   return rarity !== "common" && rarity !== "uncommon";
 }
 
+/**
+ * Raridades que ganham **textura gravada** por cima do foil.
+ *
+ * O corte é bem mais alto que o do foil, e é o que faz o topo da escada parar de
+ * ser "o mesmo foil, mais forte". No TCG o relevo tátil aparece a partir da Ultra
+ * Rare; abaixo dali a carta é lisa, por mais holográfica que seja.
+ *
+ * Cada tier daqui precisa do seu `public/assets/textures/<rarity>.png`, gerado
+ * por `scripts/build-assets.mjs`. A lista viva é `TEXTURED_TIERS` em
+ * `scripts/lib/art.mjs`, e o teste em `tests/unit/rarity.test.ts` guarda que as
+ * duas não divirjam — um tier aqui sem arquivo lá é um 404 no meio da composição.
+ */
+export function hasTexture(rarity: Rarity): boolean {
+  return (
+    rarity === "ultra_rare" ||
+    rarity === "special_illustration_rare" ||
+    rarity === "hyper_rare"
+  );
+}
+
 /*
  * A anotação de tipo é o que dá exaustividade a uma tabela que vem de JSON: um
  * tier novo em `types.ts` sem a linha correspondente em `foil.json` deixa de

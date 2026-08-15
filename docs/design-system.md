@@ -128,15 +128,17 @@ Oito tiers, na escada do TCG Pokémon. A leitura é **contagem + cor** de estrel
 
 Símbolo sozinho não separava os tiers altos — a arte é sempre o mesmo avatar. A escada real é a combinação de layout e metal:
 
-| Tier | Layout | Metal | Borda |
-|---|---|---|---|
-| common · uncommon | padrão | — | — |
-| rare | padrão | — | polida |
-| double_rare | padrão | — | **dupla** |
-| illustration_rare | **full-art** | — | polida |
-| ultra_rare | **full-art** | prata | — |
-| special_illustration_rare | **full-art** | ouro | — |
-| hyper_rare | padrão | ouro | — |
+| Tier | Layout | Metal | Borda | Textura |
+|---|---|---|---|---|
+| common · uncommon | padrão | — | — | — |
+| rare | padrão | — | polida | — |
+| double_rare | padrão | — | **dupla** | — |
+| illustration_rare | **full-art** | — | polida | — |
+| ultra_rare | **full-art** | prata | — | malha |
+| special_illustration_rare | **full-art** | ouro | — | escamas |
+| hyper_rare | padrão | ouro | — | ondas |
+
+O metal tem duas variantes, como a moldura e o foil. No full-art o lustro diagonal **para onde o scrim de baixo começa**, apagando nos últimos 18% do próprio percurso: prata a `0.3` por cima de um scrim quase preto não lê como metal, lê como o scrim ter falhado, e o texto em cima dele perde o contraste que o scrim existe para dar. O anel folheado da borda continua inteiro nos quatro lados — é ele que carrega o tier, e não passa por cima de texto nenhum.
 
 A borda entrou porque a escada morria no thumbnail, e o thumbnail é onde a carta mais vive. `rare` e `double_rare` dividiam layout, ausência de metal e — até o foil ganhar temperaturas próprias — a mesma superfície: a 150px eram a mesma carta, e a única diferença era uma estrela contra duas. `polished` clareia o anel da borda; `double` acrescenta um fio interno traçando a carta, literal como a moldura articulada da Double Rare no TCG.
 
@@ -144,7 +146,20 @@ A borda entrou porque a escada morria no thumbnail, e o thumbnail é onde a cart
 
 Como o metal, a borda é uma camada **sem elemento**: dois arquivos cobrem os oito tiers. É a RFC 8 caminho C outra vez — o que varia por raridade nunca multiplica pelos 18 tipos.
 
-Full-art: a janela sobe até a borda e desce até `448`, onde os ataques começam. A arte passa por trás do nome e da faixa de tipo; o nome vira branco sobre um scrim escuro de `118px` e o HP clareia para `#FF7A66`. Abaixo de `448` a face continua opaca — ataques e status precisam de fundo sólido.
+**Full-art cobre a face inteira** — `472×672`, de borda a borda, do topo ao rodapé. Antes parava em `452` e ataques, status e rodapé ficavam sobre face opaca: era meia-carta, com uma costura horizontal atravessando a peça bem no meio, e era o ponto fraco do layout contra a régua Pokémon moderno.
+
+O que substituiu a face opaca são **dois scrims assados na própria moldura**, fazendo o mesmo trabalho em pontas opostas:
+
+| Scrim | Região | Curva | Segura |
+|---|---|---|---|
+| topo | `118px` a partir da borda | `0.86 → 0.5 → 0` | nome e HP |
+| base | de `396` até o pé da carta | `0 → 0.82 → 0.95 → 0.98` | ataques, status e rodapé |
+
+A rampa do scrim de base é curta de propósito. Um gradiente longo e suave deixaria o topo do painel de ataques em ~`0.4`, e ali já há texto de 12px por cima de um avatar arbitrário. Ele fecha em `0.98` e não em `1` porque a arte precisa continuar sendo percebida por baixo — senão o full-art vira layout padrão com fundo escuro.
+
+**Consequência estrutural:** nada abaixo do nome pode continuar dentro da máscara da janela. Painel de ataques, fileira de status e fio do rodapé são recortados junto com a face se ficarem lá dentro, então saem da máscara e voltam por cima da arte. Suas superfícies invertem — branco translúcido (`0.1` no painel, `0.08` no status) em vez de claro sobre claro — e a tinta do texto acompanha: `#F4F1EC` no corpo, `#FF7A66` no HP. Não é branco puro: sobre um scrim que fecha em `0.98` o branco puro vibra na borda das letras de 12px.
+
+**A arte é `672`, não `472`.** Ela é quadrada, então o lado tem que ser o maior eixo da janela; a `472` sobrava um vão de 200px sem arte nenhuma no pé da carta. Para não entregar o tier mais caro com a arte mais borrada, `avatarUri` passou a pedir o avatar já no tamanho certo via `?s=` — parâmetro do próprio `avatars.githubusercontent.com`, aplicado só nesse host.
 
 `hyper_rare` volta ao layout padrão de propósito: no TCG a secret dourada é gravada sobre a carta normal, e é isso que a distingue da `special_illustration_rare` sem depender de contar estrelas.
 
@@ -173,9 +188,84 @@ Quatro camadas, na mesma ordem nos dois foils:
 
 A luz do PNG é `feDistantLight` (azimute `250`, elevação `52`), não pontual: luz pontual ilumina o grão só em volta do ponto e as linhas somem em dois terços da carta. O ponto quente que ela não dá é o trabalho da lâmina.
 
-**Relevo e granulado recuam a 26% dentro da janela da arte**, com a borda desfocada em 7px; espectro e lâmina atravessam a janela inteiros. Luz branca sobre um retrato apaga o rosto, cor sobre um retrato não. Daí haver duas variantes por tier — `foil-<tier>.png` e `fullart-foil-<tier>.png` — como já havia para as molduras.
+**Relevo e granulado recuam a 26% dentro da janela da arte**, com a borda desfocada em 7px. Luz branca sobre um retrato apaga o rosto, cor sobre um retrato não. Daí haver duas variantes por tier — `foil-<tier>.png` e `fullart-foil-<tier>.png` — como já havia para as molduras.
+
+**Espectro e lâmina atravessam a janela inteiros no layout padrão, e recuam a 42% no full-art.** A regra original valia enquanto a janela era 37% da carta e os outros 63% eram face clara, onde um pastel a `0.36` pousa bem. Quando o full-art passou a cobrir a face inteira, os dois pressupostos caíram juntos: embaixo é retrato, e mais abaixo é o scrim escuro que segura ataques e status. Pastel a `0.36` sobre scrim escuro não lê como foil, lê como lavagem cinza — o texto de 12px do rodapé sumia num fundo que deveria ser quase preto.
 
 Tudo é alpha, nenhum pixel opaco e nenhum preto: o Satori não tem `mix-blend-mode` e qualquer área escura viraria véu cinza. O foil é o único asset gravado como PNG indexado (256 cores): ruído de baixo contraste cabe em 230 KB em vez de 780 KB sem diferença visível, e nas molduras a mesma quantização faria faixas nos gradientes largos.
+
+### Padrão do foil — o eixo, não o tier
+
+A escada de raridade responde **quão raro**. Ela não responde por que duas cartas do mesmo tier são a mesma carta, e não respondia mesmo com foil, metal e borda: a arte é sempre o avatar na mesma moldura.
+
+No TCG os padrões holográficos são **ortogonais à intensidade**. Cosmos e confetti não são "mais foil" que o linear — são foil de outra tiragem. Só a força sobe com o tier. É essa separação que o sistema passou a ter:
+
+| Eixo | Tag | Padrão | Desenho |
+|---|---|---|---|
+| reach | `ORIGIN` | `linear` | ruído esticado a `0.0016 0.4` — fibra contínua, metal escovado |
+| community | `HUB` | `cosmos` | nebulosa macia + 260 pontos de raio variável |
+| volume | `MONO` | `confetti` | losangos numa grade de `26px` com jitter |
+| veterancy | `LTS` | `cracked` | 34 fraturas retas, cada uma com um fio claro paralelo |
+| breadth | `POLY` | `tinsel` | 96 cunhas saindo de um ponto em `0.42` da altura |
+
+**Cinco arquivos, não sessenta.** O padrão não tem tier no nome: a força entra em tempo de composição, com `opacity` no `<img>` valendo `foilIntensity()`. Assar a combinação daria 5 × 6 tiers × 2 variantes = 60 PNGs para descrever cinco desenhos, e é a mesma multiplicação que a RFC 8 caminho C existe para impedir. O `opacity` do Satori foi medido antes de a decisão valer — é linear e exato (255 / 128 / 51 para 1 / 0.5 / 0.2).
+
+Os padrões são **neutros**: branco, sem cor própria. A cor é trabalho do espectro, que fica por baixo; um padrão colorido brigaria com ele. E acompanham o foil — onde não há foil (`common`, `uncommon`) não há o que padronizar, então as cinco variantes dessas duas cartas são idênticas de propósito.
+
+Nenhum dos cinco é usado em `common` ou `uncommon`. Um par sem foil por baixo é padrão flutuando sobre face chapada, que lê como sujeira de impressão.
+
+### Textura gravada — o relevo tátil do topo
+
+O que faltava para o topo da escada parar de ser "o mesmo foil, mais forte". No TCG o relevo aparece a partir da Ultra Rare; abaixo dali a carta é lisa, por mais holográfica que seja.
+
+| Tier | Geometria | Passo | Opacidade |
+|---|---|---|---|
+| ultra_rare | malha diagonal | `11` | `0.16` |
+| special_illustration_rare | escamas (arcos entrelaçados) | `22` | `0.18` |
+| hyper_rare | ondas horizontais | `9` | `0.20` |
+
+Sempre duas linhas por traço — uma clara e uma escura deslocada de `1.4px`. É o par que o olho lê como quina levantada, e é o único jeito de sugerir profundidade sem área escura chapada.
+
+**Nenhuma das três é radial, e isso é restrição e não gosto.** A primeira versão dava à `hyper_rare` um leque de raios saindo de um ponto, e raio gravado por cima de `tinsel` — que também é raio — deixou `cosmos` e `cracked` indistinguíveis no tier mais caro da escada. A textura de tier estava apagando exatamente o eixo que deveria deixar aparecer.
+
+**Uma diferença honesta em relação ao original:** na carta impressa a gravação segue o contorno da ilustração. Aqui não pode — a arte é o avatar, chega em runtime, e a textura é PNG assado em build. O contorno não existe no momento do desenho. A saída é geometria própria, que funciona com qualquer avatar porque não sabe que ele existe.
+
+### A zona de recuo é o retrato, não a janela
+
+Padrão e textura recuam onde há rosto. No layout padrão isso é a janela; **no full-art não é** — ali a janela é a carta inteira, e recuar sobre a janela recua sobre tudo. A primeira versão fez exatamente isso e os quatro tiers full-art saíram sem padrão nenhum, que é o oposto do que deveriam ter.
+
+O retrato do full-art acaba onde o scrim de baixo começa (`bottomScrimTop: 396`). Abaixo dali o fundo é escuro e chapado — onde relevo lê melhor numa carta de verdade.
+
+| Zona | Padrão | Textura |
+|---|---|---|
+| sobre o retrato | `0.16` | `0.12` |
+| fora dele, layout padrão | `1` | `1` |
+| fora dele, full-art | `0.5` | `1` |
+
+O `0.5` do full-art não é simetria quebrada por descuido: ali embaixo não há retrato para proteger, mas há tipografia de 12px. A `1` os raios do `tinsel` atravessavam "linux" e a descrição do ataque, e a carta mais cara da escada era a de texto menos legível.
+
+### As mesmas camadas ao vivo
+
+O foil do site é uma pilha CSS por cima do PNG, e ela cresceu junto: seis camadas, na mesma ordem do impresso.
+
+| Camada ao vivo | Espelha | Segue o ponteiro |
+|---|---|---|
+| `.tilt-foil` | relevo especular | sim (`fePointLight`) |
+| `.tilt-spectral` | espectro | sim |
+| `.tilt-pattern` | padrão do eixo | sim, com parallax |
+| `.tilt-sheen` | lâmina | sim |
+| `.tilt-engraved` | textura gravada | **não** |
+| `.tilt-grain` | granulado | não |
+
+**Padrão e textura ao vivo usam o próprio PNG do impresso**, via `url(/assets/patterns/…)` e `url(/assets/textures/…)`. Reimplementá-los em gradiente CSS foi tentado e falhou na primeira olhada: `repeating-linear-gradient` é periódico por definição, e o `cracked` saiu como papel milimetrado em vez de fratura, o `cosmos` como grade de pontos em vez de céu. O impresso desenha 34 fraturas e 260 estrelas em posições irregulares, e CSS não faz isso.
+
+O motivo maior nem é esse. Duas descrições do mesmo desenho são duas coisas livres para divergir — é o defeito que `foil.json` foi criado para fechar quando a escada de intensidade existia em dois lugares com números diferentes. **Um desenho só, lido pelas duas pontas.**
+
+`.tilt-engraved` é a única camada da pilha que não segue o ponteiro, e é de propósito: gravação é da superfície do papel e não se move. O contraste entre textura parada e brilho em movimento é o que faz o relevo ler como relevo.
+
+**O full-art também recua ao vivo** (`[data-fullart]`): espectro de `0.85` para `0.42` e lâmina de `0.24` para `0.13`. Mesma lição do `FULL_ART_SPECTRUM` do PNG — a calibragem padrão supõe uma face clara embaixo, e no full-art não há face, há rosto. Corrigir só o impresso faria o site desmentir a carta que ele exibe.
+
+A home é o único lugar que monta `TiltCard` sem `rarity` nem `axis`: lá as cartas são só o caminho do PNG, sem carregar os dados, e a pilha inteira não é renderizada.
 
 ## Janela da arte e a solda
 
@@ -195,9 +285,22 @@ Desenhada depois da máscara, portanto por cima da arte — vale igual no layout
 
 ## Cabeçalho da carta
 
+Quatro elementos numa linha de 500px: nome + tag à esquerda, HP + ícone de tipo à direita.
+
+```
+┌─────────────────────────────────┐
+│ Linus Torvalds ORIGIN   HP 250 ◉ │
+```
+
 **O HP ganha do nome.** `46px` peso 900 contra `28px` — antes eram `34` contra `30`, e nessa distância os dois competiam sem que nenhum vencesse: a carta não tinha ponto de entrada num thumbnail de feed. Na régua Wrapped/Skyline o que faz a peça ler em um segundo é um número grande.
 
-O rótulo `HP`/`PS` é acompanhante: `14px`, opacidade `0.8`, alinhado pela **base** do número e não pelo centro da caixa, que é onde ele flutuava. O nome recuou `maxWidth` para `280px` — a `46px`, `250` mais o rótulo começam em `x=355`, e `300` de nome chegariam a `348`. A escada de `nameSize` acompanha o corpo base, então nomes longos encolhem na mesma proporção de antes.
+O rótulo `HP`/`PS` é acompanhante: `14px`, opacidade `0.8`, alinhado pela **base** do número e não pelo centro da caixa.
+
+**O ícone de tipo (`28px`) vive aqui, e só aqui.** É onde o TCG sempre o pôs, e a carta não o tinha em lugar nenhum do cabeçalho. Ele saiu da faixa de tipo para vir para cá: nos dois lugares seria a mesma informação duas vezes, e aqui lê muito maior. Alinhado pela base junto com o número — centralizado, o disco flutuaria acima da linha de base. A faixa de tipo ficou com o nome do tipo escrito, que é o que o disco sozinho não entrega e o que o i18n precisa ter onde traduzir.
+
+**A tag é sufixo do nome**, no slot que o `ex` ocupa no TCG: `13px` peso 900, `letterSpacing 0.8`, opacidade `0.72`, alinhada pela **base** do nome — pendurada nele, não flutuando ao lado. A opacidade não é tinta cheia porque a tag informa e o nome identifica; em opacidade total ela disputa a primeira leitura com um nome de 28px logo ao lado, e num thumbnail as duas viram uma mancha só.
+
+**O orçamento horizontal é o que manda.** Somando HP a `46px` + rótulo + ícone de `28`, o bloco da direita começa por volta de `x=323`. A coluna da esquerda fica com `48..311`, e a tag come ~56 dela. Daí `name.maxWidth` cair de `280` para `205` — não é preferência, é o que sobra. Junto caíram `CARD_NAME_CHARS` de 26 para 20 e a escada de `nameSize`, que passou a ter quatro degraus (`28/23/19/17`) em vez de três: 26 caracteres a 19px cabiam nos 280 e não cabem nos 205, e o Satori corta a seco, no meio da palavra e sem reticências.
 
 ## Rodapé e número de série
 

@@ -52,10 +52,22 @@ the numbers (RFC 9.2). There is no flavour text.
 | **Resistance** | Type effectiveness chain |
 | **Retreat** | Profile: account age. Repo: open issue queue |
 | **Rarity** (8 tiers) | Composite score, on the Pokémon TCG ladder |
+| **Tag** (5) | The axis the profile is strongest on — `ORIGIN` `HUB` `MONO` `LTS` `POLY` |
 | **Serial number** | Sequential by generation order, immutable once assigned |
 
 From `rare` upwards the card gains foil, and the illustration tiers change the **art treatment** —
-full-art bleed, silver or gold plating. See [`docs/design-system.md`](docs/design-system.md).
+full-art bleed, silver or gold plating, engraved texture at the top three. See
+[`docs/design-system.md`](docs/design-system.md).
+
+Rarity answers *how rare*. It does not answer why two cards of the same tier look alike — the art
+is always the same avatar in the same frame. So the card carries a **second axis, orthogonal to
+rarity**: the metric the profile is strongest on picks both the tag printed beside the name and the
+**foil pattern** — brushed linear, cosmos, confetti, cracked ice or tinsel. Intensity still comes
+from the tier. It is the structure the TCG itself has, where a mechanic suffix and print scarcity
+are different questions that meet on the same card.
+
+The vocabulary is Git's, not the Pokémon Company's, and is deliberately not translated: `ORIGIN`
+and `LTS` read the same in both languages, like `commit`.
 
 The site adds what the exported image deliberately does not carry (RFC 9.6): pack opening, specular
 foil that follows the pointer, a signature radar for the profile, and a derivations panel showing

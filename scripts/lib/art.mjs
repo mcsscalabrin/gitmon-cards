@@ -25,12 +25,19 @@ function mix(a, b, amount) {
 /**
  * Moldura de um elemento. A janela da arte fica transparente (RFC 4.4, item 3).
  *
- * Com `fullArt`, a janela sobe até a borda e a arte passa por trás do nome e da
- * faixa de tipo. Os dois deixam de ser desenhados dentro da máscara — seriam
- * recortados junto com o resto — e voltam por cima da arte, o nome apoiado num
- * scrim escuro. É esse scrim que garante legibilidade sobre avatar claro.
+ * Com `fullArt` a janela cobre a **face inteira** — é o que full-art significa no
+ * TCG, e é a mudança que fez este arquivo mudar de forma. Antes ela parava em 452
+ * e ataques, status e rodapé continuavam sobre face opaca: meia-carta, com uma
+ * costura horizontal atravessando a peça bem no meio.
  *
- * Abaixo da janela nada muda: ataques e status continuam sobre face opaca.
+ * A consequência é que **nada abaixo do nome pode continuar dentro da máscara**.
+ * Painel de ataques, fileira de status e fio do rodapé são recortados junto com a
+ * face se ficarem lá dentro. Eles saem da máscara e voltam por cima da arte, agora
+ * apoiados no scrim de baixo em vez de num fundo sólido — que é a única coisa que
+ * mantém texto legível sobre um avatar arbitrário sem `mix-blend-mode`.
+ *
+ * Os dois scrims fazem o mesmo trabalho em pontas opostas: o de cima segura o nome
+ * e o HP, o de baixo segura ataques, status e rodapé.
  */
 export function frameSvg(layout, colors, { fullArt = false } = {}) {
   const { width: W, height: H, radius: R, border: B } = layout;
@@ -44,6 +51,45 @@ export function frameSvg(layout, colors, { fullArt = false } = {}) {
   const typeStrip = `<rect x="${layout.typeStrip.x}" y="${layout.typeStrip.y}" width="${layout.typeStrip.width}"
           height="${layout.typeStrip.height}" rx="6" fill="${colors.base}" fill-opacity="${fullArt ? 0.62 : 0.2}"
           stroke="${colors.dark}" stroke-opacity="${fullArt ? 0.55 : 0.3}" stroke-width="1"/>`;
+
+  /*
+   * Painel de ataques, fileira de status e fio do rodapé.
+   *
+   * No layout padrão são superfícies claras sobre a face clara. No full-art
+   * viram o contrário — branco translúcido sobre o scrim escuro —, porque ali
+   * embaixo o fundo é a arte e não a face. É a mesma inversão que o nome e o HP
+   * já faziam no cabeçalho.
+   */
+  const panelFill = fullArt
+    ? `fill="#FFFFFF" fill-opacity="0.1"`
+    : `fill="#FFFFFF" fill-opacity="0.42"`;
+  const statusFill = fullArt
+    ? `fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.24" stroke-width="1"`
+    : `fill="${colors.base}" fill-opacity="0.16" stroke="${colors.dark}" stroke-opacity="0.28" stroke-width="1"`;
+  const hairline = fullArt
+    ? { color: "#FFFFFF", opacity: 0.26 }
+    : { color: colors.dark, opacity: 0.28 };
+
+  const panels = `<!-- Painel dos ataques. A divisória entre dois ataques é desenhada em runtime,
+         porque depende de quantos ataques a carta tem. -->
+    <rect x="${layout.attacks.left}" y="${layout.attacks.top - 8}"
+          width="${layout.attacks.right - layout.attacks.left}"
+          height="${layout.attacks.boxHeight * 2 + layout.attacks.gap + 8}" rx="10"
+          ${panelFill}/>
+
+    <!-- Fileira de fraqueza / resistência / recuo. -->
+    <rect x="${layout.attacks.left}" y="${layout.status.y}"
+          width="${layout.attacks.right - layout.attacks.left}" height="${layout.status.height}" rx="8"
+          ${statusFill}/>
+    ${[1, 2]
+      .map((i) => {
+        const x = layout.attacks.left + ((layout.attacks.right - layout.attacks.left) / 3) * i;
+        return `<line x1="${x}" y1="${layout.status.y + 7}" x2="${x}" y2="${layout.status.y + layout.status.height - 7}" stroke="${hairline.color}" stroke-opacity="${hairline.opacity}" stroke-width="1"/>`;
+      })
+      .join("\n    ")}
+
+    <line x1="${layout.footer.left}" y1="${layout.footer.top - 6}" x2="${layout.footer.right}"
+          y2="${layout.footer.top - 6}" stroke="${hairline.color}" stroke-opacity="${fullArt ? 0.24 : 0.25}" stroke-width="1"/>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
@@ -73,6 +119,29 @@ export function frameSvg(layout, colors, { fullArt = false } = {}) {
       <stop offset="0.55" stop-color="${colors.ink}" stop-opacity="0.5"/>
       <stop offset="1" stop-color="${colors.ink}" stop-opacity="0"/>
     </linearGradient>
+
+    <!--
+      Scrim de baixo: o que substituiu a face opaca quando a janela passou a
+      cobrir a carta inteira. Sobe a 0.9 logo abaixo da faixa de tipo e fecha em
+      0.95 no rodapé — não em 1, porque a arte precisa continuar sendo percebida
+      por baixo, senão o full-art vira layout padrão com fundo escuro.
+
+      A rampa é curta de propósito. Um gradiente longo e suave deixaria o topo do
+      painel de ataques em ~0.4, e ali já há texto de 12px por cima de um avatar
+      arbitrário.
+    -->
+    <linearGradient id="scrimBaixo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${colors.ink}" stop-opacity="0"/>
+      <stop offset="0.14" stop-color="${colors.ink}" stop-opacity="0.82"/>
+      <stop offset="0.3" stop-color="${colors.ink}" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="${colors.ink}" stop-opacity="0.98"/>
+    </linearGradient>
+
+    <!-- O scrim de baixo encosta nos cantos inferiores: sem este recorte ele sai
+         quadrado por cima do arredondamento da carta. -->
+    <clipPath id="faceInterna">
+      <rect x="${inner.x}" y="${inner.y}" width="${inner.w}" height="${inner.h}" rx="${inner.r}"/>
+    </clipPath>
 
     <!-- Branco mantém, preto fura. É isto que abre a janela da arte. -->
     <mask id="janela">
@@ -108,38 +177,31 @@ export function frameSvg(layout, colors, { fullArt = false } = {}) {
           height="${win.height + bezel * 2}" rx="${win.radius + 2}" fill="${colors.ink}" fill-opacity="0.92"/>
 
     <!-- Faixa de tipo, logo abaixo da janela. -->
-    ${typeStrip}`
+    ${typeStrip}
+
+    ${panels}`
     }
-
-    <!-- Painel dos ataques. A divisória entre dois ataques é desenhada em runtime,
-         porque depende de quantos ataques a carta tem. -->
-    <rect x="${layout.attacks.left}" y="${layout.attacks.top - 8}"
-          width="${layout.attacks.right - layout.attacks.left}"
-          height="${layout.attacks.boxHeight * 2 + layout.attacks.gap + 8}" rx="10"
-          fill="#FFFFFF" fill-opacity="0.42"/>
-
-    <!-- Fileira de fraqueza / resistência / recuo. -->
-    <rect x="${layout.attacks.left}" y="${layout.status.y}"
-          width="${layout.attacks.right - layout.attacks.left}" height="${layout.status.height}" rx="8"
-          fill="${colors.base}" fill-opacity="0.16" stroke="${colors.dark}" stroke-opacity="0.28" stroke-width="1"/>
-    ${[1, 2]
-      .map((i) => {
-        const x = layout.attacks.left + ((layout.attacks.right - layout.attacks.left) / 3) * i;
-        return `<line x1="${x}" y1="${layout.status.y + 7}" x2="${x}" y2="${layout.status.y + layout.status.height - 7}" stroke="${colors.dark}" stroke-opacity="0.28" stroke-width="1"/>`;
-      })
-      .join("\n    ")}
-
-    <line x1="${layout.footer.left}" y1="${layout.footer.top - 6}" x2="${layout.footer.right}"
-          y2="${layout.footer.top - 6}" stroke="${colors.dark}" stroke-opacity="0.25" stroke-width="1"/>
   </g>
 
   ${
     fullArt
-      ? `<!-- Fora da máscara, portanto por cima da arte. -->
+      ? `<!--
+    Tudo daqui para baixo fica FORA da máscara, portanto por cima da arte. Com a
+    janela cobrindo a face inteira, qualquer um destes elementos desenhado lá
+    dentro seria recortado junto com ela e sumiria da carta.
+  -->
   <path d="M${win.x} ${win.y + win.radius} a${win.radius} ${win.radius} 0 0 1 ${win.radius} -${win.radius}
            h${win.width - win.radius * 2} a${win.radius} ${win.radius} 0 0 1 ${win.radius} ${win.radius}
            v${layout.fullArt.scrimHeight - win.radius} h-${win.width} z" fill="url(#scrim)"/>
-  ${typeStrip}`
+
+  <g clip-path="url(#faceInterna)">
+    <rect x="${inner.x}" y="${layout.fullArt.bottomScrimTop}" width="${inner.w}"
+          height="${inner.y + inner.h - layout.fullArt.bottomScrimTop}" fill="url(#scrimBaixo)"/>
+  </g>
+
+  ${typeStrip}
+
+  ${panels}`
       : ""
   }
 
@@ -211,7 +273,7 @@ export const METAL_TONES = Object.keys(METALS);
  * `mix-blend-mode`, então qualquer área escura viraria véu cinza em vez de
  * metal. O contorno é desenhado como anel de traço, não como retângulo cheio.
  */
-export function metalSvg(layout, tone) {
+export function metalSvg(layout, tone, { fullArt = false } = {}) {
   const metal = METALS[tone];
   if (!metal) {
     throw new Error(`Tom metálico desconhecido: ${tone}`);
@@ -219,6 +281,19 @@ export function metalSvg(layout, tone) {
 
   const { width: W, height: H, radius: R, border: B } = layout;
   const inner = { x: B, y: B, w: W - B * 2, h: H - B * 2, r: R - 6 };
+
+  /*
+   * O lustro varre a carta inteira — e no full-art isso é um problema, porque
+   * "a carta inteira" passou a incluir o scrim escuro que segura ataques,
+   * status e rodapé. Prata a 0.3 por cima de um scrim quase preto não lê como
+   * metal: lê como o scrim ter falhado, e o texto de 12px em cima dele perde o
+   * contraste que o scrim existe para dar.
+   *
+   * A saída é o lustro desaparecer onde o scrim começa. O anel folheado da borda
+   * continua inteiro nos quatro lados: é ele que carrega o tier, e ele não passa
+   * por cima de texto nenhum.
+   */
+  const sweepEnd = fullArt ? layout.fullArt.bottomScrimTop / H : 1;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
@@ -235,7 +310,22 @@ export function metalSvg(layout, tone) {
       <stop offset="0.52" stop-color="${metal.bright}" stop-opacity="0.3"/>
       <stop offset="0.64" stop-color="${metal.bright}" stop-opacity="0.14"/>
       <stop offset="1" stop-color="${metal.mid}" stop-opacity="0"/>
+    </linearGradient>${
+      fullArt
+        ? `
+
+    <!-- Corte seco do lustro leria como risco atravessando a carta. Ele apaga
+         nos últimos 18% do próprio percurso, antes de encostar no scrim. -->
+    <linearGradient id="fim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.82" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#000000"/>
     </linearGradient>
+    <mask id="desvanece">
+      <rect x="0" y="0" width="${W}" height="${(H * sweepEnd).toFixed(0)}" fill="url(#fim)"/>
+    </mask>`
+        : ""
+    }
   </defs>
 
   <!-- Anel folheado sobre a borda. Traço, não preenchimento: o miolo da carta
@@ -247,8 +337,11 @@ export function metalSvg(layout, tone) {
   <rect x="${inner.x}" y="${inner.y}" width="${inner.w}" height="${inner.h}" rx="${inner.r}"
         fill="none" stroke="${metal.bright}" stroke-opacity="0.55" stroke-width="1.5"/>
 
-  <!-- Lustro diagonal atravessando a carta inteira. -->
-  <rect x="0" y="0" width="${W}" height="${H}" rx="${R}" fill="url(#lustro)"/>
+  <!-- Lustro diagonal. Atravessa a carta inteira no layout padrão; no full-art
+       para onde o scrim de baixo começa. -->
+  <rect x="0" y="0" width="${W}" height="${(H * sweepEnd).toFixed(0)}" rx="${R}" fill="url(#lustro)"${
+    fullArt ? ` mask="url(#desvanece)"` : ""
+  }/>
 </svg>`;
 }
 
@@ -427,6 +520,25 @@ const SPECTRAL_SWEEPS = 2.5;
 const ART_WINDOW_RELIEF = 0.26;
 
 /**
+ * Quanto do **espectro e da lâmina** sobrevive na variante full-art.
+ *
+ * A regra original era que estas duas camadas atravessam a janela inteiras, e
+ * ela estava certa enquanto a janela era 37% da carta: cor sobre foto lê como
+ * holográfico, e os outros 63% eram face clara, onde um pastel a 0.36 pousa bem.
+ *
+ * Quando o full-art passou a cobrir a face inteira, os dois pressupostos caíram
+ * de uma vez. Não sobra face clara: embaixo é retrato, e mais abaixo é o scrim
+ * escuro que segura ataques e status. Um pastel a 0.36 sobre um scrim escuro não
+ * lê como foil — lê como lavagem cinza, e foi exatamente isso que apareceu ao
+ * renderizar: o texto de 12px do rodapé sumia num fundo que deveria ser quase
+ * preto.
+ *
+ * Só a variante full-art recua. No layout padrão a regra antiga continua valendo
+ * inteira, porque lá o pressuposto dela continua verdadeiro.
+ */
+const FULL_ART_SPECTRUM = 0.42;
+
+/**
  * Camada de foil, aplicada por cima da moldura nos seis tiers a partir de `rare`
  * (RFC 8, caminho C). No TCG a Rare já vem com holográfico básico, por isso o
  * corte não é mais só nos dois tiers do topo.
@@ -590,15 +702,19 @@ export function foilSvg(layout, profile, { fullArt = false } = {}) {
   </defs>
 
   <!-- Na ordem das quatro camadas. Relevo e granulado recuam sobre a arte
-       (mask superficie); espectro e lâmina atravessam a janela inteiros. -->
-  <g clip-path="url(#carta)">
+       (mask superficie). Espectro e lâmina atravessam a janela inteiros no
+       layout padrão; no full-art recuam a ${FULL_ART_SPECTRUM}, porque ali não
+       existe face clara embaixo deles — ver FULL_ART_SPECTRUM. -->
+  <g clip-path="url(#carta)"${fullArt ? ` opacity="1"` : ""}>
     <g mask="url(#superficie)">
       <rect x="0" y="0" width="${W}" height="${H}" filter="url(#relevo)"/>
     </g>
-    <g mask="url(#linhas)">
-      <rect x="0" y="0" width="${W}" height="${H}" fill="url(#espectro)"/>
+    <g${fullArt ? ` opacity="${FULL_ART_SPECTRUM}"` : ""}>
+      <g mask="url(#linhas)">
+        <rect x="0" y="0" width="${W}" height="${H}" fill="url(#espectro)"/>
+      </g>
+      <rect x="0" y="0" width="${W}" height="${H}" fill="url(#lamina)"/>
     </g>
-    <rect x="0" y="0" width="${W}" height="${H}" fill="url(#lamina)"/>
     <g mask="url(#superficie)">
       <rect x="0" y="0" width="${W}" height="${H}" filter="url(#granulado)"/>
     </g>
@@ -629,3 +745,424 @@ function clamp01(value) {
 }
 
 export const GLYPH_KEYS = Object.keys(GLYPHS);
+
+/*
+ * ---------------------------------------------------------------------------
+ * Padrão do foil
+ * ---------------------------------------------------------------------------
+ *
+ * A descoberta que abriu o segundo eixo do sistema: no TCG os padrões
+ * holográficos são **ortogonais à intensidade**. Cosmos e confetti não são "mais
+ * foil" que o linear — são foil de outra tiragem. Só a força sobe com o tier.
+ *
+ * Daí o padrão ser camada separada do foil colorido e ser escolhido pelo **eixo**
+ * da carta (`lib/cards/tag.ts`), não pela raridade. Cinco arquivos, sem tier no
+ * nome: a força entra em tempo de composição, com `opacity` no <img>. Sem isso
+ * seriam 5 × 6 tiers × 2 variantes = 60 arquivos, e a RFC 8 caminho C existe
+ * exatamente para impedir esse tipo de multiplicação.
+ *
+ * Três invariantes herdadas do foil, nenhuma negociável:
+ *
+ *   1. Só alpha. Nenhum pixel opaco, nenhum preto — o Satori não tem
+ *      `mix-blend-mode`, e qualquer área escura viraria véu cinza.
+ *   2. **Neutro**: branco, sem cor própria. A cor é trabalho do espectro do
+ *      `foilSvg`, que fica por baixo; um padrão colorido brigaria com ele.
+ *   3. Recua sobre a janela da arte, pelo motivo de `ART_WINDOW_RELIEF`.
+ */
+
+export const FOIL_PATTERNS = ["linear", "cosmos", "confetti", "cracked", "tinsel"];
+
+/**
+ * Quanto do padrão sobrevive dentro da janela da arte.
+ *
+ * Mais fundo que o `ART_WINDOW_RELIEF` do foil (0.26), e não por simetria: o
+ * relevo do foil é ruído, que sobre um rosto vira névoa; o padrão é **geometria
+ * dura**, e geometria dura sobre um rosto lê como sujeira na lente. O que salva
+ * o full-art é justamente este número — lá a janela é a carta inteira.
+ */
+const PATTERN_WINDOW = 0.16;
+
+/**
+ * PRNG determinístico (mulberry32).
+ *
+ * `Math.random` aqui seria bug silencioso: `npm run assets` roda de novo a cada
+ * build e o PNG sairia diferente toda vez, sujando o diff do git com ruído que
+ * ninguém escreveu. Semente fixa, desenho fixo.
+ */
+function rng(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Desenho de cada padrão. Recebe as dimensões da carta e devolve `{ defs, body }`.
+ *
+ * Todos desenham em branco e só em branco. A separação entre `defs` e `body`
+ * existe porque filtros e gradientes têm que viver dentro de `<defs>`, e o corpo
+ * precisa entrar dentro do grupo mascarado.
+ */
+const PATTERN_ART = {
+  /*
+   * Linear — metal escovado, para `reach`.
+   *
+   * Ruído esticado quase só na vertical (0.0016 contra 0.4), então o grão sai
+   * como fibra contínua em vez de chuvisco. É o mais discreto do conjunto de
+   * propósito: `reach` é o eixo mais comum, e o padrão que mais aparece é o que
+   * menos pode cansar.
+   */
+  linear: () => ({
+    defs: `
+    <filter id="padrao" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0016 0.4" numOctaves="2" seed="17" result="fibra"/>
+      <feColorMatrix in="fibra" type="luminanceToAlpha" result="alfa"/>
+      <feComponentTransfer in="alfa" result="corte">
+        <feFuncA type="table" tableValues="0 0.1 0.42 0.9"/>
+      </feComponentTransfer>
+      <feFlood flood-color="#FFFFFF" result="branco"/>
+      <feComposite in="branco" in2="corte" operator="in"/>
+    </filter>`,
+    body: (W, H) => `<rect x="0" y="0" width="${W}" height="${H}" filter="url(#padrao)"/>`,
+  }),
+
+  /*
+   * Cosmos — poeira estelar, para `community`.
+   *
+   * Duas camadas, e nenhuma funciona sozinha: só a nebulosa lê como mancha de
+   * gordura, só os pontos leem como sujeira de sensor. Juntas leem como céu.
+   * Os pontos têm raio variável porque estrela de tamanho único vira textura de
+   * papel de parede — o olho encontra o período.
+   */
+  cosmos: (W, H) => {
+    const random = rng(0x5eed1);
+    const stars = Array.from({ length: 260 }, () => {
+      const r = 0.5 + random() * 1.9;
+      return `<circle cx="${(random() * W).toFixed(1)}" cy="${(random() * H).toFixed(1)}" r="${r.toFixed(2)}" fill="#FFFFFF" fill-opacity="${(0.25 + random() * 0.65).toFixed(2)}"/>`;
+    }).join("\n      ");
+
+    return {
+      defs: `
+    <filter id="nebulosa" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="4" seed="29" result="nuvem"/>
+      <feColorMatrix in="nuvem" type="luminanceToAlpha" result="alfa"/>
+      <feComponentTransfer in="alfa" result="suave">
+        <feFuncA type="table" tableValues="0 0 0.22 0.5"/>
+      </feComponentTransfer>
+      <feFlood flood-color="#FFFFFF" result="branco"/>
+      <feComposite in="branco" in2="suave" operator="in"/>
+    </filter>`,
+      body: () => `<rect x="0" y="0" width="${W}" height="${H}" filter="url(#nebulosa)"/>
+      ${stars}`,
+    };
+  },
+
+  /*
+   * Confetti — lantejoula, para `volume`.
+   *
+   * Losangos numa grade com jitter, não em posição aleatória pura: aleatório puro
+   * agrupa e deixa buracos, e o confete impresso de verdade é regular o bastante
+   * para cobrir. O jitter é o que impede a grade de aparecer.
+   */
+  confetti: (W, H) => {
+    const random = rng(0xc0ffe7);
+    const step = 26;
+    const shapes = [];
+    for (let y = -step; y < H + step; y += step) {
+      for (let x = -step; x < W + step; x += step) {
+        const cx = x + random() * step;
+        const cy = y + random() * step;
+        const s = 2.6 + random() * 3.4;
+        const rotation = (random() * 90).toFixed(0);
+        shapes.push(
+          `<rect x="${(cx - s / 2).toFixed(1)}" y="${(cy - s / 2).toFixed(1)}" width="${s.toFixed(1)}" height="${s.toFixed(1)}" rx="${(s * 0.18).toFixed(2)}" fill="#FFFFFF" fill-opacity="${(0.2 + random() * 0.6).toFixed(2)}" transform="rotate(${rotation} ${cx.toFixed(1)} ${cy.toFixed(1)})"/>`,
+        );
+      }
+    }
+    return { defs: "", body: () => shapes.join("\n      ") };
+  },
+
+  /*
+   * Cracked ice — gelo rachado, para `veterancy`.
+   *
+   * Fraturas retas que atravessam a carta em ângulos variados, com um fio claro
+   * paralelo em cada uma. É o par de linhas que dá a leitura de fratura: uma
+   * linha só lê como risco, duas leem como um plano quebrado que reflete luz na
+   * quina. O eixo é veterania, e "rachado pelo tempo" é a metáfora inteira.
+   */
+  cracked: (W, H) => {
+    const random = rng(0x1ce);
+    const shards = [];
+    for (let i = 0; i < 34; i += 1) {
+      const x1 = random() * W * 1.4 - W * 0.2;
+      const y1 = random() * H * 1.4 - H * 0.2;
+      const angle = random() * Math.PI;
+      const length = H * (0.35 + random() * 0.75);
+      const x2 = x1 + Math.cos(angle) * length;
+      const y2 = y1 + Math.sin(angle) * length;
+      const opacity = 0.16 + random() * 0.4;
+      shards.push(
+        `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#FFFFFF" stroke-opacity="${opacity.toFixed(2)}" stroke-width="${(0.7 + random() * 1.1).toFixed(2)}"/>`,
+        `<line x1="${(x1 + 2.2).toFixed(1)}" y1="${(y1 + 1.4).toFixed(1)}" x2="${(x2 + 2.2).toFixed(1)}" y2="${(y2 + 1.4).toFixed(1)}" stroke="#FFFFFF" stroke-opacity="${(opacity * 0.4).toFixed(2)}" stroke-width="0.6"/>`,
+      );
+    }
+    return { defs: "", body: () => shards.join("\n      ") };
+  },
+
+  /*
+   * Tinsel — raios do centro, para `breadth`.
+   *
+   * Cunhas finas partindo de um ponto acima do centro da carta, com larguras
+   * desiguais. O ponto de fuga fica em 0.42 da altura e não no meio: raio saindo
+   * do centro geométrico lê como alvo, e saindo de cima lê como luz.
+   *
+   * É o padrão mais raro do conjunto — `POLY` só sai para perfil, e só para quem
+   * escreve em muitas linguagens — então pode ser o mais gráfico dos cinco.
+   */
+  tinsel: (W, H) => {
+    const random = rng(0x7127e1);
+    const cx = W / 2;
+    const cy = H * 0.42;
+    const reach = Math.hypot(W, H);
+    const rays = Array.from({ length: 96 }, (_, i) => {
+      const angle = (i / 96) * Math.PI * 2 + random() * 0.02;
+      const spread = 0.004 + random() * 0.016;
+      const p = (a) => `${(cx + Math.cos(a) * reach).toFixed(1)},${(cy + Math.sin(a) * reach).toFixed(1)}`;
+      return `<polygon points="${cx.toFixed(1)},${cy.toFixed(1)} ${p(angle - spread)} ${p(angle + spread)}" fill="#FFFFFF" fill-opacity="${(0.1 + random() * 0.34).toFixed(2)}"/>`;
+    }).join("\n      ");
+    return { defs: "", body: () => rays };
+  },
+};
+
+/**
+ * Camada de padrão, uma por eixo. Ver `AXIS_PATTERNS` em `lib/cards/tag.ts`.
+ *
+ * Duas variantes por padrão, na mesma convenção da moldura e do foil: a janela do
+ * full-art é outra, e o recuo do padrão depende dela.
+ */
+export function patternSvg(layout, pattern, { fullArt = false } = {}) {
+  if (!FOIL_PATTERNS.includes(pattern)) {
+    throw new Error(`Padrão de foil desconhecido: ${pattern}`);
+  }
+
+  const { width: W, height: H, radius: R } = layout;
+
+  /*
+   * A zona de recuo é o **retrato**, não a janela — mesma correção que
+   * `textureSvg` precisou, e pelo mesmo motivo. No full-art a janela é a carta
+   * inteira, então recuar sobre a janela recua sobre tudo: os quatro tiers
+   * full-art saíam praticamente sem padrão, e o eixo, que é o ponto todo desta
+   * camada, deixava de aparecer justamente nas cartas mais caras.
+   *
+   * Abaixo do scrim o fundo é escuro e chapado. É onde o padrão lê melhor, e é o
+   * único lugar da carta full-art onde ele não disputa espaço com um rosto.
+   */
+  const win = fullArt
+    ? {
+        x: layout.fullArt.window.x,
+        y: layout.fullArt.window.y,
+        width: layout.fullArt.window.width,
+        height: layout.fullArt.bottomScrimTop - layout.fullArt.window.y,
+        radius: layout.fullArt.window.radius,
+      }
+    : layout.window;
+  const art = PATTERN_ART[pattern](W, H);
+
+  const grey = (value) =>
+    `#${Math.round(value * 255)
+      .toString(16)
+      .padStart(2, "0")
+      .repeat(3)}`;
+
+  /*
+   * Fora do retrato o padrão não vai a 100% no full-art.
+   *
+   * Foi tentado, e o resultado apareceu de imediato no `tinsel`: os raios
+   * atravessavam "linux" e a descrição do ataque, e a carta mais cara da escada
+   * era a de texto menos legível. Ali embaixo não há retrato para proteger, mas
+   * há tipografia de 12px — e o padrão é decoração de superfície, não pode ganhar
+   * do conteúdo.
+   *
+   * No layout padrão a superfície fora da janela é moldura, sem texto por cima
+   * de área grande, e continua em 100%.
+   */
+  const surface = fullArt ? 0.5 : 1;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>${art.defs}
+
+    <!-- Mesma construção do foil: a borda do recuo é desfocada porque um degrau
+         seco na moldura da janela lê como defeito de impressão. -->
+    <filter id="suavizar"><feGaussianBlur stdDeviation="8"/></filter>
+    <mask id="superficie">
+      <rect x="0" y="0" width="${W}" height="${H}" fill="${grey(surface)}"/>
+      <rect x="${win.x}" y="${win.y}" width="${win.width}" height="${win.height}" rx="${win.radius}"
+            fill="${grey(PATTERN_WINDOW)}" filter="url(#suavizar)"/>
+    </mask>
+
+    <clipPath id="carta">
+      <rect x="0" y="0" width="${W}" height="${H}" rx="${R}"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#carta)">
+    <g mask="url(#superficie)">
+      ${art.body(W, H)}
+    </g>
+  </g>
+</svg>`;
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Textura gravada
+ * ---------------------------------------------------------------------------
+ *
+ * O relevo tátil que a Ultra Rare em diante tem no TCG, e a coisa que faltava
+ * para o topo da escada parecer extraordinário em vez de "o mesmo foil, mais
+ * forte".
+ *
+ * **Uma diferença honesta em relação ao original:** na carta impressa a gravação
+ * segue o contorno da ilustração. Aqui ela não pode — a arte é o avatar, chega em
+ * runtime, e a textura é PNG assado em build. O contorno simplesmente não existe
+ * no momento em que este desenho é feito. A saída é geometria própria,
+ * independente da arte, que funciona com qualquer avatar porque não sabe que ele
+ * existe.
+ *
+ * Como é relevo e não brilho, são sempre duas linhas: uma clara e uma escura
+ * deslocada de 1px. É esse par que o olho lê como quina levantada — e é o único
+ * jeito de sugerir profundidade sem área escura chapada, que o Satori sem
+ * `mix-blend-mode` transformaria em véu cinza.
+ */
+
+export const TEXTURED_TIERS = ["ultra_rare", "special_illustration_rare", "hyper_rare"];
+
+/*
+ * Três geometrias, e a escolha delas tem uma restrição que só apareceu olhando:
+ * **a textura não pode competir com o padrão do eixo.**
+ *
+ * A primeira versão dava à `hyper_rare` um leque de raios saindo de um ponto — e
+ * raio gravado por cima de `tinsel`, que também é raio, deixou `cosmos` e
+ * `cracked` indistinguíveis no tier mais caro da escada. A textura de tier estava
+ * apagando exatamente o eixo que ela deveria deixar aparecer.
+ *
+ * Por isso nenhuma das três é radial, e as três são de famílias diferentes entre
+ * si e dos cinco padrões: grade reta, arco e onda. E todas são de baixo
+ * contraste: relevo é coisa que se nota olhando de perto, não que se anuncia.
+ */
+const TEXTURE_ART = {
+  /* Malha diagonal apertada — a mais contida das três. */
+  ultra_rare: { kind: "malha", step: 11, opacity: 0.16 },
+  /* Escamas: arcos entrelaçados, o desenho mais orgânico do conjunto. */
+  special_illustration_rare: { kind: "escamas", step: 22, opacity: 0.18 },
+  /* Ondas finas na horizontal, para a folheada. Não é radial de propósito. */
+  hyper_rare: { kind: "ondas", step: 9, opacity: 0.2 },
+};
+
+function textureBody(spec, W, H) {
+  const { step, opacity } = spec;
+  const pair = (d, o) =>
+    `<path d="${d}" fill="none" stroke="#FFFFFF" stroke-opacity="${o.toFixed(2)}" stroke-width="1.1"/>
+      <path d="${d}" fill="none" stroke="#1A1614" stroke-opacity="${(o * 0.5).toFixed(2)}" stroke-width="1.1" transform="translate(0 1.4)"/>`;
+
+  if (spec.kind === "malha") {
+    const lines = [];
+    for (let i = -H; i < W + H; i += step) {
+      lines.push(pair(`M${i} 0 L${i + H} ${H}`, opacity));
+      lines.push(pair(`M${i} ${H} L${i + H} 0`, opacity * 0.7));
+    }
+    return lines.join("\n      ");
+  }
+
+  if (spec.kind === "escamas") {
+    const scales = [];
+    for (let y = 0; y < H + step; y += step * 0.62) {
+      const offset = (y / (step * 0.62)) % 2 === 0 ? 0 : step / 2;
+      for (let x = -step; x < W + step; x += step) {
+        scales.push(
+          pair(`M${x + offset} ${y} a${step / 2} ${step / 2} 0 0 0 ${step} 0`, opacity),
+        );
+      }
+    }
+    return scales.join("\n      ");
+  }
+
+  // ondas: senoides horizontais, com a fase caminhando linha a linha para o
+  // conjunto não formar colunas verticais onde as cristas se alinham.
+  const waves = [];
+  for (let y = 0, row = 0; y < H + step; y += step, row += 1) {
+    const amplitude = 3.4;
+    const period = 62;
+    const phase = row * 11;
+    let d = `M0 ${y}`;
+    for (let x = 0; x <= W; x += period / 2) {
+      const direction = Math.round(x / (period / 2)) % 2 === 0 ? -1 : 1;
+      d += ` q${period / 4} ${(amplitude * direction).toFixed(1)} ${period / 2} 0`;
+    }
+    waves.push(pair(d, opacity * (0.7 + ((row + phase) % 3) * 0.15)));
+  }
+  return waves.join("\n      ");
+}
+
+/**
+ * Camada de textura, só nos três tiers do topo.
+ *
+ * Recua sobre o retrato com o mesmo mecanismo do padrão, e mais fundo ainda: a
+ * gravação é a camada mais dura de todas e a que mais destrói um rosto.
+ *
+ * **A zona de recuo não é a janela, no full-art.** Se fosse, a janela é a carta
+ * inteira e a textura recuaria em toda parte — foi o que aconteceu na primeira
+ * versão, e as duas cartas full-art do topo saíram sem gravação nenhuma, que é
+ * justamente o tier que ela existe para marcar. O que a textura precisa evitar é
+ * o **retrato**, não a janela; e no full-art o retrato acaba onde o scrim de
+ * baixo começa. Abaixo dali o fundo é escuro e chapado, que é onde relevo lê
+ * melhor numa carta de verdade.
+ */
+export function textureSvg(layout, tier, { fullArt = false } = {}) {
+  const spec = TEXTURE_ART[tier];
+  if (!spec) {
+    throw new Error(`Tier sem textura gravada: ${tier}`);
+  }
+
+  const { width: W, height: H, radius: R } = layout;
+
+  /* No layout padrão o retrato é a janela; no full-art é tudo acima do scrim. */
+  const portrait = fullArt
+    ? {
+        x: layout.fullArt.window.x,
+        y: layout.fullArt.window.y,
+        width: layout.fullArt.window.width,
+        height: layout.fullArt.bottomScrimTop - layout.fullArt.window.y,
+        radius: layout.fullArt.window.radius,
+      }
+    : layout.window;
+
+  const attenuation = Math.round(0.12 * 255)
+    .toString(16)
+    .padStart(2, "0")
+    .repeat(3);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <filter id="suavizar"><feGaussianBlur stdDeviation="8"/></filter>
+    <mask id="superficie">
+      <rect x="0" y="0" width="${W}" height="${H}" fill="#FFFFFF"/>
+      <rect x="${portrait.x}" y="${portrait.y}" width="${portrait.width}" height="${portrait.height}"
+            rx="${portrait.radius}" fill="#${attenuation}" filter="url(#suavizar)"/>
+    </mask>
+    <clipPath id="carta">
+      <rect x="0" y="0" width="${W}" height="${H}" rx="${R}"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#carta)">
+    <g mask="url(#superficie)">
+      ${textureBody(spec, W, H)}
+    </g>
+  </g>
+</svg>`;
+}

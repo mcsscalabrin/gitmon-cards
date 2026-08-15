@@ -4,12 +4,26 @@ import {
   cardTreatment,
   foilIntensity,
   hasFoil,
+  hasTexture,
   rarityForScore,
   raritySymbol,
   raritySymbolColor,
   raritySymbolSize,
 } from "@/lib/cards/rarity";
+import { AXES } from "@/lib/cards/ratings";
+import { dominantAxisForProfile, dominantAxisForRepo, patternForAxis, tagForAxis } from "@/lib/cards/tag";
 import { RARITIES } from "@/lib/cards/types";
+/*
+ * As listas vivas moram no gerador de arte, e é contra elas que o domínio tem
+ * que fechar — não contra uma cópia escrita aqui, e nem contra si mesmo.
+ *
+ * Importar `FOIL_PATTERNS` de `tag.ts` deixaria o teste tautológico: lá ele é
+ * derivado do mesmo `AXIS_PATTERNS` que a asserção verifica. O que pode divergir
+ * de verdade é domínio contra build — um padrão no mapa sem SVG correspondente é
+ * um `patternUri` apontando para arquivo que não existe, e o erro aparece na
+ * imagem, em produção.
+ */
+import { FOIL_PATTERNS, TEXTURED_TIERS } from "../../scripts/lib/art.mjs";
 
 describe("escada de raridade", () => {
   it("mapeia cada faixa para o tier correspondente", () => {
@@ -217,5 +231,141 @@ describe("intensidade do foil ao vivo", () => {
       expect(bands, tier).toHaveLength(4);
       for (const color of bands) expect(color, tier).toMatch(/^#[0-9A-F]{6}$/i);
     }
+  });
+});
+
+/*
+ * A textura é a camada que separa o topo do resto, e é a única que a build gera
+ * por tier em vez de por eixo. Os dois lados podem divergir sem quebrar
+ * compilação: um tier em `hasTexture` sem arquivo em `TEXTURED_TIERS` vira um
+ * `dataUri` apontando para um PNG que não existe, e o erro aparece na imagem, em
+ * produção. Mesma armadilha que `foil.json` já fechou para o foil.
+ */
+describe("textura gravada", () => {
+  it("começa na ultra_rare, como o relevo tátil do TCG", () => {
+    expect(hasTexture("illustration_rare")).toBe(false);
+    expect(hasTexture("ultra_rare")).toBe(true);
+    expect(hasTexture("special_illustration_rare")).toBe(true);
+    expect(hasTexture("hyper_rare")).toBe(true);
+  });
+
+  it("cobre exatamente os tiers que a build assa", () => {
+    expect(RARITIES.filter(hasTexture).sort()).toEqual([...TEXTURED_TIERS].sort());
+  });
+
+  it("nunca aparece sem foil por baixo", () => {
+    for (const rarity of RARITIES) {
+      if (hasTexture(rarity)) expect(hasFoil(rarity), rarity).toBe(true);
+    }
+  });
+});
+
+/*
+ * O segundo eixo do sistema. A raridade responde "quão raro"; o eixo responde
+ * "de que tipo", e é o que faz duas cartas do mesmo tier deixarem de ser a mesma
+ * carta.
+ */
+describe("eixo, tag e padrão", () => {
+  it("dá uma tag e um padrão a cada eixo, sem repetir nenhum", () => {
+    const tags = AXES.map(tagForAxis);
+    const patterns = AXES.map(patternForAxis);
+    expect(new Set(tags).size).toBe(AXES.length);
+    expect(new Set(patterns).size).toBe(AXES.length);
+  });
+
+  it("só usa padrões que a build gera, e a build não gera padrão órfão", () => {
+    for (const axis of AXES) expect(FOIL_PATTERNS, axis).toContain(patternForAxis(axis));
+    expect([...FOIL_PATTERNS].sort()).toEqual(AXES.map(patternForAxis).sort());
+  });
+
+  /*
+   * O ponto da arquitetura de cinco arquivos: o padrão não pode depender do
+   * tier, senão voltam a ser 5 × 6 × 2 = 60 PNGs. Se alguém acoplar os dois, é
+   * aqui que aparece.
+   */
+  it("é ortogonal à raridade — o mesmo eixo dá o mesmo padrão em todo tier", () => {
+    for (const axis of AXES) {
+      const esperado = patternForAxis(axis);
+      for (const rarity of RARITIES.filter(hasFoil)) {
+        expect(patternForAxis(axis), `${axis}/${rarity}`).toBe(esperado);
+      }
+    }
+  });
+
+  it("é determinístico: a mesma entrada devolve o mesmo eixo", () => {
+    const entrada = { stars: 900, followers: 120, repos: 40, years: 7, languages: 5 };
+    expect(dominantAxisForProfile(entrada)).toBe(dominantAxisForProfile(entrada));
+  });
+
+  /*
+   * Sem desempate fixo, dois eixos empatados poderiam sair em ordem diferente
+   * entre duas gerações da mesma carta — e a carta trocaria de tag sem nada ter
+   * mudado no GitHub. Conta zerada é o caso mais comum de empate que existe.
+   */
+  it("desempata pela ordem de AXES quando tudo empata em zero", () => {
+    const zerado = { stars: 0, followers: 0, repos: 0, years: 0, languages: 0 };
+    expect(dominantAxisForProfile(zerado)).toBe(AXES[0]);
+  });
+
+  it("aponta o eixo realmente dominante do perfil", () => {
+    // Muitos repositórios, pouca tração: volume ganha com folga dos outros.
+    expect(
+      dominantAxisForProfile({ stars: 50, followers: 20, repos: 800, years: 8, languages: 4 }),
+    ).toBe("volume");
+
+    // Conta nova que só escreve numa linguagem: sobra a veterania.
+    expect(
+      dominantAxisForProfile({ stars: 0, followers: 0, repos: 2, years: 4, languages: 1 }),
+    ).toBe("veterancy");
+  });
+
+  /*
+   * O teto satura, e isso é escolha e não bug: `CEILINGS.reach` é 250.000, e
+   * sindresorhus tem 851.000 estrelas. Quem passa do teto empata com quem está
+   * nele, então no topo absoluto o eixo tende a `reach` mesmo com 1.141
+   * repositórios (que dão 98 contra o 99 saturado). Registrar isto num teste
+   * evita que alguém "conserte" o clamp sem perceber que ele é o desenho.
+   */
+  it("satura no teto em vez de premiar quem passa dele", () => {
+    expect(
+      dominantAxisForProfile({
+        stars: 851_000,
+        followers: 81_000,
+        repos: 1_141,
+        years: 17,
+        languages: 6,
+      }),
+    ).toBe("reach");
+  });
+
+  /*
+   * `POLY` é exclusiva de perfil. Não é regra especial inventada para criar
+   * escassez: um repositório tem uma linguagem dominante por construção, e
+   * "amplitude de linguagens" não é pergunta que se faça a ele.
+   */
+  it("nunca devolve breadth para repositório", () => {
+    const casos = [
+      { stars: 0, forks: 0, openIssues: 0, years: 0 },
+      { stars: 400_000, forks: 80_000, openIssues: 10_000, years: 20 },
+      { stars: 1, forks: 99_999, openIssues: 3, years: 1 },
+    ];
+    for (const caso of casos) expect(dominantAxisForRepo(caso)).not.toBe("breadth");
+  });
+
+  it("separa os eixos do repositório pelas métricas próprias dele", () => {
+    // Biblioteca muito estrelada e pouco forkada: alcance com folga.
+    expect(dominantAxisForRepo({ stars: 200_000, forks: 900, openIssues: 40, years: 6 })).toBe(
+      "reach",
+    );
+
+    // Monorepo de organização: fila de issues enorme para o que ele tem de estrela.
+    expect(dominantAxisForRepo({ stars: 400, forks: 90, openIssues: 9_000, years: 5 })).toBe(
+      "volume",
+    );
+
+    // Projeto antigo e parado: só a idade sobrou.
+    expect(dominantAxisForRepo({ stars: 3, forks: 0, openIssues: 0, years: 15 })).toBe(
+      "veterancy",
+    );
   });
 });

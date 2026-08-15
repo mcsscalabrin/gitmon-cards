@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { cardTreatment, foilIntensity, hasFoil } from "@/lib/cards/rarity";
+import { cardTreatment, foilIntensity, hasFoil, hasTexture } from "@/lib/cards/rarity";
+import type { Axis } from "@/lib/cards/ratings";
+import { patternForAxis } from "@/lib/cards/tag";
 import type { Rarity } from "@/lib/cards/types";
 import {
   DEFAULT_LOCALE,
@@ -57,6 +59,7 @@ export function TiltCard({
   alt,
   priority = false,
   rarity,
+  axis,
   flippable = false,
   startFlipped = false,
   back = "/assets/backs/card-back.svg",
@@ -71,6 +74,15 @@ export function TiltCard({
    * lá a carta fica lisa, com inclinação e brilho, e sem foil.
    */
   rarity?: Rarity;
+  /**
+   * Eixo dominante da carta. Escolhe a **geometria** do padrão holográfico, do
+   * mesmo jeito que escolhe o `patterns/<padrão>.png` do PNG impresso.
+   *
+   * Opcional pela mesma razão que `rarity`: a home monta as cartas de exemplo só
+   * com o caminho do PNG. Sem ele a pilha cai no `linear`, que é o padrão mais
+   * discreto e o do eixo mais comum — nunca fica sem geometria nenhuma.
+   */
+  axis?: Axis;
   /**
    * Liga o flip: um clique (ou Enter/Espaço) gira a carta e revela o verso.
    * Fica desligado na home, onde a carta é um link para o perfil.
@@ -111,6 +123,25 @@ export function TiltCard({
   const foil = rarity !== undefined && hasFoil(rarity);
   const intensity = rarity === undefined ? 0 : foilIntensity(rarity);
   const metal = rarity === undefined ? null : cardTreatment(rarity).metal;
+
+  /*
+   * As duas camadas que o PNG impresso ganhou, espelhadas ao vivo. O eixo escolhe
+   * a geometria, o tier decide se há relevo gravado — exatamente a mesma divisão
+   * de `renderCard.tsx`. Sem isto o site mostraria um foil que a carta que ele
+   * está exibindo não tem, que é o tipo de divergência que a RFC 4.2 existe para
+   * impedir.
+   */
+  const pattern = patternForAxis(axis ?? "reach");
+  /* O tier em vez de um booleano: a textura tem geometria própria por tier, e o
+     CSS precisa saber qual PNG usar. */
+  const texture = rarity !== undefined && hasTexture(rarity) ? rarity : null;
+  /*
+   * O full-art precisa chegar ao CSS pela mesma razão que chegou ao `foilSvg`:
+   * ali a carta inteira é retrato, e o espectro que pousa bem sobre uma face
+   * clara apaga um rosto. É a lição do `FULL_ART_SPECTRUM` do impresso, e sem
+   * ela aqui as duas superfícies voltam a discordar.
+   */
+  const fullArt = rarity !== undefined && cardTreatment(rarity).fullArt;
 
   const paint = useCallback((node: HTMLDivElement, p: Pointer) => {
     const style = node.style;
@@ -258,7 +289,16 @@ export function TiltCard({
               height={700}
               fetchPriority={priority ? "high" : "auto"}
             />
-            {foil ? <HoloFoil filterId={filterId} lightRef={lightRef} metal={metal} /> : null}
+            {foil ? (
+              <HoloFoil
+                filterId={filterId}
+                lightRef={lightRef}
+                metal={metal}
+                pattern={pattern}
+                texture={texture}
+                fullArt={fullArt}
+              />
+            ) : null}
             <span className="tilt-glare" aria-hidden="true" />
           </div>
 
@@ -291,8 +331,15 @@ export function TiltCard({
  *
  *   `tilt-foil`      relevo especular — o grão metálico que reflete
  *   `tilt-spectral`  faixas de espectro — a cor que varre quando a carta inclina
+ *   `tilt-pattern`   a geometria do eixo — o que separa duas cartas do mesmo tier
  *   `tilt-sheen`     lâmina diagonal — o reflexo duro da fonte de luz
  *   `tilt-grain`     granulado fixo — tira o aspecto liso de gradiente CSS
+ *
+ * `tilt-pattern` e `tilt-engraved` são as duas que chegaram junto com o segundo
+ * eixo, e existem para o site não desmentir o PNG que ele está exibindo: o
+ * impresso passou a ter cinco geometrias de padrão e relevo gravado nos três
+ * tiers do topo, e uma pilha ao vivo com uma geometria só mostraria um foil que
+ * a carta embaixo não tem.
  *
  * A luz **não** anima sozinha: `fePointLight` segue o ponteiro, reaproveitando a
  * posição que o tilt já calcula. Um brilho em loop foi exatamente o que o autor
@@ -305,13 +352,26 @@ function HoloFoil({
   filterId,
   lightRef,
   metal,
+  pattern,
+  texture,
+  fullArt,
 }: {
   filterId: string;
   lightRef: React.RefObject<SVGFEPointLightElement | null>;
   metal: "silver" | "gold" | null;
+  pattern: string;
+  texture: Rarity | null;
+  fullArt: boolean;
 }) {
   return (
-    <span className="tilt-holo" aria-hidden="true" data-metal={metal ?? undefined}>
+    <span
+      className="tilt-holo"
+      aria-hidden="true"
+      data-metal={metal ?? undefined}
+      data-pattern={pattern}
+      data-texture={texture ?? undefined}
+      data-fullart={fullArt || undefined}
+    >
       <span className="tilt-foil">
         <svg className="tilt-foil-svg" viewBox="0 0 100 140" preserveAspectRatio="none">
           <defs>
@@ -370,7 +430,9 @@ function HoloFoil({
       </span>
 
       <span className="tilt-spectral" />
+      <span className="tilt-pattern" />
       <span className="tilt-sheen" />
+      {texture ? <span className="tilt-engraved" /> : null}
       <span className="tilt-grain" />
     </span>
   );

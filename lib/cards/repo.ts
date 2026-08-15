@@ -9,9 +9,12 @@ import {
   roundToTen,
   truncate,
   year,
+  yearsSince,
 } from "./format";
 import { elementKey, rarityKey } from "../i18n/dictionaries";
 import { rarityForScore } from "./rarity";
+import { dominantAxisForRepo, tagForAxis } from "./tag";
+import type { Axis } from "./ratings";
 import type { Attack, Card, Derivation, Element } from "./types";
 
 /**
@@ -54,6 +57,18 @@ export function buildRepoCard(
   const rarity = rarityForScore(score);
   const { attacks, fromContributors } = attacksFrom(repo, contributors);
 
+  /*
+   * Eixo dominante — ver `dominantAxisForRepo` para por que as métricas não são
+   * as mesmas do perfil. `breadth` é inatingível aqui de propósito, então `POLY`
+   * é tag exclusiva de perfil.
+   */
+  const axis = dominantAxisForRepo({
+    stars: repo.stargazers_count,
+    forks: repo.forks_count,
+    openIssues: repo.open_issues_count,
+    years: yearsSince(repo.created_at, now),
+  });
+
   return {
     kind: "repo",
     id: repo.full_name,
@@ -66,6 +81,7 @@ export function buildRepoCard(
     // 1 pip por 50 issues abertas, teto de 4. Ver justificativa (2) acima.
     retreat,
     rarity,
+    axis,
     // Atribuído fora daqui — ver `withSerial` em `./serial.ts`.
     serial: null,
     artUrl: repo.owner.avatar_url,
@@ -87,6 +103,7 @@ export function buildRepoCard(
       resistance,
       retreat,
       rarity,
+      axis,
       score,
       freshness,
     }),
@@ -102,10 +119,11 @@ export function buildRepoCard(
  * aqui o sujeito é o repositório, não quem está lendo. Chaves próprias, sob
  * `why.repo.*`.
  *
- * Não há radar do lado do repositório — os cinco eixos de `./ratings.ts` são de
- * perfil (seguidores, anos de conta) e não têm equivalente óbvio aqui. A coluna
- * esquerda fica com a primeira metade das derivações, e é o suficiente para a
- * página parar de sair com as duas laterais vazias.
+ * Continua não havendo radar do lado do repositório: `ratings` é afordância do
+ * site e os tetos de `./ratings.ts` são de perfil. O que o repositório passou a
+ * ter é o **eixo dominante**, que é outra coisa — ele não desenha polígono, só
+ * escolhe a tag e o padrão do foil, e roda sobre os tetos próprios de
+ * `REPO_CEILINGS`. A coluna esquerda fica com a primeira metade das derivações.
  */
 function repoDerivations(input: {
   repo: GitHubRepo;
@@ -117,6 +135,7 @@ function repoDerivations(input: {
   resistance: Element | null;
   retreat: number;
   rarity: Card["rarity"];
+  axis: Axis;
   score: number;
   freshness: number;
 }): Derivation[] {
@@ -171,6 +190,11 @@ function repoDerivations(input: {
       // O bônus de atividade é a parte não óbvia do score, e a única que pode
       // cair com o tempo — some da frase quando é zero, e o motivo aparece.
       ...rarityReason(input),
+    },
+    {
+      labelKey: "card.tagLabel",
+      value: tagForAxis(input.axis),
+      reasonKey: `why.repo.tag.${input.axis}`,
     },
   ];
 }

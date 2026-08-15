@@ -3,6 +3,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 import layout from "../cards/layout.json";
 import type { CardEdge, MetalTone } from "../cards/rarity";
+import type { FoilPattern } from "../cards/tag";
 import type { Element, Rarity } from "../cards/types";
 
 /**
@@ -65,7 +66,8 @@ export async function loadFonts(): Promise<SatoriFont[]> {
 
 export const frameUri = (element: Element, fullArt = false) =>
   dataUri(`frames/${fullArt ? "fullart-" : ""}${element}.png`);
-export const metalUri = (tone: MetalTone) => dataUri(`frames/metal-${tone}.png`);
+export const metalUri = (tone: MetalTone, fullArt = false) =>
+  dataUri(`frames/${fullArt ? "fullart-" : ""}metal-${tone}.png`);
 export const edgeUri = (edge: CardEdge) => dataUri(`frames/edge-${edge}.png`);
 export const energyUri = (element: Element) => dataUri(`energy/${element}.png`);
 export const retreatUri = () => dataUri("icons/retreat.png");
@@ -75,6 +77,20 @@ export const retreatUri = () => dataUri("icons/retreat.png");
  */
 export const foilUri = (rarity: Rarity, fullArt = false) =>
   dataUri(`frames/${fullArt ? "fullart-" : ""}foil-${rarity}.png`);
+
+/**
+ * Padrão do foil, escolhido pelo **eixo** e não pela raridade.
+ *
+ * Não há tier no nome do arquivo de propósito: o padrão é a geometria, e a força
+ * dela vem de `foilIntensity()` aplicada como `opacity` na composição. Ver
+ * `AXIS_PATTERNS` em `lib/cards/tag.ts` e `patternSvg` em `scripts/lib/art.mjs`.
+ */
+export const patternUri = (pattern: FoilPattern, fullArt = false) =>
+  dataUri(`patterns/${fullArt ? "fullart-" : ""}${pattern}.png`);
+
+/** Textura gravada. Só os três tiers do topo têm arquivo — ver `hasTexture`. */
+export const textureUri = (rarity: Rarity, fullArt = false) =>
+  dataUri(`textures/${fullArt ? "fullart-" : ""}${rarity}.png`);
 
 /**
  * Avatar do GitHub, redimensionado no servidor.
@@ -91,7 +107,7 @@ export async function avatarUri(
   size: number = layout.art.width,
 ): Promise<string | null> {
   try {
-    const response = await fetch(url, {
+    const response = await fetch(sourceAtLeast(url, size), {
       headers: { "User-Agent": "gitmon-cards" },
       signal: AbortSignal.timeout(5000),
     });
@@ -106,5 +122,28 @@ export async function avatarUri(
     return `data:image/png;base64,${png.toString("base64")}`;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Pede ao GitHub um avatar grande o bastante para o destino.
+ *
+ * Passou a importar quando o full-art virou face inteira: a janela ficou 472×672
+ * e a arte é quadrada, então o lado tem que ser 672. O avatar padrão vem em
+ * ~460px, e deixar o `sharp` ampliar 1,46× entrega justo o tier mais caro da
+ * escada com a arte mais borrada da carta — o oposto do que ele deveria ser.
+ *
+ * `?s=` é parâmetro do próprio `avatars.githubusercontent.com` e devolve o
+ * original reamostrado no servidor deles. Fora desse host a URL não é tocada:
+ * inventar query em domínio alheio é caminho para 404.
+ */
+function sourceAtLeast(url: string, size: number): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== "avatars.githubusercontent.com") return url;
+    parsed.searchParams.set("s", String(size));
+    return parsed.toString();
+  } catch {
+    return url;
   }
 }

@@ -42,7 +42,8 @@ numbers**. The second one is deliberate — see `.env.example`, which argues the
 | `npm run lint` | ESLint (`eslint . --max-warnings=0`) |
 | `npm run test:e2e` | Playwright (needs `npx playwright install chromium` first) |
 | `PREVIEW=<dir> npm test` | Writes the rendered PNGs to disk so you can look at them |
-| `npm run assets` | Regenerates frames, foil, metal and energy icons |
+| `npm run sheet` | Tiles those PNGs into one contact sheet at thumbnail size |
+| `npm run assets` | Regenerates frames, foil, pattern, texture, metal and energy icons |
 | `npm run fonts` | Downloads and subsets the card font — TTF for Satori, WOFF2 for the site |
 
 On PowerShell the preview variable goes first, separately: `$env:PREVIEW="out"; npm test`.
@@ -116,6 +117,20 @@ None were caught by a test. All were caught by a screenshot.
 
 If your PR touches the card, run `PREVIEW=<dir> npm test` and look at the PNGs. If it touches the
 page, start `npm run dev` and look. Describe in the PR what you saw.
+
+**Look at it small.** The declared target is reading in one second in a feed, and checking that at
+100% zoom verifies the opposite of what you want to verify. `npm run sheet` tiles the preview
+matrix into a single image at 150px per card — the width the card actually lives at in a scroll:
+
+```
+$env:PREVIEW="out/preview"; npm test
+npm run sheet                                       # out/folha-150.png
+npm run sheet -- out/preview/matriz out/f.png 300   # or any width
+```
+
+The matrix that matters is **8 tiers × 5 axes**, not 8 tiers. Rarity is only half the system now:
+the other half is whether two cards of the *same* tier with different axes look different, and that
+only shows up with the five side by side.
 
 Two warnings that save an hour of debugging:
 
