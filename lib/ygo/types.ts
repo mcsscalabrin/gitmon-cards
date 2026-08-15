@@ -101,8 +101,11 @@ export interface YgoState {
 }
 
 export type YgoAction =
-  /** Invoca monstro da mão numa zona vazia. */
-  | { kind: "summon"; handIndex: number; position: MonsterPosition }
+  /**
+   * Invoca monstro da mão. `zone` é a zona onde o jogador soltou a carta no
+   * drag & drop; sem ele, cai na primeira vaga livre (IA e replay legado).
+   */
+  | { kind: "summon"; handIndex: number; position: MonsterPosition; zone?: number }
   /** Ativa magia da mão (efeito resolve na hora, carta vai ao cemitério). */
   | { kind: "spell"; handIndex: number }
   /** Baixa armadilha virada para baixo numa zona S/T vazia. */

@@ -478,7 +478,10 @@ export function applyAction(state: YgoState, side: Side, action: YgoAction): App
   if (state.phase === "main") {
     if (action.kind === "summon") {
       const card = field.hand.splice(action.handIndex, 1)[0];
-      const zone = field.monsters.findIndex((m) => !m);
+      const zone =
+        action.zone !== undefined && !field.monsters[action.zone]
+          ? action.zone
+          : field.monsters.findIndex((m) => !m);
       field.monsters[zone] = { card, position: action.position, attacked: false };
       field.summoned = true;
       pushStep(state, action, null, card.name);

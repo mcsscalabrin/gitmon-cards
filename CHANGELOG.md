@@ -5,122 +5,161 @@ All notable changes to this project will be documented in this file.
 Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 
-## [0.2.0](2026-08-12)
+## [0.3.0](2026-08-15)
 
-### Components
+### Duelo-yugioh
 
 #### Features
 
-- adds useEffect import and adds useEffect
-- adds useRef, UserSearchInput import and removes useState import and adds inputRef, resolved and removes target
+- updates logic
+- arena do speed duel estilo Duel Links (board, replay e poster)
+- sistema de duelo v2 (motor, arbitro, board, replay e poster)
+
+
+### E2e
+
+#### Bug Fixes
+
+- testa producao no endereco publico, e cobre o cache onde ele e visivel
+- sonda a protecao da Vercel antes da suite, e agrupa as majors de lint
+
+#### Tests
+
+- espera a hidratacao antes de mandar Escape no pacote
+
+
+### Deps-dev
+
+#### Chores
+
+- sobe vitest para 4.1.10 e tira a config de JSX que sobrou
+- bump typescript from 5.9.3 to 7.0.2
+- bump eslint from 9.39.5 to 10.8.1
+
+
+### Deps
+
+#### Bug Fixes
+
+- regenera o package-lock e volta eslint e typescript ao par suportado
+
+#### Chores
+
+- bump actions/checkout from 4 to 7 in the actions group
+
+
+### Lib
+
+#### Refactoring
+
+- removes test import and adds canDrag, zone and removes zone, hand
+
+
+### Tests
+
+#### Features
+
+- adds and import and adds hand, hint and removes hand, glow
 
 
 ### App
 
 #### Features
 
-- adds NotFound function and adds Link, Shell, translator import
-- updates icon, layout
+- adds Link, translator, ROSTER_LOGINS import and adds t, canDuel
 
 
-### Lib
+### Home
 
 #### Features
 
-- adds baseUrl import and adds oauthConfig, clientId in oauth
+- a landing cabe numa tela, com trama no fundo e as cartas na mao
+
+
+### Pack
+
+#### Features
+
+- o rasgo revela o verso da carta, e a pagina atras fica borrada
+
+
+### Art
+
+#### Features
+
+- troca os 18 icones de tipo pela v2, e a paleta segue junto
+
+
+### Mobile
 
 #### Bug Fixes
 
-- removes baseUrl import and adds appBaseUrl, explicit and removes appBaseUrl in oauth
+- corta o sangramento na tela, e devolve o pacote ao centro
 
 
-### CHANGELOG
+### Brand
 
-#### Documentation
+#### Features
 
-- adds and import
+- emblema do verso da carta como favicon, navbar e pacote
 
 
 ### General
 
 #### Features
 
-- adds Image, type import
-- adds useState, AXES, type import
-- adds searchUsers, useRef, UserSearchInput import and removes useState import and adds dynamic, GET and removes target and adds useState, useRef, useId
-- adds checkCardRateLimit, type, getRedisClient import and adds discoverPool, pool and removes authHeaders, token
-- o site passa a falar a lingua da carta
-- levar a carta embora -- previa de link, baixar PNG e compartilhar
-- a raridade se expressa em superficie e borda, nao so em simbolo
-- mais arte, e a solda entre arte e moldura
-- HP como heroi numerico do cabecalho
-- serial como elemento de design, e o rodape redesenhado sem ele
-- foil impresso reassado em quatro camadas
-- foil holografico por camadas e aureola do elemento
-- icones de tipo na interface
-- derivacoes da carta de repositorio
-- arranjo simetrico da pagina da carta
-- radar de assinatura do perfil
-- 18 tipos, escada de raridade do TCG, serial e explicacao dos status
-- batalha, site bilingue e carta interativa
-- arte original, renderizacao da imagem e rotas de card
-- base Next.js, dominio de cartas e scoring
+- adds and, useEffect import and removes useEffect import and adds rootRef, dragFromRef and removes handleDragStart, handleDragEnd
+- adds useEffect import and adds useMemo
+- credita os dois autores no rodape, e abre o README com a marca e os tipos
 
-#### Bug Fixes
+#### Refactoring
 
-- inclinacao 3D da carta nunca chegou a aplicar
+- adds useState
 
 #### Documentation
 
-- estado real depois da fase 1 do revamp
-- plano do revamp visual e as decisoes que o travam
-- secao de contribuicao no README
-- README conciliado com o codigo
-- concilia RFC e specs com os 18 tipos
-- handoff da sessao com o contexto que nao esta no codigo
+- README em ingles, CONTRIBUTING proprio e templates de issue e PR
+- registra por que o e2e esta vermelho e o que a esteira ensinou
 
-#### Chores
+#### CI/CD
 
-- scaffold inicial do gitmon-cards
+- nao reprova PR de fork, e nomeia o ambiente que falta antes do deploy
 
 
 ### Contributors
 
-Thank you to 2 community contributors:
+Thank you to 3 community contributors:
 
 @mcsscalabrin
-- feat: foil holografico por camadas e aureola do elemento
-- fix: inclinacao 3D da carta nunca chegou a aplicar
-- docs: secao de contribuicao no README
-- docs: README conciliado com o codigo
-- docs: concilia RFC e specs com os 18 tipos
-- feat: icones de tipo na interface
-- feat: derivacoes da carta de repositorio
-- docs: handoff da sessao com o contexto que nao esta no codigo
-- feat: arranjo simetrico da pagina da carta
-- feat: radar de assinatura do perfil
-- feat: 18 tipos, escada de raridade do TCG, serial e explicacao dos status
-- feat: o site passa a falar a lingua da carta
-- feat: levar a carta embora -- previa de link, baixar PNG e compartilhar
-- docs: estado real depois da fase 1 do revamp
-- feat: a raridade se expressa em superficie e borda, nao so em simbolo
-- feat: mais arte, e a solda entre arte e moldura
-- feat: HP como heroi numerico do cabecalho
-- feat: serial como elemento de design, e o rodape redesenhado sem ele
-- feat: foil impresso reassado em quatro camadas
-- docs: plano do revamp visual e as decisoes que o travam
+- feat(home): a landing cabe numa tela, com trama no fundo e as cartas na mao
+- feat(art): troca os 18 icones de tipo pela v2, e a paleta segue junto
+- test(e2e): espera a hidratacao antes de mandar Escape no pacote
+- fix(mobile): corta o sangramento na tela, e devolve o pacote ao centro
+- feat: credita os dois autores no rodape, e abre o README com a marca e os tipos
+- fix(e2e): testa producao no endereco publico, e cobre o cache onde ele e visivel
+- docs: README em ingles, CONTRIBUTING proprio e templates de issue e PR
+- ci: nao reprova PR de fork, e nomeia o ambiente que falta antes do deploy
+- fix(e2e): sonda a protecao da Vercel antes da suite, e agrupa as majors de lint
+- chore(deps-dev): sobe vitest para 4.1.10 e tira a config de JSX que sobrou
+- fix(deps): regenera o package-lock e volta eslint e typescript ao par suportado
+- feat(brand): emblema do verso da carta como favicon, navbar e pacote
+- docs: registra por que o e2e esta vermelho e o que a esteira ensinou
 
 @benogoulart
-- feat(components): adds useEffect import and adds useEffect
-- feat: adds Image, type import
-- feat: adds useState, AXES, type import
-- feat(app): adds NotFound function and adds Link, Shell, translator import
-- docs(CHANGELOG): adds and import
-- feat(app): updates icon, layout
-- feat(components): adds useRef, UserSearchInput import and removes useState import and adds inputRef, resolved and removes target
-- feat: adds searchUsers, useRef, UserSearchInput import and removes useState import and adds dynamic, GET and removes target and adds useState, useRef, useId
-- fix(lib): removes baseUrl import and adds appBaseUrl, explicit and removes appBaseUrl in oauth
-- feat(lib): adds baseUrl import and adds oauthConfig, clientId in oauth
-- feat: adds checkCardRateLimit, type, getRedisClient import and adds discoverPool, pool and removes authHeaders, token
+- feat(duelo-yugioh): updates logic
+- feat(duelo-yugioh): arena do speed duel estilo Duel Links (board, replay e poster)
+- feat(duelo-yugioh): sistema de duelo v2 (motor, arbitro, board, replay e poster)
+- feat(pack): o rasgo revela o verso da carta, e a pagina atras fica borrada
+- feat: adds and, useEffect import and removes useEffect import and adds rootRef, dragFromRef and removes handleDragStart, handleDragEnd
+- refactor(lib): removes test import and adds canDrag, zone and removes zone, hand
+- feat(tests): adds and import and adds hand, hint and removes hand, glow
+- feat(app): adds Link, translator, ROSTER_LOGINS import and adds t, canDuel
+- feat: adds useEffect import and adds useMemo
+- refactor: adds useState
 
-**Contributors:** @mcsscalabrin, @benogoulart
+@49699333
+- chore(deps-dev): bump typescript from 5.9.3 to 7.0.2
+- chore(deps-dev): bump eslint from 9.39.5 to 10.8.1
+- chore(deps): bump actions/checkout from 4 to 7 in the actions group
+
+**Contributors:** @mcsscalabrin, @benogoulart, @49699333

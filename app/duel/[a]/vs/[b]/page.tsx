@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { DuelBoard } from "@/components/duel/DuelBoard";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Shell } from "@/components/ui/Shell";
 import { getProfileCard } from "@/lib/cards";
 import type { Card } from "@/lib/cards";
 import { randomSeed } from "@/lib/duel/engine";
+import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 
 /**
@@ -24,6 +26,7 @@ export default async function Page({
 }) {
   const { a, b } = await params;
   const locale = await getLocale();
+  const t = translator(locale);
 
   let cardA: Card;
   let cardB: Card;
@@ -39,6 +42,9 @@ export default async function Page({
 
   return (
     <Shell locale={locale}>
+      <div className="mode-switch">
+        <Link href={`/ygo/${a}/vs/${b}`}>{t("battle.asYgo")}</Link>
+      </div>
       <DuelBoard a={cardA} b={cardB} seed={randomSeed()} locale={locale} />
     </Shell>
   );

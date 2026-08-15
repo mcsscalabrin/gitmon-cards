@@ -59,6 +59,9 @@ export default async function DuelPage({ params }: Params) {
           <Link className="button" href={`/duel/${duel.a.id}/vs/${duel.b.id}`}>
             {t("duel.rematch")}
           </Link>
+          <Link className="button" href={`/ygo/${duel.a.id}/vs/${duel.b.id}`}>
+            {t("battle.asYgo")}
+          </Link>
           <Link className="ghost-link" href={`/${duel.a.id}`}>
             {duel.a.name}
           </Link>
