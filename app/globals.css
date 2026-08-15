@@ -2801,3 +2801,369 @@ select {
   color: var(--text-faint);
 }
 
+
+/* ------------------------------------------------------- arena speed duel */
+
+.ygo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 680px;
+}
+
+.ygo-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--side, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ygo-player[data-side="a"] { --side: var(--side-a); }
+.ygo-player[data-side="b"] { --side: var(--side-b); }
+
+.ygo-player[data-active] {
+  border-left-color: var(--side);
+  box-shadow: 0 0 0 1px var(--side);
+}
+
+.ygo-player strong {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ygo-lp-bar {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.ygo-lp-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--side);
+  transition: width 0.4s ease;
+}
+
+.ygo-lp-value {
+  font-size: 20px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--side);
+}
+
+.ygo-hand {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  min-height: calc(var(--ygo-card-w) * 1.42);
+}
+
+.ygo-deck {
+  align-self: center;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px dashed var(--border-strong);
+}
+
+.ygo-zonegrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ygo-zones {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 320px;
+}
+
+.ygo-zone {
+  --ygo-card-w: clamp(52px, 13vw, 68px);
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: calc(var(--ygo-card-w) * 1.42);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg-sunken) 60%, transparent);
+}
+
+.ygo-zone[data-flash] {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  animation: ygo-flash 0.45s ease;
+}
+
+@keyframes ygo-flash {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 18px transparent;
+  }
+}
+
+.ygo-zone-empty {
+  width: 46%;
+  height: 46%;
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.ygo-card {
+  --ygo-card-w: clamp(52px, 13vw, 68px);
+  position: relative;
+  width: var(--ygo-card-w);
+  aspect-ratio: 5 / 7;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-sunken);
+}
+
+.ygo-card-back {
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--side, var(--accent)) 30%, transparent) 0 30%, transparent 31%),
+    linear-gradient(160deg, color-mix(in srgb, var(--side, var(--accent)) 22%, var(--bg)) 0 45%, var(--bg) 45% 55%, color-mix(in srgb, var(--side, var(--accent)) 18%, var(--bg)) 55%);
+}
+
+.ygo-card-monster {
+  display: grid;
+  padding: 3px;
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-sunken) 100%);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.ygo-card-monster[data-pos="defense"] {
+  transform: rotate(90deg);
+}
+
+.ygo-card-monster[data-attacked] {
+  opacity: 0.55;
+}
+
+.ygo-card-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+  border-radius: 4px;
+}
+
+.ygo-card-level {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.ygo-card-atk,
+.ygo-card-def {
+  position: absolute;
+  bottom: 3px;
+  z-index: 1;
+  padding: 1px 4px;
+  font-size: 10px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
+  border-radius: 3px;
+}
+
+.ygo-card-atk { left: 3px; }
+.ygo-card-def { right: 3px; }
+
+.ygo-card-skill {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-width: 2px;
+  background: color-mix(in srgb, var(--kind-color, var(--accent)) 18%, var(--bg-sunken));
+  border-color: var(--kind-color, var(--accent));
+}
+
+.ygo-card-skill[data-kind="spell"] { --kind-color: var(--accent); }
+.ygo-card-skill[data-kind="trap"] { --kind-color: var(--danger); }
+
+.ygo-card-name {
+  position: relative;
+  z-index: 1;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+.ygo-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px;
+}
+
+.ygo-phase {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.ygo-phase[data-window] {
+  color: var(--danger);
+  animation: ygo-window 1s ease infinite alternate;
+}
+
+@keyframes ygo-window {
+  from { opacity: 1; }
+  to { opacity: 0.45; }
+}
+
+.ygo-narration {
+  margin: 0;
+  font-size: 15px;
+  text-align: center;
+  color: var(--text);
+}
+
+.ygo-status,
+.ygo-saving {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.ygo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.ygo-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 13px;
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.ygo-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* -------------------------------------------------- replay do speed duel */
+
+.ygo-replay {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+}
+
+.ygo-replay-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+}
+
+.ygo-replay-vs {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 18px;
+}
+
+.ygo-replay-vs span {
+  font-weight: 900;
+  max-width: 40vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ygo-replay-vs span[data-side="a"] { color: var(--side-a); }
+.ygo-replay-vs span[data-side="b"] { color: var(--side-b); }
+
+.ygo-replay-vs b {
+  color: var(--text-faint);
+}
+
+.ygo-replay-winner {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.ygo-replay-winner em {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.ygo-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.ygo-log li {
+  --turn-side: var(--text-faint);
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 12px;
+  border-left: 3px solid var(--turn-side);
+  background: var(--bg-raised);
+  border-radius: 0 10px 10px 0;
+  animation: log-in 260ms ease both;
+}
+
+.ygo-log li[data-side="a"] { --turn-side: var(--side-a); }
+.ygo-log li[data-side="b"] { --turn-side: var(--side-b); }

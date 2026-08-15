@@ -462,3 +462,51 @@ test.describe("duelo", { tag: "@stateful" }, () => {
     expect((await poster.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
   });
 });
+
+test.describe("speed duel", { tag: "@stateful" }, () => {
+  const RESULTADO = /\/ygo\/[0-9a-f]{16}$/;
+
+  async function jogar(page: Page) {
+    await page.goto("/ygo/voce/vs/ia");
+
+    // A arena é uma ação; o resultado é que tem página (mesma regra do duelo).
+    const final = page.waitForURL(RESULTADO, { timeout: 180_000 });
+
+    // Speed Duel dura até 40 turnos e cada resposta da IA custa ~700ms. O loop
+    // perde no polling barato e deixa o `waitForURL` segurar o prazo de verdade.
+    for (let i = 0; i < 400; i++) {
+      if (RESULTADO.test(page.url())) break;
+      if (await page.locator(".ygo-actions .ygo-action").count()) {
+        await page.locator(".ygo-actions .ygo-action").first().click();
+      }
+      await page.waitForTimeout(250);
+    }
+
+    await final;
+  }
+
+  test("joga, redireciona para um resultado estável e serve o pôster", async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(240_000);
+
+    await jogar(page);
+
+    const ygoId = page.url().split("/").pop();
+    const poster = await request.get(`/ygo/${ygoId}.png`);
+
+    // Mesma ressalva do pôster de batalha: o 200 depende de `REDIS_URL`.
+    expect(poster.status()).toBe(200);
+    expect((await poster.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
+    // Resultado já arbitrado não muda nunca.
+    expect(poster.headers()["cache-control"]).toContain("immutable");
+  });
+
+  test("pôster devolve carta de erro para speed duel que nunca existiu", async ({ request }) => {
+    const poster = await request.get("/ygo/0000000000000000.png");
+
+    expect(poster.status()).toBe(404);
+    expect((await poster.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
+  });
+});

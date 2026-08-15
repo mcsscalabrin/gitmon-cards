@@ -67,6 +67,7 @@ export const PROJECT_STARS_TTL_SECONDS = readInt("PROJECT_STARS_TTL_SECONDS", 36
 export const CARD_DATA_TTL_SECONDS = readInt("CARD_DATA_TTL_SECONDS", 3600);
 export const BATTLE_TTL_SECONDS = readInt("BATTLE_TTL_SECONDS", 2592000);
 export const DUEL_TTL_SECONDS = readInt("DUEL_TTL_SECONDS", 2592000);
+export const YGO_TTL_SECONDS = readInt("YGO_TTL_SECONDS", 2592000);
 
 function readInt(name: string, fallback: number): number {
   const raw = process.env[name];

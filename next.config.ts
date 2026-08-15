@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
     "/api/card-og/**": ["./public/assets/**"],
     "/api/battle/**": ["./public/assets/**"],
     "/api/duel/**": ["./public/assets/**"],
+    "/api/ygo/**": ["./public/assets/**"],
   },
 
   // A extensão .png na URL pública é cosmética — é o que torna o link colável em
@@ -31,6 +32,10 @@ const nextConfig: NextConfig = {
         {
           source: "/duel/:duelId.png",
           destination: "/api/duel/:duelId/image",
+        },
+        {
+          source: "/ygo/:ygoId.png",
+          destination: "/api/ygo/:ygoId/image",
         },
         {
           /*
