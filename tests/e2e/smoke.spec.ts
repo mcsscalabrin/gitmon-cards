@@ -144,22 +144,28 @@ test.describe("abertura de pacote", () => {
     await expect(page.locator(".pack-wrapper")).toBeFocused();
   });
 
-  test("pular dispensa o pacote e revela a carta", async ({ page }) => {
+  test("pular dispensa o pacote e revela o verso", async ({ page }) => {
     await page.goto("/torvalds");
     await page.locator(".pack-skip").click();
 
     await expect(page.locator(".pack")).toHaveCount(0);
-    await expect(page.locator(".tilt-face-front img")).toBeVisible();
+    // O rasgo revela o verso, não a frente: os status são a recompensa do gesto
+    // de virar, e não vão aparecer de graça no bolso do botão de pular.
+    await expect(page.locator(".tilt-inner")).toHaveAttribute("data-flipped", "true");
+    await expect(page.locator(".tilt-face-back img")).toHaveAttribute(
+      "src",
+      "/assets/backs/card-back.svg",
+    );
   });
 
-  test("rasgar dispensa o pacote e revela a carta", async ({ page }) => {
+  test("rasgar dispensa o pacote e revela o verso", async ({ page }) => {
     await page.goto("/torvalds");
     await page.locator(".pack-wrapper").click();
 
     // A coreografia inteira tem menos de 1s; o overlay se desmonta sozinho ao
     // fim dela, sem ninguém precisar clicar de novo.
     await expect(page.locator(".pack")).toHaveCount(0, { timeout: 5000 });
-    await expect(page.locator(".tilt-face-front img")).toBeVisible();
+    await expect(page.locator(".tilt-inner")).toHaveAttribute("data-flipped", "true");
   });
 
   test("Escape pula a abertura", async ({ page }) => {
@@ -241,8 +247,13 @@ test.describe("largura no telefone", () => {
   }
 });
 
+/*
+ * O flip do perfil nasce virado: quem abre o pacote recebe o verso, e a frente
+ * (com os status) é a recompensa de um clique ou de um Enter. Nada disso existe
+ * na home — lá a carta de exemplo é só um link.
+ */
 test.describe("virar a carta", () => {
-  test("clique no perfil revela o verso e outro clique volta", async ({ page }) => {
+  test("o perfil chega virado e um clique entrega a frente", async ({ page }) => {
     await page.goto("/torvalds");
     await page.locator(".pack-skip").click();
 
@@ -250,7 +261,7 @@ test.describe("virar a carta", () => {
     // Virável é `role="button"`, não link: o clique vira, não navega.
     await expect(card).toHaveAttribute("role", "button");
 
-    await card.click();
+    // Nasceu virado: o verso para cima, a frente escondida.
     await expect(page.locator(".tilt-inner")).toHaveAttribute("data-flipped", "true");
     await expect(page.locator(".tilt-face-back img")).toHaveAttribute(
       "src",
@@ -259,11 +270,18 @@ test.describe("virar a carta", () => {
 
     await card.click();
     await expect(page.locator(".tilt-inner")).not.toHaveAttribute("data-flipped", "true");
+
+    await card.click();
+    await expect(page.locator(".tilt-inner")).toHaveAttribute("data-flipped", "true");
   });
 
-  test("teclado vira a carta com Enter", async ({ page }) => {
+  test("teclado devolve o verso com Enter", async ({ page }) => {
     await page.goto("/torvalds");
     await page.locator(".pack-skip").click();
+
+    // Do verso para a frente com um clique, e o Enter traz o verso de volta.
+    await page.locator(".tilt-card").click();
+    await expect(page.locator(".tilt-inner")).not.toHaveAttribute("data-flipped", "true");
 
     await page.locator(".tilt-card").focus();
     await page.keyboard.press("Enter");

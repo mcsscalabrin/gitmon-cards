@@ -22,7 +22,11 @@ export function CardPanel({
 }: {
   card: Card;
   locale: Locale;
-  /** Liga o flip da carta. Só o perfil vira; o repositório e a home não. */
+  /**
+   * Liga o flip da carta. Só o perfil vira; o repositório e a home não. Quem
+   * vira também nasce virado (verso para cima): o pacote revela o verso, e o
+   * gesto de virar é quem entrega a frente.
+   */
   flippable?: boolean;
   children?: React.ReactNode;
 }) {
@@ -70,6 +74,7 @@ export function CardPanel({
           priority
           rarity={card.rarity}
           flippable={flippable}
+          startFlipped={flippable}
           locale={locale}
         />
         <div className="card-headline">

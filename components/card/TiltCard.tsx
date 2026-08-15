@@ -58,6 +58,7 @@ export function TiltCard({
   priority = false,
   rarity,
   flippable = false,
+  startFlipped = false,
   back = "/assets/backs/card-back.svg",
   locale,
 }: {
@@ -76,6 +77,13 @@ export function TiltCard({
    */
   flippable?: boolean;
   /**
+   * A carta nasce virada, com o verso para cima. É o suspense do perfil: o
+   * pacote abre e o que se revela é o verso, não os status — quem entrega a
+   * frente é o gesto de virar. Vale só no primeiro render; dali em diante o
+   * estado é do clique, e sem `flippable` isto não muda nada (não há verso).
+   */
+  startFlipped?: boolean;
+  /**
    * Arte do verso. O mesmo PNG para qualquer carta — é o verso da marca.
    *
    * Qualquer caminho sob `/assets/` serve: a rewrite `/:owner/:repo.png` do
@@ -89,7 +97,7 @@ export function TiltCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const lightRef = useRef<SVGFEPointLightElement>(null);
 
-  const [flipped, setFlipped] = useState(false);
+  const [flipped, setFlipped] = useState(startFlipped);
   const t = translator(locale ?? DEFAULT_LOCALE);
 
   const target = useRef<Pointer>({ px: 0.5, py: 0.5, active: 0 });

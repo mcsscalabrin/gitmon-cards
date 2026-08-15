@@ -635,6 +635,11 @@ select {
 /*
  * O visitante rasga a tira serrilhada e a carta aparece atrás. Toda a
  * coreografia é `clip-path` + `transform`; o React só troca `data-stage`.
+ *
+ * O fundo vem quase opaco e ainda borra atrás de si: a página que já tem a
+ * carta visível (revisitar, voltar) não deve deixar o status vazar antes da
+ * revelação. A camada escura já esconde quase tudo — o que sobra, borrado,
+ * deixa de se ler como carta.
  */
 
 .pack {
@@ -647,6 +652,8 @@ select {
   justify-content: center;
   gap: 28px;
   background: rgb(9 11 15 / 0.92);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   animation: pack-in 220ms ease both;
 }
 
