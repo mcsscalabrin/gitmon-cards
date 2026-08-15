@@ -244,6 +244,29 @@ O retrato do full-art acaba onde o scrim de baixo começa (`bottomScrimTop: 396`
 
 O `0.5` do full-art não é simetria quebrada por descuido: ali embaixo não há retrato para proteger, mas há tipografia de 12px. A `1` os raios do `tinsel` atravessavam "linux" e a descrição do ataque, e a carta mais cara da escada era a de texto menos legível.
 
+### As mesmas camadas ao vivo
+
+O foil do site é uma pilha CSS por cima do PNG, e ela cresceu junto: seis camadas, na mesma ordem do impresso.
+
+| Camada ao vivo | Espelha | Segue o ponteiro |
+|---|---|---|
+| `.tilt-foil` | relevo especular | sim (`fePointLight`) |
+| `.tilt-spectral` | espectro | sim |
+| `.tilt-pattern` | padrão do eixo | sim, com parallax |
+| `.tilt-sheen` | lâmina | sim |
+| `.tilt-engraved` | textura gravada | **não** |
+| `.tilt-grain` | granulado | não |
+
+**Padrão e textura ao vivo usam o próprio PNG do impresso**, via `url(/assets/patterns/…)` e `url(/assets/textures/…)`. Reimplementá-los em gradiente CSS foi tentado e falhou na primeira olhada: `repeating-linear-gradient` é periódico por definição, e o `cracked` saiu como papel milimetrado em vez de fratura, o `cosmos` como grade de pontos em vez de céu. O impresso desenha 34 fraturas e 260 estrelas em posições irregulares, e CSS não faz isso.
+
+O motivo maior nem é esse. Duas descrições do mesmo desenho são duas coisas livres para divergir — é o defeito que `foil.json` foi criado para fechar quando a escada de intensidade existia em dois lugares com números diferentes. **Um desenho só, lido pelas duas pontas.**
+
+`.tilt-engraved` é a única camada da pilha que não segue o ponteiro, e é de propósito: gravação é da superfície do papel e não se move. O contraste entre textura parada e brilho em movimento é o que faz o relevo ler como relevo.
+
+**O full-art também recua ao vivo** (`[data-fullart]`): espectro de `0.85` para `0.42` e lâmina de `0.24` para `0.13`. Mesma lição do `FULL_ART_SPECTRUM` do PNG — a calibragem padrão supõe uma face clara embaixo, e no full-art não há face, há rosto. Corrigir só o impresso faria o site desmentir a carta que ele exibe.
+
+A home é o único lugar que monta `TiltCard` sem `rarity` nem `axis`: lá as cartas são só o caminho do PNG, sem carregar os dados, e a pilha inteira não é renderizada.
+
 ## Janela da arte e a solda
 
 `420×310` = **37,2%** do canvas, contra `390×300` (33,4%) do layout original. A vertical já estava no limite — a faixa do nome acima e a de tipo abaixo não davam folga —, então o ganho veio de recalcular o empilhamento inteiro: faixa do nome `86→84`, faixa de tipo `34→32`, caixa de ataque `52→48`, status `42→40`. Nenhum deles estava apertado; a janela estava.

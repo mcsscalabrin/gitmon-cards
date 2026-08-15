@@ -31,11 +31,19 @@ function card(overrides: Partial<Card>): Card {
 
 describe("renderBattle", () => {
   it("compõe o pôster do resultado em PNG", async () => {
+    /*
+     * Os dois lados vêm com tier e eixo diferentes de propósito: o pôster passou
+     * a carregar símbolo de raridade, cor do metal e tag (fecha o gap 3.1), e um
+     * par idêntico nesses campos não exercitaria nenhum dos dois caminhos.
+     * `hyper_rare` dá o símbolo de três estrelas em ouro, que é o mais largo.
+     */
     const a = card({
       id: "torvalds",
       name: "Linus Torvalds",
       element: "fire",
       hp: 250,
+      rarity: "hyper_rare",
+      axis: "reach",
       attacks: [{ name: "linux", cost: 4, damage: 300, text: "" }],
     });
     const b = card({
@@ -44,6 +52,8 @@ describe("renderBattle", () => {
       element: "electric",
       hp: 200,
       weakness: "fire",
+      rarity: "ultra_rare",
+      axis: "breadth",
       attacks: [{ name: "redux", cost: 3, damage: 180, text: "" }],
     });
 

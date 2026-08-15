@@ -1680,6 +1680,95 @@ select {
 }
 
 /*
+ * ------------------------------------------------------------ padrão do eixo
+ *
+ * A quinta camada, e a que carrega o segundo eixo do sistema. O tier decide
+ * **quanto** brilha (`--foil`); o eixo decide **como** — e é isso que faz duas
+ * cartas do mesmo tier deixarem de ser a mesma carta.
+ *
+ * **A geometria é o próprio PNG do impresso**, e não uma reimplementação em
+ * gradiente CSS. Foi tentado o contrário primeiro, e o resultado apareceu na
+ * primeira olhada: `repeating-linear-gradient` é periódico por definição, então
+ * o `cracked` saiu como treliça de papel milimetrado em vez de fratura, e o
+ * `cosmos` como grade de pontos em vez de céu. O impresso desenha 34 fraturas e
+ * 260 estrelas em posições irregulares, e CSS não tem como fazer isso.
+ *
+ * Mas o motivo maior nem é esse: duas descrições do mesmo desenho são duas
+ * coisas livres para divergir. É exatamente o defeito que `foil.json` foi criado
+ * para fechar quando a escada de intensidade existia em dois lugares com números
+ * diferentes. Aqui a solução é a mesma — **um desenho só, lido pelas duas
+ * pontas**: `scripts/build-assets.mjs` assa o PNG, `renderCard.tsx` o compõe na
+ * imagem e esta regra o reusa ao vivo.
+ *
+ * Duplicar a camada por cima do PNG é o que a pilha inteira já faz: o foil
+ * impresso também está lá embaixo, e o de cima existe para **reagir ao
+ * ponteiro**. É a mesma lógica de `.tilt-foil` e `.tilt-spectral`.
+ *
+ * `116%` de tamanho dá a margem que o deslocamento consome. A 100% o parallax
+ * arrastaria a borda do PNG para dentro da carta e apareceria um vinco.
+ */
+.tilt-pattern {
+  mix-blend-mode: overlay;
+  opacity: calc(var(--foil) * (0.06 + var(--active) * 0.34));
+  background-size: 116% 116%;
+  background-position: var(--holo-shift, 50%) var(--holo-drift, 50%);
+  background-repeat: no-repeat;
+}
+
+.tilt-holo[data-pattern="linear"] .tilt-pattern {
+  background-image: url("/assets/patterns/linear.png");
+}
+
+.tilt-holo[data-pattern="cosmos"] .tilt-pattern {
+  background-image: url("/assets/patterns/cosmos.png");
+}
+
+.tilt-holo[data-pattern="confetti"] .tilt-pattern {
+  background-image: url("/assets/patterns/confetti.png");
+}
+
+.tilt-holo[data-pattern="cracked"] .tilt-pattern {
+  background-image: url("/assets/patterns/cracked.png");
+}
+
+/* O leque é ancorado na carta, não no ponteiro: raio que desliza lateralmente
+   denuncia que é textura. Aqui o que se move por cima dele é a luz das outras
+   camadas, que é como um foil radial de verdade se comporta. */
+.tilt-holo[data-pattern="tinsel"] .tilt-pattern {
+  background-image: url("/assets/patterns/tinsel.png");
+  background-size: 100% 100%;
+  background-position: 50% 50%;
+}
+
+/*
+ * Relevo gravado, nos três tiers do topo. Mesmo princípio do padrão: o desenho é
+ * o PNG que a build já assou, não uma segunda descrição dele em CSS.
+ *
+ * Não segue o ponteiro, e é a única camada da pilha que não segue: gravação é da
+ * superfície do papel e não se move. O que anda por cima dela é a luz das outras
+ * camadas, e é justamente esse contraste — textura parada, brilho em movimento —
+ * que faz o relevo ler como relevo.
+ */
+.tilt-engraved {
+  mix-blend-mode: soft-light;
+  opacity: calc(var(--foil) * (0.45 + var(--active) * 0.4));
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.tilt-holo[data-texture="ultra_rare"] .tilt-engraved {
+  background-image: url("/assets/textures/ultra_rare.png");
+}
+
+.tilt-holo[data-texture="special_illustration_rare"] .tilt-engraved {
+  background-image: url("/assets/textures/special_illustration_rare.png");
+}
+
+.tilt-holo[data-texture="hyper_rare"] .tilt-engraved {
+  background-image: url("/assets/textures/hyper_rare.png");
+}
+
+/*
  * Metal do tier tinge o espectro. `ultra_rare` é prata e
  * `special_illustration_rare`/`hyper_rare` são ouro na moldura impressa
  * (`cardTreatment`); sem isto o reflexo ao vivo sai igual nos três e desmente a
@@ -1691,6 +1780,23 @@ select {
 
 .tilt-holo[data-metal="silver"] .tilt-spectral {
   filter: saturate(0.55) brightness(1.12);
+}
+
+/*
+ * No full-art o espectro e a lâmina recuam — mesma correção que `FULL_ART_SPECTRUM`
+ * fez no PNG assado, e pela mesma razão exata.
+ *
+ * A calibragem original supõe uma face clara embaixo, onde um véu de cor pousa
+ * bem. No full-art não há face: a carta inteira é retrato, e o mesmo véu apaga um
+ * rosto. Deixar só o impresso corrigido faria o site desmentir a carta que ele
+ * está exibindo, que é o defeito que estas duas camadas existem para não ter.
+ */
+.tilt-holo[data-fullart] .tilt-spectral {
+  opacity: calc(var(--foil) * var(--active) * 0.42);
+}
+
+.tilt-holo[data-fullart] .tilt-sheen {
+  opacity: calc(var(--foil) * (0.05 + var(--active) * 0.13));
 }
 
 /* Fio de luz na borda, como o corte metálico de uma carta de verdade. */
@@ -1973,6 +2079,24 @@ select {
   margin: 0;
   font-size: 34px;
   letter-spacing: -0.8px;
+}
+
+/*
+ * A tag, no mesmo papel que ocupa na carta: sufixo do nome, corpo pequeno, peso
+ * alto e tinta recuada. Ela informa, o nome identifica — em tinta cheia disputa
+ * a primeira leitura com um título de 34px logo ao lado.
+ *
+ * `baseline` e não `center`: alinhada pelo centro do h1 ela flutua acima da
+ * linha do nome, exatamente como o ícone de tipo flutuava no cabeçalho do PNG
+ * antes de ser ancorado pela base.
+ */
+.headline-tag {
+  margin-left: 10px;
+  color: var(--element, var(--text-muted));
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  vertical-align: baseline;
 }
 
 .card-headline p {

@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { ELEMENT_COLORS } from "../cards/elements";
 import { formatCount } from "../cards/format";
 import { raritySymbol, raritySymbolColor } from "../cards/rarity";
+import { tagForAxis } from "../cards/tag";
 import type { Card } from "../cards/types";
 import { elementKey, rarityKey, translator, type Locale } from "../i18n/dictionaries";
 import { CARD_FONT, energyUri, loadFonts } from "./assets";
@@ -94,18 +95,37 @@ export async function renderCardOg(card: Card, locale: Locale): Promise<ImageRes
             Gitmon Cards
           </span>
 
-          <span
-            style={{
-              fontSize: nameSize(card.name),
-              fontWeight: 900,
-              letterSpacing: -1.5,
-              lineHeight: 1.05,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-            }}
-          >
-            {card.name}
-          </span>
+          {/*
+            Nome + tag, na mesma gramática do cabeçalho da carta: a tag pendurada
+            no nome pela linha de base, corpo pequeno, tinta recuada. A prévia é
+            a primeira coisa que muita gente vê do produto, e ela não pode falar
+            uma língua diferente da carta que exibe ao lado.
+          */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+            <span
+              style={{
+                fontSize: nameSize(card.name),
+                fontWeight: 900,
+                letterSpacing: -1.5,
+                lineHeight: 1.05,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+              }}
+            >
+              {card.name}
+            </span>
+            <span
+              style={{
+                fontSize: 22,
+                fontWeight: 900,
+                letterSpacing: 2,
+                color: "#5F6775",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {tagForAxis(card.axis)}
+            </span>
+          </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 24 }}>
             <img src={energy} width={30} height={30} />

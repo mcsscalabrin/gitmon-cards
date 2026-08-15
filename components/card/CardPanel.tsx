@@ -1,4 +1,5 @@
 import { ELEMENT_COLORS } from "@/lib/cards/elements";
+import { tagForAxis } from "@/lib/cards/tag";
 import type { Card } from "@/lib/cards/types";
 import { absoluteUrl } from "@/lib/config";
 import { elementKey, rarityKey, translator, type Locale } from "@/lib/i18n/dictionaries";
@@ -73,12 +74,21 @@ export function CardPanel({
           alt={`${card.name} — ${t(elementKey(card.element))}`}
           priority
           rarity={card.rarity}
+          axis={card.axis}
           flippable={flippable}
           startFlipped={flippable}
           locale={locale}
         />
         <div className="card-headline">
-          <h1>{card.name}</h1>
+          <h1>
+            {card.name}
+            {/*
+              A tag acompanha o nome aqui como acompanha na carta — mesmo slot,
+              mesma hierarquia. Repetir a gramática do PNG é o que faz a página
+              parecer a carta em vez de uma ficha sobre ela.
+            */}
+            <span className="headline-tag">{tagForAxis(card.axis)}</span>
+          </h1>
           <p>
             {t(rarityKey(card.rarity))} ·{" "}
             <span className="headline-type">
