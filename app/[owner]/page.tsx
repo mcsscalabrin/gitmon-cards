@@ -50,6 +50,8 @@ export default async function ProfilePage({ params }: Params) {
           label={t("home.battle")}
           placeholder={t("home.opponent")}
           action={t("home.battleAction")}
+          ygoMode
+          modeLabels={{ battle: t("home.modeBattle"), ygo: t("home.modeYgo") }}
         />
       </CardPanel>
 

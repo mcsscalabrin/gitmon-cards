@@ -78,3 +78,44 @@ turno; dano `×` efetividade de tipo (`×2` / `×0.5`, tabela em [`layout-spec.m
 (vence maior % de HP restante).
 
 O resultado gera um `battle-id` imutável — é ele, e não o par de usuários, que é cacheável.
+
+## Motor de duelo
+
+Sistema v2, dirigido: o visitante escolhe a ação por turno e a IA responde. V1 é
+só perfil vs perfil. Regras: 8000 LP por lado, um Gitmon em campo, posições
+`attack`/`defense`/`face-down` (face-down vira e deita em defesa ao ser atacado);
+`ATK = 5×(reach+volume)`, `DEF = 5×(community+veterancy+breadth)`, o ataque soma o
+dano impresso; dano `ATK vs ATK/DEF` com mínimo 1 e efetividade de tipo
+(`×2`/`×0.5`, tabela em `layout-spec.md`); destruição → ataque direto ao LP; teto
+de 20 turnos → vence maior % de LP restante.
+
+Como na batalha, o resultado gera um `duel-id` imutável (`duel:v1:<id>`, TTL
+`DUEL_TTL_SECONDS`), e é ele — não o par de usuários — que é cacheável
+(`/duel/<id>.png`, com `immutable`). O client é o controle e o servidor o juiz: o
+client roda o mesmo motor na mesma semente e, ao fim, envia as ações para
+`POST /api/duel`, que re-executa e persiste — o lockstep entre os dois é garantido
+por `duelSession(seed)`, que faz o starter consumir o primeiro número do PRNG.
+
+## Motor de Speed Duel
+
+A arena (`/ygo/<a>/vs/<b>`) é o duelo em formato Duel Links, separado do duelo v2
+(D25): o visitante é o lado A, a IA o lado B. Regras: 4000 LP por lado, 3 zonas
+de monstro + 3 de magia/armadilha, mão de 4 a 6 (abre com 4), fases
+Draw → Main → Battle → End; invocação normal de 1 monstro por turno em posição
+`attack`/`defense`/`face-down`; magias ativam na hora e armadilhas baixam
+face-down e entram na janela antes da Batalha do atacante. Combate **YGO puro**:
+`ATK vs ATK` destrói o menor, `ATK vs DEF` não causa dano (sem pierce), empate
+destrói os dois, ataque direto ao LP com o ATK inteiro quando o campo do
+oponente está vazio. Fim por knockout (LP ≤ 0), deckout ou teto de 40 turnos
+(vence maior % de LP restante).
+
+As cartas vêm de um roster curado de 20 devs (`lib/ygo/roster.ts`) — monstros com
+`atk`/`def`/nível e skills (`buff`/`burn`/`recover`/`draw`/`destroy`/`search`/
+`negate`/`counter`) como magias e armadilhas; deck automático de 20 (15 monstros +
+5 skills) shuffleado no PRNG do duelo. Todos os efeitos são determinísticos:
+nenhum consome o PRNG, para a mesma escolha de IA reproduzir igual no client e
+no servidor (lockstep do duelo v2).
+
+Como nos outros, o resultado gera um `ygo-id` imutável (`ygo:v1:<id>`, TTL
+`YGO_TTL_SECONDS`) e é ele que é cacheável (`/ygo/<id>.png`, com `immutable`);
+`/ygo/<a>/vs/<b>` não pode ter cache duro.

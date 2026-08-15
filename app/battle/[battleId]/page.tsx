@@ -59,6 +59,9 @@ export default async function BattlePage({ params }: Params) {
           <Link className="button" href={`/${battle.a.id}/vs/${battle.b.id}`}>
             {t("battle.rematch")}
           </Link>
+          <Link className="button" href={`/ygo/${battle.a.id}/vs/${battle.b.id}`}>
+            {t("battle.asYgo")}
+          </Link>
           <Link className="ghost-link" href={`/${battle.a.id}`}>
             {battle.a.name}
           </Link>
