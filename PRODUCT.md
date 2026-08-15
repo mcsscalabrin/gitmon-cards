@@ -59,9 +59,11 @@ existe para produzir e explicar a carta. Ele **não** viaja junto: o PNG exporta
 ## Capabilities and Constraints
 
 **O que existe hoje:** carta de perfil e de repositório, batalha 1v1 com
-resultado imutável e compartilhável, site bilíngue PT/EN com toggle manual,
-radar de assinatura do perfil, painel de derivações, abertura de pacote, foil
-holográfico ao vivo seguindo o ponteiro.
+resultado imutável e compartilhável, duelo 1v1 dirigido e Speed Duel completo
+em arena estilo Duel Links (decks de devs do GitHub, fases, posições e
+magias/armadilhas), site bilíngue PT/EN com toggle manual, radar de assinatura
+do perfil, painel de derivações, abertura de pacote, foil holográfico ao vivo
+seguindo o ponteiro.
 
 **Restrições técnicas travadas:**
 
