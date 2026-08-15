@@ -70,7 +70,7 @@ export function YgoBoard({
     const timer = setTimeout(() => {
       const action = aiAct(state, "b", session.random);
       const result = applyAction(state, "b", action);
-      if (result.ok) setState(result.state);
+      if (result.ok) setState(structuredClone(result.state));
     }, AI_MS);
     return () => clearTimeout(timer);
   }, [state, session]);
@@ -80,7 +80,7 @@ export function YgoBoard({
     const result = applyAction(state, "a", action);
     if (!result.ok) return;
     actionsRef.current.push(action);
-    setState(result.state);
+    setState(structuredClone(result.state));
   };
 
   // Fim do jogo: o servidor é o juiz. Manda as ações e redireciona para o
