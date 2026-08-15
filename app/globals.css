@@ -1112,8 +1112,21 @@ select {
   white-space: nowrap;
 }
 
-.search-form button,
-.battle-form button {
+/*
+ * `button[type="submit"]`, e não `button`.
+ *
+ * O autocomplete mora **dentro** do formulário, e cada sugestão dele é um
+ * `<button>`. Com o seletor solto, esta regra alcançava as seis: `.search-form
+ * button` (0,1,1) ganha de `.search-dropdown-item` (0,1,0) na cascata, e a lista
+ * inteira saía pintada de amarelo, com o padding do botão de envio. O `:hover`
+ * do item (0,2,0) voltava a vencer, então a linha sob o cursor era a única
+ * escura — o que fazia o sintoma parecer intencional.
+ *
+ * O tipo é o critério certo porque é o que de fato separa os dois: um envia o
+ * formulário, os outros escolhem um nome.
+ */
+.search-form button[type="submit"],
+.battle-form button[type="submit"] {
   padding: 11px 20px;
   border-radius: var(--radius);
   border: 0;
@@ -1140,9 +1153,285 @@ select {
   font-weight: 600;
 }
 
+/* ------------------------------------------------ a home em uma tela só */
+
+/*
+ * A home não rola. É a única página do site em que isso faz sentido: ela tem
+ * três coisas para dizer (o que é, como usar, como é o resultado) e as três
+ * cabem juntas — enquanto a página de uma carta tem stats, derivações, embed e
+ * batalha, que não cabem nem deveriam.
+ *
+ * Tudo aqui está preso ao mesmo eixo vertical: título, descrição, busca e as
+ * três cartas dividem o mesmo centro, e cabeçalho e faixa de apoio fecham a
+ * composição em cima e embaixo com o mesmo fio de 1px. O alinhamento é o que
+ * substitui a decoração que a página não tem.
+ */
+
+/*
+ * A trama do `DitherBackground` (React Bits). Fixa, atrás de tudo e sem eventos:
+ * ela não é interface, é atmosfera.
+ *
+ * `z-index: -1` funciona porque nada no caminho até a raiz cria contexto de
+ * empilhamento — o canvas cai atrás do conteúdo do documento e ainda assim
+ * **na frente** do fundo da página, que é onde a onda precisa estar para
+ * compor com `--bg` em vez de substituí-lo.
+ */
+.dither {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.5;
+
+  /*
+   * O buffer tem o tamanho em pixels de CSS e o navegador o estica para os
+   * pixels do aparelho. Sem isto ele interpola, e a interpolação borra
+   * justamente a única coisa que a trama tem: a borda dura da célula.
+   */
+  image-rendering: pixelated;
+
+  /*
+   * Buraco no meio. A trama existe para o quadro respirar, não para o título
+   * competir com ela — a máscara a apaga onde o texto e as cartas moram e a
+   * devolve inteira nas bordas, que é onde uma moldura deve estar.
+   */
+  -webkit-mask-image: radial-gradient(
+    ellipse 72% 58% at 50% 46%,
+    transparent 6%,
+    rgb(0 0 0 / 0.45) 44%,
+    #000 84%
+  );
+  mask-image: radial-gradient(
+    ellipse 72% 58% at 50% 46%,
+    transparent 6%,
+    rgb(0 0 0 / 0.45) 44%,
+    #000 84%
+  );
+}
+
+/*
+ * O corte de altura, e não de largura.
+ *
+ * Abaixo disto (celular deitado, janela achatada) travar a home em 100dvh não
+ * deixa nada caber — só espreme. Lá ela volta a rolar, que é o comportamento
+ * honesto: "sem scroll" é uma promessa sobre a composição, não sobre a régua.
+ */
+@media (min-height: 560px) {
+  /*
+   * A altura já está resolvida; a barra de rolagem seria só um resíduo de
+   * arredondamento aparecendo e sumindo.
+   *
+   * `overflow-y`, e não o atalho `overflow`: o eixo horizontal já é cortado lá
+   * em cima, na regra que existe para o pacote não sair do centro no telefone, e
+   * o atalho aqui apagaria aquilo justamente na home. Pelo mesmo motivo o corte
+   * é `clip` e vai nos dois elementos — a raiz propaga o próprio valor para o
+   * viewport em vez de aplicá-lo em si, então quem corta de verdade é o `body`,
+   * e só depois de a linha da raiz tirá-lo do papel de propagador.
+   */
+  html:has(.shell[data-landing]),
+  body:has(.shell[data-landing]) {
+    overflow-y: clip;
+  }
+
+  .shell[data-landing] {
+    height: 100dvh;
+  }
+
+  .shell[data-landing] .shell-header {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* O miolo toma o que sobra e centra dentro dele — é daqui que vem o eixo. */
+  .shell[data-landing] .shell-main {
+    flex: 1;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(20px, 4.5vh, 52px);
+    padding: 0;
+  }
+
+  .shell[data-landing] .hero {
+    align-items: center;
+    text-align: center;
+    gap: clamp(8px, 1.6vh, 16px);
+    padding-top: 0;
+    max-width: 38rem;
+  }
+
+  /*
+   * Cresce com a altura, mas com teto na largura.
+   *
+   * O que aperta esta página é a altura — daí o `vh` mandar. Sozinho ele erra
+   * nos dois extremos: no celular em pé (844 de altura, 390 de largura) o título
+   * fica maior do que a coluna comporta e quebra em quatro linhas, e numa janela
+   * baixa e larga ele encolhe sem precisar. O `min` com `vw` é o teto que faltava.
+   */
+  .shell[data-landing] .hero h1 {
+    font-size: clamp(26px, min(4.4vh, 8vw), 44px);
+    text-wrap: balance;
+  }
+
+  .shell[data-landing] .hero p {
+    font-size: clamp(14px, 1.9vh, 17px);
+    max-width: 44ch;
+    text-wrap: balance;
+  }
+
+  /* Sem quebra: a busca é uma peça só, e o botão descendo para uma segunda
+     linha desfaz o eixo central na única linha que tem duas coisas. */
+  .shell[data-landing] .search-form {
+    width: 100%;
+    max-width: 27rem;
+    margin-top: clamp(4px, 1.2vh, 12px);
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+
+  /* Quem cede largura é o campo, que tem `min-width: 0` para isso. O rótulo do
+     botão quebrado ao meio ("Gerar / carta") é o que acontece sem esta linha. */
+  .shell[data-landing] .search-form button {
+    white-space: nowrap;
+  }
+
+  /*
+   * As três encostadas, como cartas na mão.
+   *
+   * Largura tomada pelo menor de três limites: o teto de 224px, o que cabe na
+   * largura da janela e o que cabe na altura dela. A carta é 5:7, então largura
+   * é o único número a controlar — a altura vem junto.
+   *
+   * `flex` e não `grid`: o encaixe é feito com margem negativa, e três colunas
+   * de grade com margem negativa continuam reservando a largura da coluna
+   * inteira — a fileira ficaria descentrada por duas sobreposições.
+   */
+  .shell[data-landing] .samples {
+    --sample-w: min(224px, (100vw - 40px) / 3, 22vh);
+    /*
+     * Quanto cada carta avança sobre a vizinha, de cada lado. Baixo de
+     * propósito: os PS ficam no canto superior direito da arte, e passando de
+     * ~4% a vizinha começa a comer o número.
+     */
+    --sample-lap: calc(var(--sample-w) * 0.04);
+
+    display: flex;
+    justify-content: center;
+    gap: 0;
+  }
+
+  /* O rótulo é um identificador do GitHub, e passa a ser desenhado como um:
+     mesma mono da busca logo acima, que é onde ele seria digitado. */
+  .shell[data-landing] .sample {
+    position: relative;
+    width: var(--sample-w);
+    margin-inline: calc(var(--sample-lap) * -1);
+    gap: clamp(6px, 1.2vh, 12px);
+    font-family: var(--font-mono);
+    font-size: clamp(11px, 1.5vh, 13.5px);
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /*
+   * A carta apontada sai da pilha: sobe, vem para a frente e empurra as outras
+   * duas para fora. É o gesto de tirar uma carta da mão — e resolve o custo da
+   * sobreposição, que é justamente esconder a borda da vizinha.
+   *
+   * O afastamento é maior que a sobreposição (×3), então o vão abre de verdade
+   * em vez de só desencostar.
+   */
+  .shell[data-landing] .sample:hover,
+  .shell[data-landing] .sample:focus-visible {
+    z-index: 2;
+  }
+
+  /*
+   * Quem sobe é a carta, não o item inteiro: os três rótulos estão numa linha
+   * de base só, e levantar um deles junto quebraria justamente o alinhamento
+   * que esta página existe para ter. O deslocamento lateral fica no item —
+   * ali o rótulo *deve* acompanhar, porque ele pertence à carta que se afastou.
+   */
+  .shell[data-landing] .sample .tilt-scene {
+    transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .shell[data-landing] .sample:hover .tilt-scene,
+  .shell[data-landing] .sample:focus-visible .tilt-scene {
+    transform: translateY(-6%);
+  }
+
+  .shell[data-landing] .sample:hover ~ .sample,
+  .shell[data-landing] .sample:focus-visible ~ .sample {
+    transform: translateX(calc(var(--sample-lap) * 3));
+  }
+
+  /*
+   * As de trás. Irmão anterior não tem combinador — `:has(~ …)` é o que
+   * pergunta "existe uma carta apontada depois de mim?" e é a única forma de o
+   * afastamento valer para os dois lados sem duplicar a marcação.
+   */
+  .shell[data-landing] .sample:has(~ .sample:hover),
+  .shell[data-landing] .sample:has(~ .sample:focus-visible) {
+    transform: translateX(calc(var(--sample-lap) * -3));
+  }
+
+  .shell[data-landing] .shell-footer {
+    padding: 12px 0;
+  }
+}
+
+/*
+ * Faixa de apoio em uma linha. Fora da media query de propósito: quando a home
+ * rola, ela continua sendo a versão curta — a descrição saiu porque nesta
+ * página ela era redundante, não porque faltava espaço.
+ */
+.support-band[data-compact] {
+  margin: 0 0 14px;
+  padding: 12px 18px;
+  gap: 14px;
+  /*
+   * Translúcida, porque a trama passa por trás. Uma superfície opaca aqui
+   * recortaria um retângulo cego no fundo, bem na borda de baixo, que é onde a
+   * onda está mais forte.
+   */
+  background: color-mix(in srgb, var(--bg-raised) 74%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.support-band[data-compact] .support-copy h2 {
+  font-size: 15px;
+}
+
+.support-band[data-compact] .support-star,
+.support-band[data-compact] .button {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
 /* ------------------------------------------------------------ carta 3D */
 
+/*
+ * O canto da carta é proporcional a ela, e não a um número fixo.
+ *
+ * Os 16px foram desenhados para a carta grande da página de perfil, onde ela tem
+ * 340px de largura. Na home, a mesma carta aparece a 200 ou a 110 — e 16px ali é
+ * quase 15% da largura: o canto começa a comer a moldura impressa no PNG, que
+ * tem o próprio raio, e as duas curvas deixam de coincidir.
+ *
+ * `cqw` porque a medida certa é a largura da própria carta, e nenhuma unidade
+ * fora de container query sabe disso: `%` em `border-radius` mede largura na
+ * horizontal e **altura** na vertical, o que numa carta 5:7 devolve um canto
+ * elíptico. Os 4.7% reproduzem exatamente os 16px nos 340 de origem, então a
+ * página de perfil não muda de aparência.
+ */
 .tilt-scene {
+  container-type: inline-size;
+  --tilt-radius: 4.7cqw;
+
   perspective: 1100px;
   width: 100%;
   max-width: 340px;
@@ -1150,7 +1439,7 @@ select {
 
 .tilt-card {
   position: relative;
-  border-radius: 16px;
+  border-radius: var(--tilt-radius);
 
   /*
    * `--active` vai de 0 a 1 no laço de rAF do TiltCard e é o dimmer de toda a
@@ -1181,7 +1470,7 @@ select {
 .tilt-card img {
   width: 100%;
   height: auto;
-  border-radius: 16px;
+  border-radius: var(--tilt-radius);
   /*
    * A sombra cresce com a elevação: carta levantada projeta sombra maior e mais
    * difusa. Sem isso o `translateZ` lê como zoom, não como altura.
@@ -1195,7 +1484,7 @@ select {
 .tilt-glare {
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: var(--tilt-radius);
   pointer-events: none;
   opacity: var(--active);
   /*
@@ -1247,7 +1536,7 @@ select {
   position: absolute;
   inset: 0;
   transform: rotateY(180deg);
-  border-radius: 16px;
+  border-radius: var(--tilt-radius);
 }
 
 /*
@@ -1274,7 +1563,7 @@ select {
 .tilt-holo {
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: var(--tilt-radius);
   overflow: hidden;
   pointer-events: none;
 }
@@ -1409,7 +1698,7 @@ select {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: var(--tilt-radius);
   pointer-events: none;
   padding: 1px;
   opacity: calc(var(--foil) * (0.25 + var(--active) * 0.6));

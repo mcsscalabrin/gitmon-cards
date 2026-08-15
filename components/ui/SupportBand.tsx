@@ -16,17 +16,25 @@ import { translator, type Locale } from "@/lib/i18n/dictionaries";
 export function SupportBand({
   locale,
   stars,
+  compact = false,
 }: {
   locale: Locale;
   stars: number | null;
+  /**
+   * Uma linha só, sem o parágrafo. É o formato da home, onde a página inteira
+   * cabe numa tela e cada bloco tem um orçamento de altura — e onde a explicação
+   * não faz falta, porque o pedido está a dois cliques de distância do que a
+   * pessoa acabou de ver funcionar.
+   */
+  compact?: boolean;
 }) {
   const t = translator(locale);
 
   return (
-    <aside className="support-band">
+    <aside className="support-band" data-compact={compact || undefined}>
       <div className="support-copy">
         <h2>{t("support.title")}</h2>
-        <p>{t("support.description")}</p>
+        {compact ? null : <p>{t("support.description")}</p>}
       </div>
 
       <div className="support-actions">

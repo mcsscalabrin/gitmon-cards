@@ -20,7 +20,7 @@ export default async function HomePage() {
   const t = translator(locale);
 
   return (
-    <Shell locale={locale}>
+    <Shell locale={locale} landing>
       <section className="hero">
         <h1>{t("home.tagline")}</h1>
         <p>{t("home.description")}</p>

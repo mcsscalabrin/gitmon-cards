@@ -307,6 +307,30 @@ test.describe("site", () => {
     await expect(samples.first()).toBeVisible();
   });
 
+  /*
+   * A home cabe numa tela, e é a única página do site em que isso vale.
+   *
+   * A regressão aqui é silenciosa por construção: um bloco cresce alguns
+   * pixels, a barra de rolagem volta, e nada quebra — a página continua
+   * inteira, só deixa de ser a composição que ela é. Sem este teste, o sintoma
+   * só aparece para quem abre a home.
+   *
+   * A altura importa mais que a largura: abaixo de 560px de altura a home volta
+   * a rolar de propósito (não há espaço para espremer), então a medida é feita
+   * acima desse corte.
+   */
+  test("a home cabe na tela, sem rolagem", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+
+    const doc = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollHeight,
+      client: document.documentElement.clientHeight,
+    }));
+
+    expect(doc.scroll).toBe(doc.client);
+  });
+
   test("troca o idioma da interface e mantém a escolha", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "English" }).click();

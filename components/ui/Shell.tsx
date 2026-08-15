@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AUTHORS, PROJECT_REPO_URL } from "@/lib/config";
 import { translator, type Locale } from "@/lib/i18n/dictionaries";
 import { getProjectStars } from "@/lib/project";
+import { DitherBackground } from "./DitherBackground";
 import { LocaleToggle } from "./LocaleToggle";
 import { SupportBand } from "./SupportBand";
 
@@ -14,16 +15,30 @@ import { SupportBand } from "./SupportBand";
  */
 export async function Shell({
   locale,
+  landing = false,
   children,
 }: {
   locale: Locale;
+  /**
+   * Chrome da home: a página inteira cabe numa tela, o fundo ganha a trama e a
+   * faixa de apoio encolhe para uma linha.
+   *
+   * É uma propriedade só, e não três, porque as três decisões são a mesma: a
+   * home não rola, então tudo que mora fora do miolo tem um orçamento de altura
+   * — e o fundo, que numa página que rola seria uma distração deslizando, numa
+   * que não rola é a única coisa que se move. Nas páginas de carta nada disso
+   * vale: lá a altura é do conteúdo, e quem tem que respirar é a carta.
+   */
+  landing?: boolean;
   children: React.ReactNode;
 }) {
   const t = translator(locale);
   const stars = await getProjectStars();
 
   return (
-    <div className="shell">
+    <div className="shell" data-landing={landing || undefined}>
+      {landing ? <DitherBackground /> : null}
+
       <header className="shell-header">
         <Link href="/" className="brand">
           <span className="brand-mark" aria-hidden="true" />
@@ -44,7 +59,7 @@ export async function Shell({
 
       <main className="shell-main">{children}</main>
 
-      <SupportBand locale={locale} stars={stars} />
+      <SupportBand locale={locale} stars={stars} compact={landing} />
 
       {/*
         O sponsor saiu daqui e foi para a faixa acima: no rodapé ele era um link
