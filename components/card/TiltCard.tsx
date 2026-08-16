@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { cardTreatment, foilBands, foilIntensity, hasFoil, hasTexture } from "@/lib/cards/rarity";
-import type { Axis } from "@/lib/cards/ratings";
+import type { ProfileAxis } from "@/lib/cards/ratings";
 import { patternForAxis } from "@/lib/cards/tag";
 import type { Rarity } from "@/lib/cards/types";
 import {
@@ -121,7 +121,7 @@ export function TiltCard({
    * com o caminho do PNG. Sem ele a pilha cai no `linear`, que é o padrão mais
    * discreto e o do eixo mais comum — nunca fica sem geometria nenhuma.
    */
-  axis?: Axis;
+  axis?: ProfileAxis;
   /**
    * Liga o flip: um clique (ou Enter/Espaço) gira a carta e revela o verso.
    * Fica desligado na home, onde a carta é um link para o perfil.

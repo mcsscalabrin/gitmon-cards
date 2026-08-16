@@ -43,6 +43,12 @@ export { buildRepoCard } from "./repo";
  * e `AXIS_PATTERNS[undefined]` devolveria `undefined` no meio da composição, ou
  * seja, um `patternUri` apontando para um arquivo que não existe. Quebra ao
  * renderizar, não ao compilar, e só em produção, onde o Redis guarda por uma hora.
+ *
+ * v5 também: campo `cardClass` (ex/Mega ex) em perfil e repositório, e o radar do
+ * repositório ganhou o eixo `activity` no lugar de `breadth`. Como a v4, não
+ * quebra nada — o renderizador ignora os dois —, mas a classe é o "overall" da
+ * carta no site e uma hora de site mostrando a classe errada não se distingue
+ * de bug.
  */
 const CARD_VERSION = "v5";
 

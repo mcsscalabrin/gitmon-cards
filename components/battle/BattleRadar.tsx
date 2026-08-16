@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AXES } from "@/lib/cards/ratings";
 import type { Card } from "@/lib/cards/types";
 import { radarGeometry, radarSector } from "@/lib/radar";
 import { SIDE_COLORS, SIDE_MARKERS, markerPath } from "@/lib/viz/series";
@@ -43,9 +42,27 @@ export function BattleRadar({
   const ratingsA = a.ratings ?? [];
   const ratingsB = b.ratings ?? [];
 
-  const valuesA = AXES.map((_, i) => ratingsA[i]?.value ?? 0);
-  const valuesB = AXES.map((_, i) => ratingsB[i]?.value ?? 0);
-  const labels = AXES.map((ax) => t(`axis.${ax}` as MessageKey));
+  /*
+   * Alinhamento por nome, não por posição: o perfil assina breadth e o
+   * repositório assina activity, então dois polígonos na mesma posição podem
+   * ser eixos diferentes. A régua de comparação usa só os eixos que os dois
+   * têm em comum (na ordem da carta A, que é a canônica), e quem falta num dos
+   * lados — ratings vazios, hoje impossível mas barato de defender — vira zero.
+   */
+  const hasA = new Set(ratingsA.map((r) => r.axis));
+  const hasB = new Set(ratingsB.map((r) => r.axis));
+  const order = (ratingsA.length > 0 ? ratingsA : ratingsB).map((r) => r.axis);
+  const axes =
+    ratingsA.length > 0 && ratingsB.length > 0
+      ? order.filter((ax) => hasA.has(ax) && hasB.has(ax))
+      : order;
+
+  const valueFor = (ratings: typeof ratingsA, axis: (typeof axes)[number]) =>
+    ratings.find((r) => r.axis === axis)?.value ?? 0;
+
+  const valuesA = axes.map((ax) => valueFor(ratingsA, ax));
+  const valuesB = axes.map((ax) => valueFor(ratingsB, ax));
+  const labels = axes.map((ax) => t(`axis.${ax}` as MessageKey));
 
   const geoA = radarGeometry(valuesA, labels, SIZE);
   const geoB = radarGeometry(valuesB, labels, SIZE);
@@ -155,10 +172,10 @@ export function BattleRadar({
             </text>
           ))}
 
-          {AXES.map((_, i) => (
+          {axes.map((_, i) => (
             <polygon
               key={i}
-              points={radarSector(geo.center, geo.radius + 17, i, AXES.length)}
+              points={radarSector(geo.center, geo.radius + 17, i, axes.length)}
               fill="transparent"
               className="battle-radar-hitzone"
               tabIndex={0}

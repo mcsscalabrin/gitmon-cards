@@ -66,6 +66,21 @@ export const RARITIES = [
 
 export type Rarity = (typeof RARITIES)[number];
 
+/**
+ * Classe da carta — o "overall" no lugar da nota do gitfut (handoff.md).
+ *
+ * Não é o mesmo fato que a raridade: esta mede o **pico da assinatura de
+ * escala externa**, e não a soma ponderada de tudo. Dois devs com a mesma
+ * quantia de estrelas saem daqui diferentes quando um as concentra num único
+ * eixo — a dimensão que a raridade não enxerga. Ver `./cardClass.ts`.
+ *
+ * No TCG real "ser ex" e "estar nos tiers altos" são o mesmo fato; aqui a
+ * classe existe exatamente para não ser isso.
+ */
+export const CARD_CLASSES = ["standard", "ex", "mega_ex"] as const;
+
+export type CardClass = (typeof CARD_CLASSES)[number];
+
 export interface Attack {
   /** Nome curto — vem do dado (nome do repo, login do contribuidor), não é inventado. */
   name: string;
@@ -97,12 +112,21 @@ export interface Card {
    * Eixo em que a carta é mais forte — o segundo eixo do sistema, ortogonal à
    * raridade. Decide a **tag** impressa ao lado do nome e o **padrão** do foil.
    *
+   * É sempre um eixo do perfil: o eixo dominante do repositório é um subconjunto
+   * dos do perfil (`activity` só existe na assinatura do radar). Ver `./tag.ts`.
+   *
    * O que fica guardado é o eixo e não a tag já resolvida, de propósito: o eixo
    * é o dado, a palavra e a geometria são apresentação. Trocar `ORIGIN` por
    * outra palavra em `./tag.ts` passa a valer para as cartas já em cache, em vez
    * de precisar de um bump de `CARD_VERSION` só para renomear um rótulo.
    */
-  axis: Axis;
+  axis: ProfileAxis;
+  /**
+   * Classe ex/Mega ex, do pico de escala externa. Como `derivations` e
+   * `ratings`, é afordância do site e não entra na imagem exportada — o PNG
+   * continua limpo (RFC 9.6). Ver `./cardClass.ts`.
+   */
+  cardClass?: CardClass;
   /**
    * Número de série sequencial, atribuído na primeira vez que a carta é gerada e
    * imutável depois disso. `null` quando o store durável não respondeu — carta
@@ -149,7 +173,7 @@ export interface Derivation {
   reasonParams?: Record<string, string | number>;
 }
 
-import type { Axis, AxisRating } from "./ratings";
+import type { AxisRating, ProfileAxis } from "./ratings";
 
 export interface CardStat {
   /** Chave do dicionário i18n, não o rótulo já traduzido. */

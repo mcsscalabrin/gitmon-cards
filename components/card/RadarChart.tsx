@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { AXES } from "@/lib/cards/ratings";
 import type { AxisRating } from "@/lib/cards/ratings";
 import { radarGeometry, radarSector } from "@/lib/radar";
 import { translator, type Locale, type MessageKey } from "@/lib/i18n/dictionaries";
 
 /**
- * Assinatura do perfil em cinco eixos.
+ * Assinatura de perfil ou repositório em cinco eixos.
+ *
+ * Os eixos vêm do próprio `ratings` (e não de uma constante global): o perfil
+ * assina `reach/community/volume/veterancy/breadth` e o repositório troca a
+ * amplitude por `activity`, então quem desenha não pode presumir o conjunto
+ * fixo — `ratings.ts` é a única fonte do que cada sujeito assina.
  *
  * Decisões que vêm de `lib/cards/ratings.ts` e não são estéticas:
  *
@@ -47,17 +51,24 @@ function formatRaw(raw: number, locale: Locale): string {
 export function RadarChart({
   ratings,
   locale,
+  kind = "profile",
 }: {
   ratings: AxisRating[];
   locale: Locale;
+  /**
+   * Qual assinatura está plotada. Só muda o título e a legenda; a geometria
+   * já é derivada dos eixos presentes em `ratings`.
+   */
+  kind?: "profile" | "repo";
 }) {
   const t = translator(locale);
   const [active, setActive] = useState<number | null>(null);
 
   const size = 240;
 
+  const axes = ratings.map((r) => r.axis);
   const values = ratings.map((r) => r.value);
-  const labels = AXES.map((a) => t(`axis.${a}` as MessageKey));
+  const labels = axes.map((a) => t(`axis.${a}` as MessageKey));
   const geo = radarGeometry(values, labels, size);
 
   /** O eixo mais forte é o único rotulado por destaque — rótulo seletivo, não em todo ponto. */
@@ -68,8 +79,8 @@ export function RadarChart({
   return (
     <figure className="radar">
       <figcaption>
-        <h2>{t("radar.title")}</h2>
-        <p>{t("radar.caption")}</p>
+        <h2>{t(kind === "repo" ? "radar.title.repo" : "radar.title")}</h2>
+        <p>{t(kind === "repo" ? "radar.caption.repo" : "radar.caption")}</p>
       </figcaption>
 
       <div className="radar-svg-wrap">
@@ -151,10 +162,10 @@ export function RadarChart({
             o único jeito de chegar no destaque — teclado mostra o mesmo que o
             mouse.
           */}
-          {AXES.map((axis, i) => (
+          {axes.map((axis, i) => (
             <polygon
               key={i}
-              points={radarSector(geo.center, geo.radius + 17, i, AXES.length)}
+              points={radarSector(geo.center, geo.radius + 17, i, axes.length)}
               fill="transparent"
               className="radar-hitzone"
               tabIndex={0}

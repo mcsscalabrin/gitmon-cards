@@ -9,7 +9,10 @@ import { cardMetadata } from "@/lib/metadata";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 
-type Params = { params: Promise<{ owner: string; repo: string }> };
+type Params = {
+  params: Promise<{ owner: string; repo: string }>;
+  searchParams: Promise<{ guide?: string }>;
+};
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { owner, repo } = await params;
@@ -21,8 +24,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   });
 }
 
-export default async function RepoPage({ params }: Params) {
+export default async function RepoPage({ params, searchParams }: Params) {
   const { owner, repo } = await params;
+  const { guide } = await searchParams;
   const locale = await getLocale();
   const t = translator(locale);
 
@@ -39,7 +43,7 @@ export default async function RepoPage({ params }: Params) {
 
   return (
     <Shell locale={locale}>
-      <CardPanel card={card} locale={locale}>
+      <CardPanel card={card} locale={locale} suppressPack={guide === "1"}>
         <BattleForm
           challenger={`${owner}/${repo}`}
           label={t("home.battle")}

@@ -17,19 +17,21 @@ build limpos.
 | 1.1 | `.superdesign/` ignorado e referenciado pelo código | ✅ resolvido |
 | 1.2 | `npm run lint` quebrado | ✅ resolvido |
 | 1.3 | Documentação contradiz o código | ✅ resolvido |
-| 2.1 | `serial.ts` sem teste, Lua nunca executado | 🟡 parcial |
+| 2.1 | `serial.ts` sem teste, Lua nunca executado | 🟡 parcial (script de exercício pronto; falta Docker) |
 | 2.2 | Abertura de pacote sem teste, bloqueia interação | ✅ resolvido |
-| 2.3 | `SupportBand` sem teste | ⬜ aberto |
+| 2.3 | `SupportBand` sem teste | ✅ resolvido |
 | 3.1 | Pôster de batalha ignora raridade | ✅ resolvido |
-| 3.2 | Terminologia do TCG Pokémon | ⬜ decisão sua |
+| 3.2 | Terminologia do TCG Pokémon | ✅ decidido (mantida) |
 | 3.3 | Cauda da distribuição desconhecida | ⬜ decisão sua |
-| 3.4 | Pacote toca em toda visita | ⬜ decisão sua |
+| 3.4 | Pacote toca em toda visita | ✅ decidido (mantido) |
 | 4.1 | `PackOpening` sem focus trap | ✅ resolvido |
 | 4.2 | Foil ao vivo nunca visto por ninguém | 🟡 corrigido — falta seu olhar final |
 | 4.3 | `.env.example` incompleto | ✅ resolvido |
 | 5.1 | Erro no `pages.md` que eu gerei | ✅ resolvido |
 | 5.2 | Estágio 3 do canvas fraco | 🟡 segunda rodada aplicada — falta seu olhar |
 | 6.1 | Alvo de clique em movimento perpétuo | ✅ resolvido (achado novo) |
+| 7.1 | `elements.test.ts` encosta no timeout lendo assets | ✅ resolvido (`existsSync`) |
+| 7.2 | e2e vermelho por Deployment Protection | 🟡 depende de você |
 
 ---
 
@@ -142,6 +144,11 @@ não estava rodando — iniciar o Docker é ação do autor, não minha.
 **Decisão:** subir o Docker Desktop e me avisar (eu levanto o container e rodo),
 ou aceitar que a atomicidade vai para produção sem nunca ter sido exercitada.
 
+**Feito depois:** `scripts/exercise-serial.mjs` exercita a atribuição atômica de
+verdade — duas execuções simultâneas do mesmo serial, a atomicidade via script
+Lua e o store contra `REDIS_URL` local ou de preview. Falta o que não está no
+repositório: Docker Desktop de pé e um Redis no ar (ver `docs/handoff.md`).
+
 ### 2.2 A abertura de pacote bloqueia interação e não tem teste
 
 `PackOpening` é um overlay `position: fixed; inset: 0; z-index: 50` que cobre a
@@ -157,10 +164,16 @@ o overlay cobre a página e recebe o foco, pular dispensa, rasgar dispensa e
 revela a carta, `Escape` pula, e o foco fica confinado. O bloco existe para que
 esse esbarrão tenha nome, em vez de virar falha confusa em outro teste.
 
-### 2.3 `SupportBand` sem teste
+### 2.3 `SupportBand` sem teste — RESOLVIDO
 
 Nem unitário nem e2e. O caminho `stars === null` (API fora do ar) nunca foi
 exercitado — só o caminho feliz, que eu vi ao vivo.
+
+**Feito:** `tests/unit/support-band.test.ts`, quatro casos com
+`renderToStaticMarkup` em ambiente node — contador formatado quando o número
+existe, contador omitido quando `stars` é `null` (sem inventar número, com a
+ação preservada), os dois destinos (favoritar e patrocinar) com `target`/`rel`
+corretos, e o formato compacto removendo só o parágrafo.
 
 ---
 
@@ -186,7 +199,7 @@ mostrava tier, símbolo, foil, metal e serial; o pôster de batalha, nada disso.
 Podia ser certo — batalha é sobre HP e dano, não sobre colecionar. Mas era uma
 divergência que ninguém decidiu de propósito.
 
-### 3.2 Terminologia do TCG Pokémon
+### 3.2 Terminologia do TCG Pokémon — DECIDIDO
 
 `Illustration Rare`, `Special Illustration Rare` e `Hyper Rare` são termos
 específicos do produto da Pokémon Company. `Common`/`Uncommon`/`Rare`/`Ultra Rare`
@@ -196,6 +209,9 @@ Num produto público que já se apresenta como parecido com Pokémon, os três
 primeiros aproximam mais do original do que o resto do projeto se permitiu (a
 RFC 11 e o cabeçalho de `scripts/lib/art.mjs` deixam claro que nenhum asset é
 derivado de material da Pokémon Company).
+
+**Decisão:** terminologia mantida, inclusive os nomes de classe `ex`/`Mega ex`.
+Registrado como D29.
 
 ### 3.3 A cauda da distribuição de raridade é desconhecida
 
@@ -207,12 +223,16 @@ todos os usuários reais do GitHub.
 Especificamente: não sei se `illustration_rare` (8.000) e `ultra_rare` (40.000)
 são faixas povoadas ou faixas vazias entre "dev comum" e "celebridade".
 
-### 3.4 O pacote toca em toda visita
+### 3.4 O pacote toca em toda visita — DECIDIDO
 
 Decisão consciente (RFC 7.2 proíbe estado por visitante), mas o custo é real e
 não foi medido: quem consulta cinco perfis seguidos rasga cinco pacotes. O botão
 de pular existe desde o primeiro quadro justamente por isso, mas ninguém testou
 se isso basta.
+
+**Decisão:** mantém. RFC 7.2 proíbe estado por visitante e o botão de pular já é
+o mecanismo; medir fica para quando houver dados reais de uso. Registrado como
+D30.
 
 ---
 
@@ -325,29 +345,26 @@ elemento interativo**.
 
 ## Sugestão de ordem
 
-A primeira rodada fechou 1.1, 1.3, 2.2, 4.1, 4.3, 5.1 e 6.1. O que sobrou, por
-quem consegue resolver:
+A primeira rodada fechou 1.1, 1.3, 2.2, 4.1, 4.3, 5.1 e 6.1. A segunda rodada
+fechou 2.3, 3.1, 3.2, 3.4 e 7.1, e decidiu o provedor de Redis (ver
+`docs/decisions.md`, Q11). O que sobrou, por quem consegue resolver:
 
 **Depende de você, e destrava trabalho meu:**
 
 1. **4.2** — olhar o foil ao vivo em `/torvalds`. Terceira tentativa no efeito,
    duas reprovadas; não declaro resolvido sem você ver.
-2. **2.1** — subir o Docker Desktop. Com ele de pé eu levanto o Redis, exercito
-   a atribuição concorrente e fecho o único caminho de código que iria para
-   produção sem nunca ter rodado.
+2. **2.1** — subir o Docker Desktop. Com ele de pé, `scripts/exercise-serial.mjs`
+   exercita a atribuição atômica contra um Redis de verdade e fecha o único
+   caminho de código que iria para produção sem nunca ter rodado.
 
-**Decisões de produto, só suas:**
+**Decisão de produto, só sua:**
 
-3. **3.1** — pôster de batalha mostra raridade e serial, ou fica como está.
-4. **3.2** — manter a terminologia específica do TCG Pokémon.
-5. **3.4** — o pacote continuar tocando em toda visita.
+3. **3.3** — medir a cauda da distribuição de raridade num conjunto maior e
+   menos enviesado que os 8 perfis célebres que escolhi.
 
 **Trabalho meu, quando você quiser:**
 
-6. **2.3** — teste do `SupportBand`, incluindo o caminho sem contador.
-7. **3.3** — medir a distribuição num conjunto maior e menos enviesado que os 8
-   perfis célebres que escolhi.
-8. **5.2** — mais uma rodada no estágio 3 do canvas, com a ressalva de sempre: o
+4. **5.2** — mais uma rodada no estágio 3 do canvas, com a ressalva de sempre: o
    placeholder cinza limita o que dá para julgar lá.
 
 ---
@@ -374,6 +391,10 @@ compra tempo.
 **Atualização:** passou no runner Linux nas quatro execuções do CI, em ~40s de
 job inteiro. Confirma que é lentidão de disco no Windows, não defeito — mas a
 margem continua fina e o veredito segue valendo.
+
+**Resolvido:** trocado por `existsSync` — é existência que o teste afirma
+verificar, e o comentário dele já dizia isso. O teste deixa de ler ~4 MB de PNG
+por execução.
 
 ### 7.2 O e2e está vermelho por Deployment Protection, não por código
 
