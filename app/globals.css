@@ -780,16 +780,16 @@ select {
 .pack-glow {
   position: absolute;
   top: 26px;
-  left: 8%;
-  right: 8%;
-  height: 120px;
+  left: 0;
+  right: 0;
+  height: 150px;
   opacity: 0;
   pointer-events: none;
   background: radial-gradient(
     ellipse at 50% 0%,
-    rgb(255 255 255 / 0.85),
-    rgb(255 236 170 / 0.35) 42%,
-    transparent 72%
+    rgb(255 255 255 / 0.95),
+    rgb(255 236 170 / 0.5) 46%,
+    transparent 78%
   );
 }
 
@@ -802,12 +802,17 @@ select {
 }
 
 .pack[data-stage="opening"] .pack-glow {
-  animation: pack-leak 620ms ease-out both;
+  /*
+   * A luz dispara de uma vez (pico em 20%) e se mantém acesa durante a queda —
+   * é ela que dá contorno ao pacote escuro caindo sobre o overlay escuro. Sem
+   * esta sustentação a queda inteira acontece em silhueta.
+   */
+  animation: pack-leak 700ms ease-out both;
 }
 
 .pack[data-stage="opening"] .pack-body {
   /* Acelera na queda (gravidade) em vez de desacelerar. */
-  animation: pack-fall 620ms cubic-bezier(0.55, 0, 1, 0.45) 180ms both;
+  animation: pack-fall 700ms cubic-bezier(0.55, 0, 1, 0.45) 180ms both;
 }
 
 @keyframes pack-tear {
@@ -823,12 +828,17 @@ select {
 }
 
 @keyframes pack-leak {
-  35% {
+  20% {
     opacity: 1;
+    transform: scaleY(2.6) scaleX(1.12);
+  }
+  70% {
+    opacity: 0.55;
+    transform: scaleY(2.9) scaleX(1.15);
   }
   to {
     opacity: 0;
-    transform: scaleY(2.1);
+    transform: scaleY(3) scaleX(1.18);
   }
 }
 
@@ -839,13 +849,20 @@ select {
    * originais, que mal saíam do lugar. A rotação e o encolhimento leve lêem
    * como corpo solto tombando, e a opacidade só some no fim — ficar visível
    * durante a queda é o que faz ela ser uma queda.
+   *
+   * O brilho cresce no fim de propósito: a luz que vazou pelo rasgo ilumina a
+   * embalagem por dentro enquanto ela cai. Corpo escuro caindo sobre o overlay
+   * escuro é silhueta — um corpo que clareia em queda é o que se lê.
    */
-  90% {
+  0%,
+  70% {
     opacity: 1;
+    filter: brightness(1.05);
   }
   to {
-    transform: translateY(125%) rotate(-9deg) scale(0.95);
+    transform: translateY(200%) rotate(-14deg) scale(0.92);
     opacity: 0;
+    filter: brightness(1.4);
   }
 }
 
