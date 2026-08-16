@@ -4349,3 +4349,170 @@ select {
     transition: none;
   }
 }
+
+/* ------------------------------------------------------ ajuda por seção */
+
+/*
+ * O "?" de cada seção. Os cabeçalhos viram uma linha de flex: o rótulo de 13px
+ * e o botão dividem a mesma linha, e a bolha ancorada fica sob responsabilidade
+ * do `.help-anchor` (posição relativa), nunca da seção que o contém.
+ */
+
+.hero-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.hero-row .search-form {
+  flex: 1 1 260px;
+  margin-top: 0;
+}
+
+.radar-title-row,
+.why-heading,
+.embed-heading,
+.battle-form-heading,
+.battle-actions-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A margem de 10px que os rótulos tinham sozinha (`h2 { margin: 0 0 10px }`)
+   passa para a linha que os acompanha, para o "?" não subir nem descer. */
+.why-heading,
+.embed-heading,
+.battle-form-heading,
+.battle-actions-heading {
+  margin-bottom: 10px;
+}
+
+.why-heading h2,
+.embed-heading h2,
+.battle-form-heading h2,
+.battle-actions-heading h2 {
+  margin: 0;
+}
+
+/* O seletor de modos ganha o mesmo papel de linha: tabs à esquerda, "?" à
+   direita, e a margem que era do seletor passa para a linha. */
+.battle-form-modes-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.battle-form-modes-row .battle-form-modes {
+  margin-bottom: 0;
+}
+
+/* A coluna esquerda do painel espelha o texto (RFC: a esquerda mira a carta);
+   os cabeçalhos acompanham e encostam o "?" na borda de fora, onde a bolha
+   pode crescer para a esquerda sem esbarrar na carta. */
+.card-aside-left .radar-title-row,
+.card-aside-left .why-heading {
+  justify-content: flex-end;
+}
+
+/* O "?" do cabeçalho da carta fica sob a linha de raridade, centralizado como
+   o resto do cabeçalho. */
+.headline-help {
+  margin-top: 8px;
+}
+
+.help-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.help-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease;
+}
+
+.help-trigger:hover,
+.help-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.help-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.help-popover {
+  position: absolute;
+  z-index: 60;
+  display: block;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+  text-align: left;
+  animation: pop .16s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.help-popover[data-placement="bottom"] {
+  top: calc(100% + 6px);
+}
+
+.help-popover[data-placement="top"] {
+  bottom: calc(100% + 6px);
+}
+
+/* Centralizar por `left/right + margin auto` em vez de `translateX`: a bolha
+   também anima em `transform` (keyframe `pop`), e as duas coisas não podem
+   disputar a mesma propriedade. */
+.help-popover[data-align="left"] {
+  left: 0;
+  right: auto;
+}
+
+.help-popover[data-align="right"] {
+  right: 0;
+  left: auto;
+}
+
+.help-popover[data-align="center"] {
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.help-popover strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.help-popover > span {
+  display: block;
+}

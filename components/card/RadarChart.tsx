@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { AxisRating } from "@/lib/cards/ratings";
 import { radarGeometry, radarSector } from "@/lib/radar";
+import { HelpButton } from "@/components/ui/HelpButton";
+import { HELP } from "@/lib/guide/help";
 import { translator, type Locale, type MessageKey } from "@/lib/i18n/dictionaries";
 
 /**
@@ -79,7 +81,15 @@ export function RadarChart({
   return (
     <figure className="radar">
       <figcaption>
-        <h2>{t(kind === "repo" ? "radar.title.repo" : "radar.title")}</h2>
+        <div className="radar-title-row">
+          <h2>{t(kind === "repo" ? "radar.title.repo" : "radar.title")}</h2>
+          <HelpButton
+            title={t(HELP.radar.titleKey)}
+            body={t(HELP.radar.bodyKey)}
+            label={t("help.trigger")}
+            align="right"
+          />
+        </div>
         <p>{t(kind === "repo" ? "radar.caption.repo" : "radar.caption")}</p>
       </figcaption>
 

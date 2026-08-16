@@ -4,12 +4,14 @@ import type { Card } from "@/lib/cards/types";
 import { absoluteUrl } from "@/lib/config";
 import { elementKey, rarityKey, translator, classKey, type Locale } from "@/lib/i18n/dictionaries";
 import { CopyField } from "@/components/ui/CopyField";
+import { HelpButton } from "@/components/ui/HelpButton";
 import { ShareActions } from "@/components/ui/ShareActions";
 import { PackOpening } from "./PackOpening";
 import { RadarChart } from "./RadarChart";
 import { StatBreakdown } from "./StatBreakdown";
 import { TiltCard } from "./TiltCard";
 import { TypeIcon } from "./TypeIcon";
+import { HELP } from "@/lib/guide/help";
 
 /**
  * A carta em si, com o que uma pessoa precisa depois de gerá-la: o snippet para
@@ -108,6 +110,13 @@ export function CardPanel({
             </span>{" "}
             · {t(card.kind === "profile" ? "card.profile" : "card.repo")}
           </p>
+          <HelpButton
+            title={t(HELP.card.titleKey)}
+            body={t(HELP.card.bodyKey)}
+            label={t("help.trigger")}
+            align="center"
+            className="headline-help"
+          />
         </div>
       </div>
 
@@ -142,7 +151,14 @@ export function CardPanel({
         />
 
         <section className="embed">
-          <h2>{t("home.embed")}</h2>
+          <div className="embed-heading">
+            <h2>{t("home.embed")}</h2>
+            <HelpButton
+              title={t(HELP.embed.titleKey)}
+              body={t(HELP.embed.bodyKey)}
+              label={t("help.trigger")}
+            />
+          </div>
           <CopyField value={markdown} copyLabel={t("home.copy")} copiedLabel={t("home.copied")} />
         </section>
 

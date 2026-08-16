@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import UserSearchInput, { type UserSearchInputHandle } from "../ui/UserSearchInput";
+import { HelpButton } from "../ui/HelpButton";
 
 /**
  * Manda para `/<desafiante>/vs/<adversário>`, que sorteia uma batalha nova e
@@ -19,6 +20,8 @@ export function BattleForm({
   action,
   ygoMode = false,
   modeLabels,
+  help,
+  helpModes,
 }: {
   challenger: string;
   label: string;
@@ -26,6 +29,13 @@ export function BattleForm({
   action: string;
   ygoMode?: boolean;
   modeLabels?: { battle: string; ygo: string };
+  /**
+   * Ajuda por seção ("?"): bolha que explica o formulário sem o tour completo.
+   * O conteúdo chega pronto de quem chama (que resolve as chaves de i18n).
+   */
+  help?: { title: string; body: string; label: string };
+  /** Ajuda do seletor de modos Batalha/Speed Duel, quando `ygoMode`. */
+  helpModes?: { title: string; body: string; label: string };
 }) {
   const router = useRouter();
   const [opponent, setOpponent] = useState("");
@@ -44,27 +54,33 @@ export function BattleForm({
 
   return (
     <form className="battle-form" onSubmit={submit}>
-      <h2>{label}</h2>
+      <div className="battle-form-heading">
+        <h2>{label}</h2>
+        {help ? <HelpButton {...help} /> : null}
+      </div>
       {ygoMode && modeLabels ? (
-        <div className="battle-form-modes" role="tablist" aria-label={label}>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "battle"}
-            className={mode === "battle" ? "is-active" : undefined}
-            onClick={() => setMode("battle")}
-          >
-            {modeLabels.battle}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "ygo"}
-            className={mode === "ygo" ? "is-active" : undefined}
-            onClick={() => setMode("ygo")}
-          >
-            {modeLabels.ygo}
-          </button>
+        <div className="battle-form-modes-row">
+          <div className="battle-form-modes" role="tablist" aria-label={label}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "battle"}
+              className={mode === "battle" ? "is-active" : undefined}
+              onClick={() => setMode("battle")}
+            >
+              {modeLabels.battle}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "ygo"}
+              className={mode === "ygo" ? "is-active" : undefined}
+              onClick={() => setMode("ygo")}
+            >
+              {modeLabels.ygo}
+            </button>
+          </div>
+          {helpModes ? <HelpButton {...helpModes} /> : null}
         </div>
       ) : null}
       <div className="battle-form-row">

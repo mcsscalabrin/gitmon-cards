@@ -333,6 +333,8 @@ const pt = {
   "guide.close": "Fechar guia",
   "guide.step": "{current} de {total}",
 
+  "help.trigger": "O que é esta seção?",
+
   "guide.step.concept.title": "O que é o Gitmon Cards",
   "guide.step.concept.body":
     "Perfis e repositórios do GitHub viram cartas de TCG. Cada número vem de uma fórmula fixa e documentada — nada é inventado.",
@@ -659,6 +661,8 @@ const en: Record<MessageKey, string> = {
   "guide.done": "Done",
   "guide.close": "Close guide",
   "guide.step": "{current} of {total}",
+
+  "help.trigger": "What is this section?",
 
   "guide.step.concept.title": "What is Gitmon Cards",
   "guide.step.concept.body":

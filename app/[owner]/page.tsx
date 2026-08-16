@@ -6,6 +6,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { Shell } from "@/components/ui/Shell";
 import { getProfileCard, getProfileRepos } from "@/lib/cards";
 import { ELEMENT_COLORS } from "@/lib/cards/elements";
+import { HELP } from "@/lib/guide/help";
 import { cardMetadata } from "@/lib/metadata";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
@@ -53,6 +54,16 @@ export default async function ProfilePage({ params, searchParams }: Params) {
           action={t("home.battleAction")}
           ygoMode
           modeLabels={{ battle: t("home.modeBattle"), ygo: t("home.modeYgo") }}
+          help={{
+            title: t(HELP.battle.titleKey),
+            body: t(HELP.battle.bodyKey),
+            label: t("help.trigger"),
+          }}
+          helpModes={{
+            title: t(HELP.ygo.titleKey),
+            body: t(HELP.ygo.bodyKey),
+            label: t("help.trigger"),
+          }}
         />
       </CardPanel>
 

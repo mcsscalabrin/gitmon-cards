@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { TiltCard } from "@/components/card/TiltCard";
+import { HelpButton } from "@/components/ui/HelpButton";
 import { SearchForm } from "@/components/ui/SearchForm";
 import { Shell } from "@/components/ui/Shell";
+import { HELP } from "@/lib/guide/help";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 
@@ -24,7 +26,14 @@ export default async function HomePage() {
       <section className="hero">
         <h1>{t("home.tagline")}</h1>
         <p>{t("home.description")}</p>
-        <SearchForm placeholder={t("home.search")} action={t("home.searchAction")} />
+        <div className="hero-row">
+          <SearchForm placeholder={t("home.search")} action={t("home.searchAction")} />
+          <HelpButton
+            title={t(HELP.search.titleKey)}
+            body={t(HELP.search.bodyKey)}
+            label={t("help.trigger")}
+          />
+        </div>
       </section>
 
       <section className="samples" aria-label={t("home.samples")}>
