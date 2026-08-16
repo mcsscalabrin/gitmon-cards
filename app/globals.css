@@ -2099,6 +2099,24 @@ select {
   vertical-align: baseline;
 }
 
+/*
+ * Selo da classe ex/Mega ex, colado ao nome. Pílula fina na cor do elemento
+ * (a mesma do tipo na linha de baixo): escala com o nome em vez de competir
+ * com ele. `vertical-align` para ficar no meio da linha de 34px do h1.
+ */
+.card-class {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 9px;
+  border: 1px solid var(--element, var(--text-muted));
+  border-radius: 999px;
+  color: var(--element, var(--text-muted));
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+}
+
 .card-headline p {
   margin: 6px 0 0;
   color: var(--element, var(--text-muted));

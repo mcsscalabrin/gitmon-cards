@@ -51,9 +51,10 @@ the numbers (RFC 9.2). There is no flavour text.
 | **Weakness** | Profile: the developer's second language. Repo: the type chain |
 | **Resistance** | Type effectiveness chain |
 | **Retreat** | Profile: account age. Repo: open issue queue |
-| **Rarity** (8 tiers) | Composite score, on the Pokémon TCG ladder |
-| **Tag** (5) | The axis the profile is strongest on — `ORIGIN` `HUB` `MONO` `LTS` `POLY` |
-| **Serial number** | Sequential by generation order, immutable once assigned |
+ | **Rarity** (8 tiers) | Composite score, on the Pokémon TCG ladder |
+ | **Tag** (5) | The axis the profile is strongest on — `ORIGIN` `HUB` `MONO` `LTS` `POLY` |
+ | **Class** (ex / Mega ex) | Peak of the external-scale signature (Reach/Community) — site-only, like the radar |
+ | **Serial number** | Sequential by generation order, immutable once assigned |
 
 From `rare` upwards the card gains foil, and the illustration tiers change the **art treatment** —
 full-art bleed, silver or gold plating, engraved texture at the top three. See
@@ -70,8 +71,9 @@ The vocabulary is Git's, not the Pokémon Company's, and is deliberately not tra
 and `LTS` read the same in both languages, like `commit`.
 
 The site adds what the exported image deliberately does not carry (RFC 9.6): pack opening, specular
-foil that follows the pointer, a signature radar for the profile, and a derivations panel showing
-where each number came from. The PNG that travels into someone else's README stays clean.
+foil that follows the pointer, a signature radar for profiles **and** repositories, the ex/Mega ex
+class badge next to the name, and a derivations panel showing where each number came from. The PNG
+that travels into someone else's README stays clean.
 
 It also speaks the card's language instead of being a wrapper around it: display and headings use
 the **same typeface** Satori draws on the card (M PLUS Rounded 1c, 28 KB in two WOFF2 weights), and
@@ -153,6 +155,7 @@ lib/
   cards/                       scoring: HP, type, attacks, weakness, retreat, rarity
     profile.ts / repo.ts       the two card formulas (RFC 6.1 and 6.2)
     rarity.ts                  8 tiers, symbol, foil and art treatment
+    cardClass.ts               ex / Mega ex — peak of the external-scale signature
     serial.ts                  serial number — the only durable data, assigned by a Lua script
     ratings.ts                 the 5 radar axes (signature, not measurement)
     layout.json                card geometry in pixels — single source
@@ -244,8 +247,8 @@ Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT); all other copy
 are held by Lucide Contributors 2022. See `docs/assets-brief.md`.
 
 The tier names `Illustration Rare`, `Special Illustration Rare` and `Hyper Rare` are product
-terminology from The Pokémon Company, adopted here as TCG vocabulary. This is an open question —
-see `docs/gaps-revalidacao.md` (3.2).
+terminology from The Pokémon Company, adopted here as TCG vocabulary, by decision — see
+`docs/decisions.md` (D29).
 
 ## License
 

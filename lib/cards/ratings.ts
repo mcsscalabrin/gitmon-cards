@@ -1,16 +1,17 @@
 /**
- * Os cinco eixos da assinatura do perfil.
+ * As duas assinaturas de radar: a do perfil e a do repositório.
  *
- * **Isto é assinatura, não medição.** O radar existe para dar ao perfil uma
+ * **Isto é assinatura, não medição.** O radar existe para dar ao sujeito uma
  * silhueta reconhecível — dois devs diferentes viram polígonos diferentes de
- * relance —, e não para comparar grandezas.
+ * relance, e o mesmo vale para dois repositórios —, e não para comparar
+ * grandezas.
  *
  * A distinção importa porque um radar de cinco eixos é, na prática, um gráfico
  * de cinco escalas independentes: estrelas, seguidores, repositórios, anos e
  * linguagens não têm unidade comum. A forma do polígono e a área dele são
- * artefato dos tetos escolhidos aqui, não do perfil. Mudar `CEILINGS.stars` de
- * 250k para 100k desenha outro polígono para o mesmo dev, sem nada ter mudado
- * no GitHub dele.
+ * artefato dos tetos escolhidos aqui, não do sujeito. Mudar `CEILINGS.reach`
+ * de 250k para 100k desenha outro polígono para o mesmo dev, sem nada ter
+ * mudado no GitHub dele.
  *
  * Consequências assumidas no componente que desenha:
  *
@@ -19,9 +20,35 @@
  * - Os números reais moram na lista de derivações ao lado, com a frase de
  *   motivo. O radar dá a forma; a lista dá o dado.
  */
-export const AXES = ["reach", "community", "volume", "veterancy", "breadth"] as const;
+export const PROFILE_AXES = [
+  "reach",
+  "community",
+  "volume",
+  "veterancy",
+  "breadth",
+] as const;
+export type ProfileAxis = (typeof PROFILE_AXES)[number];
 
-export type Axis = (typeof AXES)[number];
+/**
+ * Eixos da assinatura do repositório. Quatro coincidem com os do perfil; o
+ * quinto é **activity** no lugar de **breadth** — um repositório tem uma
+ * linguagem dominante, então "amplitude" não significaria nada aqui. Recência
+ * do último push é o análogo de "veterania": um eixo que o perfil não tem.
+ */
+export const REPO_AXES = [
+  "reach",
+  "community",
+  "volume",
+  "veterancy",
+  "activity",
+] as const;
+export type RepoAxis = (typeof REPO_AXES)[number];
+
+/** União das duas assinaturas; `AxisRating.axis` aceita qualquer uma. */
+export type Axis = ProfileAxis | RepoAxis;
+
+/** Eixos do perfil. Mantido com o nome curto pelos consumidores antigos. */
+export const AXES = PROFILE_AXES;
 
 /**
  * Teto de cada eixo: o valor que satura em 99.
@@ -33,12 +60,35 @@ export type Axis = (typeof AXES)[number];
  *
  * Mexer aqui muda a silhueta de todo mundo de uma vez. É o preço de haver teto.
  */
-export const CEILINGS: Record<Axis, number> = {
+export const CEILINGS: Record<ProfileAxis, number> = {
   reach: 250_000,
   community: 320_000,
   volume: 1_200,
   veterancy: 20,
   breadth: 12,
+};
+
+/**
+ * Teto de cada eixo da assinatura do repositório.
+ *
+ * `reach` e `veterancy` repetem os do perfil de propósito: estrelas saturavam
+ * num número só (torvalds é quem chega perto), e um repo não envelhece mais
+ * que um dev. Os outros três são do mundo do repo:
+ *
+ * - `community` (forks): teto calibrado no maior repo do GitHub. Linux tem
+ *   ~90k forks; quem bate 100k empatou com o topo.
+ * - `volume` (issues abertas): fila de recuo (Q5). 5000 issues abertas é um
+ *   número que nem repositório abandonado de grande porte costuma passar.
+ * - `activity` (dias desde o último push): **invertido**. Quem empurrou hoje
+ *   satura; quem não empurra há 730 dias (2 anos) zera. É o único eixo em que
+ *   um número alto é ruim, e por isso o `value` é `99 - normalize(...)`.
+ */
+export const REPO_CEILINGS: Record<RepoAxis, number> = {
+  reach: 250_000,
+  community: 100_000,
+  volume: 5_000,
+  veterancy: 20,
+  activity: 730,
 };
 
 export interface AxisRating {
@@ -78,7 +128,7 @@ export interface RatingInput {
 }
 
 export function ratingsFor(input: RatingInput): AxisRating[] {
-  const raw: Record<Axis, number> = {
+  const raw: Record<ProfileAxis, number> = {
     reach: input.stars,
     community: input.followers,
     volume: input.repos,
@@ -91,6 +141,40 @@ export function ratingsFor(input: RatingInput): AxisRating[] {
     value: normalize(raw[axis], CEILINGS[axis]),
     raw: raw[axis],
   }));
+}
+
+/**
+ * Entrada da assinatura do repositório. `daysSincePush` é o que GitHubRepo
+ * fornece (`pushed_at`); `null` vira `Infinity` aqui para saturar o zero.
+ */
+export interface RepoRatingInput {
+  stars: number;
+  forks: number;
+  issues: number;
+  years: number;
+  daysSincePush: number;
+}
+
+/**
+ * Assinatura do repositório em cinco eixos — ver `REPO_AXES`/`REPO_CEILINGS`.
+ *
+ * A recência é o único eixo invertido: `daysSincePush` alto é pouco
+ * atividade, então o valor sai de `99 - normalize(...)`. O `raw` continua o
+ * número cru (dias desde o último push) para a tabela acessível não mentir
+ * sobre o que o ponto significa.
+ */
+export function repoRatingsFor(input: RepoRatingInput): AxisRating[] {
+  return [
+    { axis: "reach", value: normalize(input.stars, REPO_CEILINGS.reach), raw: input.stars },
+    { axis: "community", value: normalize(input.forks, REPO_CEILINGS.community), raw: input.forks },
+    { axis: "volume", value: normalize(input.issues, REPO_CEILINGS.volume), raw: input.issues },
+    { axis: "veterancy", value: normalize(input.years, REPO_CEILINGS.veterancy), raw: input.years },
+    {
+      axis: "activity",
+      value: 99 - normalize(input.daysSincePush, REPO_CEILINGS.activity),
+      raw: input.daysSincePush,
+    },
+  ];
 }
 
 /**

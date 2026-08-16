@@ -66,6 +66,21 @@ export const RARITIES = [
 
 export type Rarity = (typeof RARITIES)[number];
 
+/**
+ * Classe da carta — o "overall" no lugar da nota do gitfut (handoff.md).
+ *
+ * Não é o mesmo fato que a raridade: esta mede o **pico da assinatura de
+ * escala externa**, e não a soma ponderada de tudo. Dois devs com a mesma
+ * quantia de estrelas saem daqui diferentes quando um as concentra num único
+ * eixo — a dimensão que a raridade não enxerga. Ver `./cardClass.ts`.
+ *
+ * No TCG real "ser ex" e "estar nos tiers altos" são o mesmo fato; aqui a
+ * classe existe exatamente para não ser isso.
+ */
+export const CARD_CLASSES = ["standard", "ex", "mega_ex"] as const;
+
+export type CardClass = (typeof CARD_CLASSES)[number];
+
 export interface Attack {
   /** Nome curto — vem do dado (nome do repo, login do contribuidor), não é inventado. */
   name: string;
@@ -103,6 +118,12 @@ export interface Card {
    * de precisar de um bump de `CARD_VERSION` só para renomear um rótulo.
    */
   axis: Axis;
+  /**
+   * Classe ex/Mega ex, do pico de escala externa. Como `derivations` e
+   * `ratings`, é afordância do site e não entra na imagem exportada — o PNG
+   * continua limpo (RFC 9.6). Ver `./cardClass.ts`.
+   */
+  cardClass?: CardClass;
   /**
    * Número de série sequencial, atribuído na primeira vez que a carta é gerada e
    * imutável depois disso. `null` quando o store durável não respondeu — carta

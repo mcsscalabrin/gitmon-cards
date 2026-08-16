@@ -196,6 +196,62 @@ describe("raridade", () => {
   });
 });
 
+describe("assinatura do repositório (radar)", () => {
+  it("sai preenchida com os cinco eixos do repo", () => {
+    const card = buildRepoCard(repo(), [], NOW);
+    expect(card.ratings).toBeDefined();
+    expect(card.ratings?.map((r) => r.axis)).toEqual([
+      "reach",
+      "community",
+      "volume",
+      "veterancy",
+      "activity",
+    ]);
+  });
+
+  it("reflete a recência do último push no eixo de atividade", () => {
+    const recente = buildRepoCard(
+      repo({ stargazers_count: 500, pushed_at: "2026-08-09T00:00:00Z" }),
+      [],
+      NOW,
+    );
+    const parado = buildRepoCard(
+      repo({ stargazers_count: 500, pushed_at: "2019-01-01T00:00:00Z" }),
+      [],
+      NOW,
+    );
+    const activity = (card: ReturnType<typeof buildRepoCard>) =>
+      card.ratings?.find((r) => r.axis === "activity");
+
+    expect(activity(recente)?.value).toBeGreaterThan(50);
+    expect(activity(parado)?.value).toBe(0);
+    // Raw não é nota: o número cru de dias fica visível na tabela acessível.
+    expect(activity(parado)?.raw).toBeGreaterThan(700);
+  });
+});
+
+describe("classe ex/Mega ex", () => {
+  it("sai do pico de estrelas/forks, não da soma", () => {
+    // 700★ = alcance ~52, abaixo do piso de 80 → standard (raridade double_rare
+    // com o bônus de atividade, mas a classe é outra dimensão).
+    const modesto = buildRepoCard(repo({ stargazers_count: 700 }), [], NOW);
+    expect(modesto.cardClass).toBe("standard");
+
+    // 250k★ satura alcance → mega ex.
+    const gigante = buildRepoCard(repo({ stargazers_count: 250_000 }), [], NOW);
+    expect(gigante.cardClass).toBe("mega_ex");
+  });
+
+  it("recém-criado não vira mega ex só por atividade saturada", () => {
+    const novinho = buildRepoCard(
+      repo({ stargazers_count: 0, forks_count: 0, pushed_at: NOW.toISOString() }),
+      [],
+      NOW,
+    );
+    expect(novinho.cardClass).toBe("standard");
+  });
+});
+
 describe("derivações", () => {
   function derivationsOf(card: ReturnType<typeof buildRepoCard>): Derivation[] {
     const list = card.derivations;

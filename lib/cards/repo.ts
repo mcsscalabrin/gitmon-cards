@@ -12,9 +12,11 @@ import {
   yearsSince,
 } from "./format";
 import { elementKey, rarityKey } from "../i18n/dictionaries";
+import { cardClassFor } from "./cardClass";
 import { rarityForScore } from "./rarity";
 import { dominantAxisForRepo, tagForAxis } from "./tag";
 import type { Axis } from "./ratings";
+import { repoRatingsFor } from "./ratings";
 import type { Attack, Card, Derivation, Element } from "./types";
 
 /**
@@ -69,6 +71,18 @@ export function buildRepoCard(
     years: yearsSince(repo.created_at, now),
   });
 
+  const ratings = repoRatingsFor({
+    stars: repo.stargazers_count,
+    forks: repo.forks_count,
+    issues: repo.open_issues_count,
+    // `pushed_at` é o único campo nullable do repo: repo sem push nunca
+    // acontece na prática, mas `Infinity` zera o eixo de atividade em vez
+    // de estourar. Ver `daysSince` em `./format.ts` (devolve Infinity para
+    // `null`).
+    years: yearsSince(repo.created_at, now),
+    daysSincePush: daysSince(repo.pushed_at, now),
+  });
+
   return {
     kind: "repo",
     id: repo.full_name,
@@ -107,6 +121,8 @@ export function buildRepoCard(
       score,
       freshness,
     }),
+    ratings,
+    cardClass: cardClassFor(ratings),
     sourceUrl: repo.html_url,
   };
 }
@@ -119,11 +135,12 @@ export function buildRepoCard(
  * aqui o sujeito é o repositório, não quem está lendo. Chaves próprias, sob
  * `why.repo.*`.
  *
- * Continua não havendo radar do lado do repositório: `ratings` é afordância do
- * site e os tetos de `./ratings.ts` são de perfil. O que o repositório passou a
- * ter é o **eixo dominante**, que é outra coisa — ele não desenha polígono, só
- * escolhe a tag e o padrão do foil, e roda sobre os tetos próprios de
- * `REPO_CEILINGS`. A coluna esquerda fica com a primeira metade das derivações.
+ * O radar do repositório roda sobre os tetos próprios de `REPO_CEILINGS`, com o
+ * eixo `activity` no lugar de `breadth` — um repo tem linguagem dominante, então
+ * "amplitude" não significa nada lá (D27). O **eixo dominante** é outra coisa
+ * ainda: ele não desenha polígono, só escolhe a tag e o padrão do foil. A coluna
+ * esquerda fica com a primeira metade das derivações, e é o suficiente para a
+ * página parar de sair com as duas laterais vazias.
  */
 function repoDerivations(input: {
   repo: GitHubRepo;
