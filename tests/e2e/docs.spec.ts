@@ -20,7 +20,8 @@ test.describe("guia (/docs) e tour guiado", () => {
 
     const tooltip = page.locator(".guide-tooltip");
     await expect(tooltip).toBeVisible();
-    await expect(tooltip).toHaveAttribute("aria-modal", "true");
+    // O diálogo (com `aria-modal`) é o overlay; a tooltip é a caixa dentro dele.
+    await expect(page.locator(".guide-overlay")).toHaveAttribute("aria-modal", "true");
     await expect(tooltip).toContainText("O que é o Gitmon Cards");
     // O primeiro passo ilumina o herói da própria /docs.
     await expect(page.locator(".guide-spotlight")).toBeVisible();
@@ -32,7 +33,9 @@ test.describe("guia (/docs) e tour guiado", () => {
     await page.goto("/docs");
     await page.getByRole("button", { name: /Iniciar tour guiado|Start guided tour/ }).click();
 
-    await page.getByRole("button", { name: /Próximo|Next/ }).click();
+    // Escopo na tooltip: o rótulo "Next" também casa com o botão do Next.js Dev
+    // Tools em dev, que aparece de forma não determinística.
+    await page.locator(".guide-tooltip").getByRole("button", { name: /Próximo|Next/ }).click();
 
     // O passo "gerar carta" navega para a home e espera o seletor da busca.
     await expect(page).toHaveURL(/\/$/);

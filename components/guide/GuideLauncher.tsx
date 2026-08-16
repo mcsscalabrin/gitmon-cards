@@ -86,7 +86,8 @@ export function GuideLauncher({ locale }: { locale: Locale }) {
   useEffect(() => {
     if (!open) return;
 
-    if (step.to && !window.location.href.includes(step.to)) {
+    const targetPath = step.to?.split("?")[0];
+    if (step.to && window.location.pathname !== targetPath) {
       router.push(step.to);
     }
 
