@@ -200,3 +200,46 @@ describe("organizações", () => {
     }
   });
 });
+
+describe("classe ex/Mega ex", () => {
+  it("sai do pico de alcance/comunidade, e não da soma de tudo", () => {
+    // dev comum (200★, 100 seg): raridade `rare`, mas pico ~42 → standard.
+    const comum = buildProfileCard(
+      user({ followers: 100, public_repos: 60 }),
+      [repo({ stargazers_count: 200 })],
+      NOW,
+    );
+    expect(comum.rarity).toBe("rare");
+    expect(comum.cardClass).toBe("standard");
+
+    // Celebridade (254k★): satura alcance → mega ex.
+    const celebridade = buildProfileCard(
+      user({ followers: 316_000, public_repos: 12 }),
+      [repo({ stargazers_count: 254_000 })],
+      NOW,
+    );
+    expect(celebridade.cardClass).toBe("mega_ex");
+  });
+
+  it("devolve ex para o pico de escala externa sem saturar", () => {
+    // gaearon (30k★, 91k seg): alcance ~82 → ex.
+    const notavel = buildProfileCard(
+      user({ followers: 91_000, public_repos: 299 }),
+      [repo({ stargazers_count: 30_000 })],
+      NOW,
+    );
+    expect(notavel.cardClass).toBe("ex");
+  });
+
+  it("saturação interna não confere classe — conta veterana é standard", () => {
+    // 12 anos de conta e 12 linguagens: veterania e amplitude em 99, escala
+    // externa zero. A classe é a dimensão que a raridade não enxerga, não o
+    // oposto.
+    const veterana = buildProfileCard(
+      user({ followers: 0, public_repos: 0, created_at: "2014-08-10T00:00:00Z" }),
+      [],
+      NOW,
+    );
+    expect(veterana.cardClass).toBe("standard");
+  });
+});

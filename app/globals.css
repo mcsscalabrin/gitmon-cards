@@ -2099,6 +2099,24 @@ select {
   vertical-align: baseline;
 }
 
+/*
+ * Selo da classe ex/Mega ex, colado ao nome. Pílula fina na cor do elemento
+ * (a mesma do tipo na linha de baixo): escala com o nome em vez de competir
+ * com ele. `vertical-align` para ficar no meio da linha de 34px do h1.
+ */
+.card-class {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 9px;
+  border: 1px solid var(--element, var(--text-muted));
+  border-radius: 999px;
+  color: var(--element, var(--text-muted));
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+}
+
 .card-headline p {
   margin: 6px 0 0;
   color: var(--element, var(--text-muted));
@@ -3449,32 +3467,14 @@ select {
 }
 
 .ygo-card-back {
-  background:
-    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--side, var(--accent)) 55%, transparent) 0 14%, transparent 15%),
-    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.18) 0 3px, transparent 4px),
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 4px, transparent 4px 8px),
-    linear-gradient(150deg, #1b2333 0%, #0d121c 100%);
+  background: url('/assets/backs/card-back.svg') center/cover no-repeat;
 }
 
-.ygo-card-monster {
-  display: block;
-  background: linear-gradient(160deg, #1a2130 0%, #0b0f16 100%);
-}
-
-.ygo-card-monster::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 34%;
-  background: linear-gradient(180deg, transparent, rgba(9, 11, 15, 0.85));
-  pointer-events: none;
-}
-
-.ygo-card-monster[data-pos="defense"] {
+.ygo-card[data-pos="defense"] {
   transform: rotate(90deg);
 }
 
-.ygo-card-monster[data-attacked] {
+.ygo-card[data-attacked] {
   opacity: 0.55;
   filter: saturate(0.4);
 }
@@ -3485,72 +3485,7 @@ select {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.92;
-  border-radius: 4px;
-}
-
-.ygo-card-level {
-  position: absolute;
-  top: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-  font-size: clamp(7px, 1vw, 10px);
-  letter-spacing: 1.5px;
-  line-height: 1;
-  color: var(--accent);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-}
-
-.ygo-card-atk,
-.ygo-card-def {
-  position: absolute;
-  bottom: 3px;
-  z-index: 1;
-  padding: 1px 5px;
-  font-size: clamp(8px, 1.1vw, 11px);
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  color: #fff;
-  background: rgba(9, 11, 15, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.ygo-card-atk { left: 3px; }
-.ygo-card-def { right: 3px; }
-
-.ygo-card-skill {
-  display: grid;
-  place-items: center;
-  padding: 6px;
-  border-width: 2px;
-  background: color-mix(in srgb, var(--kind-color, var(--accent)) 20%, #0c1017);
-  border-color: color-mix(in srgb, var(--kind-color, var(--accent)) 70%, transparent);
-}
-
-.ygo-card-skill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0 3px, transparent 3px 6px);
-  pointer-events: none;
-}
-
-.ygo-card-skill[data-kind="spell"] { --kind-color: var(--accent); }
-.ygo-card-skill[data-kind="trap"] { --kind-color: var(--danger); }
-
-.ygo-card-name {
-  position: relative;
-  z-index: 1;
-  font-size: clamp(8px, 1vw, 10px);
-  font-weight: 900;
-  text-align: center;
-  line-height: 1.2;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  opacity: 1;
 }
 
 .ygo-zone:hover .ygo-card {
@@ -3559,7 +3494,7 @@ select {
   z-index: 2;
 }
 
-.ygo-zone:hover .ygo-card-monster[data-pos="defense"] {
+.ygo-zone:hover .ygo-card[data-pos="defense"] {
   transform: translateY(-5px) rotate(90deg);
 }
 
@@ -3819,10 +3754,7 @@ select {
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background:
-    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.12) 0 3px, transparent 4px),
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 4px, transparent 4px 8px),
-    linear-gradient(150deg, #1b2333 0%, #0d121c 100%);
+  background: url('/assets/backs/card-back.svg') center/cover no-repeat;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
 }
@@ -3917,7 +3849,7 @@ select {
 
 .ygo-selected-art {
   position: relative;
-  aspect-ratio: 5 / 6;
+  aspect-ratio: 5 / 7;
   background: radial-gradient(circle at 50% 40%, rgba(58, 138, 216, 0.25), transparent 70%), #0d121c;
 }
 
@@ -3925,28 +3857,7 @@ select {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.92;
-}
-
-.ygo-selected-skill {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 8px;
-  text-align: center;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 13px;
-  color: #fff;
-}
-
-.ygo-selected-skill[data-kind="spell"] {
-  background: linear-gradient(160deg, rgba(58, 138, 216, 0.35), rgba(58, 138, 216, 0.08));
-}
-
-.ygo-selected-skill[data-kind="trap"] {
-  background: linear-gradient(160deg, rgba(226, 98, 47, 0.35), rgba(226, 98, 47, 0.08));
+  opacity: 1;
 }
 
 .ygo-selected-body {

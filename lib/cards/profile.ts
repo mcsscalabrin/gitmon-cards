@@ -13,6 +13,7 @@ import {
   yearsSince,
 } from "./format";
 import { elementKey, rarityKey } from "../i18n/dictionaries";
+import { cardClassFor } from "./cardClass";
 import { rarityForScore } from "./rarity";
 import { ratingsFor } from "./ratings";
 import { dominantAxisForProfile, tagForAxis } from "./tag";
@@ -82,6 +83,14 @@ export function buildProfileCard(
     languages: languages.length,
   });
 
+  const ratings = ratingsFor({
+    stars: totalStars,
+    followers: user.followers,
+    repos: user.public_repos,
+    years: accountAge,
+    languages: languages.length,
+  });
+
   return {
     kind: "profile",
     id: user.login,
@@ -112,13 +121,8 @@ export function buildProfileCard(
       // String, não número: ano formatado como número vira "2.011".
       { labelKey: "stat.since", value: String(year(user.created_at)) },
     ],
-    ratings: ratingsFor({
-      stars: totalStars,
-      followers: user.followers,
-      repos: user.public_repos,
-      years: accountAge,
-      languages: languages.length,
-    }),
+    ratings,
+    cardClass: cardClassFor(ratings),
     derivations: [
       {
         labelKey: "card.type",

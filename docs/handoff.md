@@ -153,15 +153,10 @@ Créditos gastos: ~60,5.
 
    E force o cache: a rota de imagem responde `max-age=3600`, então o PNG na tela
    pode ser anterior a tudo isto. `?bust=<agora>` resolve.
-2. **Subir o Docker Desktop.** Com ele de pé, levantar um Redis e exercitar a
-   atomicidade do script Lua — é o único caminho de código que iria para
+2. **Subir o Docker Desktop.** Com ele de pé, levantar um Redis e rodar
+   `scripts/exercise-serial.mjs` — é o único caminho de código que iria para
    produção sem nunca ter rodado. A lógica em volta tem 15 testes com o cliente
-   mockado; a atomicidade em si, nenhum.
-3. **Classe de carta (ex, Mega ex).** O autor quer que ela seja o "overall" no
-   lugar da nota do gitfut. A questão em aberto: se derivar da raridade, não
-   acrescenta informação — no TCG real "ser ex" e "estar nos tiers altos" são o
-   mesmo fato. Para valer como sinal, precisa medir outra dimensão, tipo
-   concentração do perfil (250k estrelas num repo vs. espalhadas em quarenta).
+   mockado; a atomicidade em si, nenhum. O script já existe e espera só o Redis.
 
 ## Próximo trabalho, já decidido — FEITO
 
@@ -181,12 +176,15 @@ Os três itens desta lista foram fechados. O que ficou registrado de cada um:
   com a tabela real de 18 tipos; `decisions.md` ganhou D11 (os 18 tipos) e D12
   (derivações e radar só no site). `design-system.md`, `assets-brief.md` e
   `data-mapping.md` atualizados.
-
-**Ainda não há radar para carta de repositório.** Os cinco eixos de `ratings.ts`
-são de perfil (seguidores, anos de conta) e não têm equivalente óbvio num repo.
-Com as derivações no lugar, as duas colunas já não saem vazias — mas a esquerda
-do repo é mais leve que a do perfil, que tem radar em cima. É decisão de produto,
-não pendência de código.
+- **Classe de carta (ex, Mega ex).** Implementada como D26: pico da assinatura
+  de escala externa (Alcance/Comunidade), piso 80 para `ex` e 99 para `mega_ex`,
+  só no site (badge na headline). Mede outra dimensão que a raridade — a da
+  concentração que o handoff pedia — e `CARD_VERSION` subiu para v5.
+- **Radar do repositório.** Implementado como D27: cinco eixos próprios com
+  `activity` no lugar de `breadth`. `RadarChart` e `BattleRadar` derivam os
+  eixos do próprio `ratings` (alinhamento por nome, não posição), o que também
+  conserta a batalha perfil × repositório, que até então comparava eixos
+  desalinhados.
 
 ## Padrão que se repetiu, e vale herdar
 

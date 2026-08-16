@@ -58,6 +58,14 @@ const pt = {
   "rarity.special_illustration_rare": "Rara Ilustrada Especial",
   "rarity.hyper_rare": "Hiper Rara",
 
+  /*
+   * Classe ex/Mega ex. Nomes de produto do TCG, mantidos como são (decisão
+   * 3.2: terminologia preservada em vez de traduzida).
+   */
+  "class.standard": "Padrão",
+  "class.ex": "ex",
+  "class.mega_ex": "Mega ex",
+
   "card.hp": "PS",
   "card.weakness": "Fraqueza",
   "card.resistance": "Resistência",
@@ -122,7 +130,9 @@ const pt = {
   "card.flipBack": "Virar de volta",
 
   "radar.title": "Assinatura do perfil",
+  "radar.title.repo": "Assinatura do repositório",
   "radar.caption": "Forma comparativa, não medição — os números exatos estão ao lado.",
+  "radar.caption.repo": "Forma comparativa, não medição — os números exatos estão ao lado.",
   "radar.axis": "Eixo",
   "radar.values": "Valores por eixo",
   "radar.normalized": "índice 0–99, escala logarítmica",
@@ -131,6 +141,7 @@ const pt = {
   "axis.volume": "Volume",
   "axis.veterancy": "Veterania",
   "axis.breadth": "Amplitude",
+  "axis.activity": "Atividade",
 
   "why.title": "De onde saem estes números",
   "why.element": "Sua linguagem dominante é {language}, ponderada por estrelas.",
@@ -397,6 +408,10 @@ const en: Record<MessageKey, string> = {
   "rarity.special_illustration_rare": "Special Illustration Rare",
   "rarity.hyper_rare": "Hyper Rare",
 
+  "class.standard": "Standard",
+  "class.ex": "ex",
+  "class.mega_ex": "Mega ex",
+
   "card.hp": "HP",
   "card.weakness": "Weakness",
   "card.resistance": "Resistance",
@@ -455,7 +470,9 @@ const en: Record<MessageKey, string> = {
   "card.flipBack": "Flip back",
 
   "radar.title": "Profile signature",
+  "radar.title.repo": "Repository signature",
   "radar.caption": "Comparative shape, not measurement — exact numbers are alongside.",
+  "radar.caption.repo": "Comparative shape, not measurement — exact numbers are alongside.",
   "radar.axis": "Axis",
   "radar.values": "Values by axis",
   "radar.normalized": "0–99 index, logarithmic scale",
@@ -464,6 +481,7 @@ const en: Record<MessageKey, string> = {
   "axis.volume": "Volume",
   "axis.veterancy": "Veterancy",
   "axis.breadth": "Breadth",
+  "axis.activity": "Activity",
 
   "why.title": "Where these numbers come from",
   "why.element": "Your dominant language is {language}, weighted by stars.",
@@ -712,6 +730,10 @@ export function elementKey(element: string): MessageKey {
 
 export function rarityKey(rarity: string): MessageKey {
   return `rarity.${rarity}` as MessageKey;
+}
+
+export function classKey(cardClass: string): MessageKey {
+  return `class.${cardClass}` as MessageKey;
 }
 
 export function errorKey(code: string): MessageKey {
