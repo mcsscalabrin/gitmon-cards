@@ -7,7 +7,7 @@ import { Shell } from "@/components/ui/Shell";
 import { YgoReplay } from "@/components/ygo/YgoReplay";
 import { absoluteUrl } from "@/lib/config";
 import { GitmonError } from "@/lib/github/errors";
-import { HELP } from "@/lib/guide/help";
+import { HELP, stepsForSection } from "@/lib/guide/help";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 import { loadYgo } from "@/lib/ygo/store";
@@ -61,6 +61,8 @@ export default async function YgoPage({ params }: Params) {
             title={t(HELP.poster.titleKey)}
             body={t(HELP.poster.bodyKey)}
             label={t("help.trigger")}
+            steps={stepsForSection("poster")}
+            stepByStepLabel={t("help.stepByStep")}
           />
         </div>
         <CopyField value={posterUrl} copyLabel={t("home.copy")} copiedLabel={t("home.copied")} />

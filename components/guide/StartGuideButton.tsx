@@ -1,6 +1,6 @@
 "use client";
 
-import { GUIDE_START_EVENT } from "./GuideLauncher";
+import { GUIDE_START_EVENT } from "@/lib/guide/events";
 
 /** Botão da /docs que inicia o tour. O overlay escuta o evento globalmente. */
 export function StartGuideButton({ label }: { label: string }) {

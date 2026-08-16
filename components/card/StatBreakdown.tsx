@@ -1,6 +1,6 @@
 import { ELEMENTS, type Derivation, type Element } from "@/lib/cards/types";
 import { HelpButton } from "@/components/ui/HelpButton";
-import { HELP } from "@/lib/guide/help";
+import { HELP, stepsForSection } from "@/lib/guide/help";
 import { translator, type Locale, type MessageKey } from "@/lib/i18n/dictionaries";
 import { TypeIcon } from "./TypeIcon";
 
@@ -67,6 +67,8 @@ export function StatBreakdown({
             body={t(HELP.why.bodyKey)}
             label={t("help.trigger")}
             align="right"
+            steps={stepsForSection("why")}
+            stepByStepLabel={t("help.stepByStep")}
           />
         </div>
       ) : null}

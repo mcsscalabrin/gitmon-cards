@@ -11,7 +11,7 @@ import { RadarChart } from "./RadarChart";
 import { StatBreakdown } from "./StatBreakdown";
 import { TiltCard } from "./TiltCard";
 import { TypeIcon } from "./TypeIcon";
-import { HELP } from "@/lib/guide/help";
+import { HELP, stepsForSection } from "@/lib/guide/help";
 
 /**
  * A carta em si, com o que uma pessoa precisa depois de gerá-la: o snippet para
@@ -116,6 +116,8 @@ export function CardPanel({
             label={t("help.trigger")}
             align="center"
             className="headline-help"
+            steps={stepsForSection("card")}
+            stepByStepLabel={t("help.stepByStep")}
           />
         </div>
       </div>
@@ -157,6 +159,8 @@ export function CardPanel({
               title={t(HELP.embed.titleKey)}
               body={t(HELP.embed.bodyKey)}
               label={t("help.trigger")}
+              steps={stepsForSection("embed")}
+              stepByStepLabel={t("help.stepByStep")}
             />
           </div>
           <CopyField value={markdown} copyLabel={t("home.copy")} copiedLabel={t("home.copied")} />

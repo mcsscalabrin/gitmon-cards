@@ -334,6 +334,7 @@ const pt = {
   "guide.step": "{current} de {total}",
 
   "help.trigger": "O que é esta seção?",
+  "help.stepByStep": "Passo a passo",
 
   "guide.step.concept.title": "O que é o Gitmon Cards",
   "guide.step.concept.body":
@@ -663,6 +664,7 @@ const en: Record<MessageKey, string> = {
   "guide.step": "{current} of {total}",
 
   "help.trigger": "What is this section?",
+  "help.stepByStep": "Step by step",
 
   "guide.step.concept.title": "What is Gitmon Cards",
   "guide.step.concept.body":

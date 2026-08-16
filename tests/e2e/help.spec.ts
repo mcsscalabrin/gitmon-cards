@@ -65,4 +65,33 @@ test.describe("ajuda por seção (?)", () => {
     await page.locator(".battle-form-modes-row .help-trigger").click();
     await expect(page.locator(".help-popover")).toContainText("Speed Duel");
   });
+
+  test("o 'Passo a passo' da seção Carta roda um mini-tour só dela", async ({ page }) => {
+    await page.goto("/torvalds?guide=1");
+
+    await page.locator(".card-headline .help-trigger").click();
+    await page.locator(".help-popover .help-start").click();
+
+    // O mini-tour da carta tem 3 passos (pacote → frente → cabeçalho), não os
+    // 14 do tour universal — e a bolha fecha na hora do disparo.
+    const tooltip = page.locator(".guide-tooltip");
+    await expect(tooltip).toBeVisible();
+    await expect(page.locator(".help-popover")).toHaveCount(0);
+    await expect(tooltip).toContainText(/1 de 3|1 of 3/);
+    await expect(tooltip).toContainText("Abertura de pacote");
+  });
+
+  test("o mini-tour da busca na home tem um passo só", async ({ page }) => {
+    await page.goto("/");
+
+    await page.getByRole("button", { name: /O que é esta seção|What is this section/ }).click();
+    await page.locator(".help-popover .help-start").click();
+
+    const tooltip = page.locator(".guide-tooltip");
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toContainText(/1 de 1|1 of 1/);
+    // Fecha com Escape como o tour completo.
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".guide-overlay")).toHaveCount(0);
+  });
 });

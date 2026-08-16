@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { GUIDE_STEPS } from "@/lib/guide/steps";
+import { GUIDE_STEPS, type GuideStep } from "@/lib/guide/steps";
+import { GUIDE_START_EVENT } from "@/lib/guide/events";
 import { translator, type Locale } from "@/lib/i18n/dictionaries";
 
 /**
@@ -18,12 +19,10 @@ import { translator, type Locale } from "@/lib/i18n/dictionaries";
  * `PackOpening` faz — decidir o estágio, esperar o alvo e confinar o foco.
  *
  * A entrada é um evento `CustomEvent("gitmon:guide:start")`, disparado pelo
- * botão da /docs. Não há auto-tour na primeira visita: é uma consulta, não um
- * onboarding (RFC 9.2).
+ * botão da /docs (tour completo) ou pelo "Passo a passo" da ajuda por seção
+ * (mini-tour só com os passos daquela aba, via `detail.steps`). Não há auto-tour
+ * na primeira visita: é uma consulta, não um onboarding (RFC 9.2).
  */
-
-/** Constante compartilhada com `StartGuideButton` da /docs. */
-export const GUIDE_START_EVENT = "gitmon:guide:start";
 
 /** Quanto tempo o tour espera um alvo depois de navegar. */
 const TARGET_TIMEOUT = 6000;
@@ -35,11 +34,12 @@ export function GuideLauncher({ locale }: { locale: Locale }) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [steps, setSteps] = useState<readonly GuideStep[]>(GUIDE_STEPS);
   const lastFocus = useRef<HTMLElement | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const step = GUIDE_STEPS[index];
-  const isLast = index === GUIDE_STEPS.length - 1;
+  const step = steps[index];
+  const isLast = index === steps.length - 1;
 
   const close = useCallback(() => {
     setOpen(false);
@@ -50,13 +50,13 @@ export function GuideLauncher({ locale }: { locale: Locale }) {
 
   const next = useCallback(() => {
     setIndex((i) => {
-      if (i >= GUIDE_STEPS.length - 1) {
+      if (i >= steps.length - 1) {
         close();
         return i;
       }
       return i + 1;
     });
-  }, [close]);
+  }, [close, steps.length]);
 
   const back = useCallback(() => {
     setIndex((i) => Math.max(0, i - 1));
@@ -70,10 +70,13 @@ export function GuideLauncher({ locale }: { locale: Locale }) {
     return el.getBoundingClientRect();
   }, []);
 
-  // Entrada pelo botão da /docs.
+  // Entrada pelos botões de tour: completo (sem detail) ou por seção (`steps`).
   useEffect(() => {
-    function onStart() {
+    function onStart(event: Event) {
+      const detail = (event as CustomEvent<{ steps?: readonly GuideStep[] }>).detail;
+      const subset = detail?.steps;
       lastFocus.current = document.activeElement as HTMLElement | null;
+      setSteps(subset && subset.length > 0 ? subset : GUIDE_STEPS);
       setRect(null);
       setIndex(0);
       setOpen(true);
@@ -203,7 +206,7 @@ export function GuideLauncher({ locale }: { locale: Locale }) {
           ×
         </button>
         <p className="guide-progress">
-          {t("guide.step", { current: index + 1, total: GUIDE_STEPS.length })}
+          {t("guide.step", { current: index + 1, total: steps.length })}
         </p>
         <h2>{t(step.titleKey)}</h2>
         <p className="guide-body">{t(step.bodyKey)}</p>

@@ -3,7 +3,7 @@ import { TiltCard } from "@/components/card/TiltCard";
 import { HelpButton } from "@/components/ui/HelpButton";
 import { SearchForm } from "@/components/ui/SearchForm";
 import { Shell } from "@/components/ui/Shell";
-import { HELP } from "@/lib/guide/help";
+import { HELP, stepsForSection } from "@/lib/guide/help";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 
@@ -32,6 +32,8 @@ export default async function HomePage() {
             title={t(HELP.search.titleKey)}
             body={t(HELP.search.bodyKey)}
             label={t("help.trigger")}
+            steps={stepsForSection("search")}
+            stepByStepLabel={t("help.stepByStep")}
           />
         </div>
       </section>

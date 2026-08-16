@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import UserSearchInput, { type UserSearchInputHandle } from "../ui/UserSearchInput";
 import { HelpButton } from "../ui/HelpButton";
+import type { GuideStep } from "@/lib/guide/steps";
 
 /**
  * Manda para `/<desafiante>/vs/<adversário>`, que sorteia uma batalha nova e
@@ -13,6 +14,19 @@ import { HelpButton } from "../ui/HelpButton";
  * Com `ygoMode`, um seletor escolhe a versão: em "Yugioh" o envio vai para
  * `/ygo/<desafiante>/vs/<adversário>`, que sorteia um duelo de Speed Duel.
  */
+/**
+ * Ajuda por seção ("?"): bolha que explica o formulário sem o tour completo.
+ * O conteúdo chega pronto de quem chama (que resolve as chaves de i18n), junto
+ * com os passos do mini-tour da seção.
+ */
+type HelpContent = {
+  title: string;
+  body: string;
+  label: string;
+  steps?: readonly GuideStep[];
+  stepByStepLabel?: string;
+};
+
 export function BattleForm({
   challenger,
   label,
@@ -29,13 +43,9 @@ export function BattleForm({
   action: string;
   ygoMode?: boolean;
   modeLabels?: { battle: string; ygo: string };
-  /**
-   * Ajuda por seção ("?"): bolha que explica o formulário sem o tour completo.
-   * O conteúdo chega pronto de quem chama (que resolve as chaves de i18n).
-   */
-  help?: { title: string; body: string; label: string };
+  help?: HelpContent;
   /** Ajuda do seletor de modos Batalha/Speed Duel, quando `ygoMode`. */
-  helpModes?: { title: string; body: string; label: string };
+  helpModes?: HelpContent;
 }) {
   const router = useRouter();
   const [opponent, setOpponent] = useState("");
