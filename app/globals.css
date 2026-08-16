@@ -3467,11 +3467,7 @@ select {
 }
 
 .ygo-card-back {
-  background:
-    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--side, var(--accent)) 55%, transparent) 0 14%, transparent 15%),
-    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.18) 0 3px, transparent 4px),
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 4px, transparent 4px 8px),
-    linear-gradient(150deg, #1b2333 0%, #0d121c 100%);
+  background: url('/assets/backs/card-back.svg') center/cover no-repeat;
 }
 
 .ygo-card-monster {
@@ -3837,10 +3833,7 @@ select {
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background:
-    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.12) 0 3px, transparent 4px),
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 4px, transparent 4px 8px),
-    linear-gradient(150deg, #1b2333 0%, #0d121c 100%);
+  background: url('/assets/backs/card-back.svg') center/cover no-repeat;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
 }
