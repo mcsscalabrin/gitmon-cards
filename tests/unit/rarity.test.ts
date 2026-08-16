@@ -13,7 +13,7 @@ import {
 } from "@/lib/cards/rarity";
 import { AXES } from "@/lib/cards/ratings";
 import { dominantAxisForProfile, dominantAxisForRepo, patternForAxis, tagForAxis } from "@/lib/cards/tag";
-import { RARITIES } from "@/lib/cards/types";
+import { RARITIES, type Rarity } from "@/lib/cards/types";
 /*
  * As listas vivas moram no gerador de arte, e é contra elas que o domínio tem
  * que fechar — não contra uma cópia escrita aqui, e nem contra si mesmo.
@@ -241,9 +241,10 @@ describe("intensidade do foil ao vivo", () => {
    * feed e colorida no site —, só que dessa vez em função que vaza para o React.
    */
   it("devolve ao TiltCard exatamente as bandas que a build assa", () => {
+    const baked = foil.bands as Partial<Record<Rarity, string[]>>;
     for (const rarity of RARITIES) {
       const bands = foilBands(rarity);
-      if (hasFoil(rarity)) expect(bands, rarity).toEqual(foil.bands[rarity]);
+      if (hasFoil(rarity)) expect(bands, rarity).toEqual(baked[rarity]);
       else expect(bands, rarity).toEqual([]);
     }
   });
