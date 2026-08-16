@@ -319,12 +319,6 @@ const pt = {
   "ygo.windowOpen": "Armadilhas na mesa?",
 
   "docs.nav": "Guia",
-  "docs.title": "Guia de uso",
-  "docs.lead":
-    "O Gitmon Cards transforma dados públicos do GitHub em cartas de TCG. Este guia explica o que cada parte faz e como usar — e um tour guiado passa por tudo ao vivo.",
-  "docs.startTour": "Iniciar tour guiado",
-  "docs.posters.code":
-    "/torvalds.png            → carta de perfil\n/facebook/react.png      → carta de repositório\n/battle/<id>.png         → pôster de batalha\n/ygo/<id>.png            → pôster de Speed Duel\n/duel/<id>.png           → pôster de duelo",
 
   "guide.skip": "Pular",
   "guide.back": "Voltar",
@@ -333,12 +327,6 @@ const pt = {
   "guide.close": "Fechar guia",
   "guide.step": "{current} de {total}",
 
-  "help.trigger": "O que é esta seção?",
-  "help.stepByStep": "Passo a passo",
-
-  "guide.step.concept.title": "O que é o Gitmon Cards",
-  "guide.step.concept.body":
-    "Perfis e repositórios do GitHub viram cartas de TCG. Cada número vem de uma fórmula fixa e documentada — nada é inventado.",
   "guide.step.generate.title": "Gerar uma carta",
   "guide.step.generate.body":
     "Digite um usuário, um owner/repositório, ou cole a URL do GitHub inteira. A busca sugere nomes enquanto você digita.",
@@ -372,12 +360,6 @@ const pt = {
   "guide.step.posters.title": "Pôsteres estáticos",
   "guide.step.posters.body":
     "Batalhas e duelos têm URL de imagem própria, embutível como a carta — o resultado pode viajar para fora do site.",
-  "guide.step.language.title": "Idiomas",
-  "guide.step.language.body":
-    "O site é bilíngue por toggle manual, sem detecção automática. A escolha fica num cookie.",
-  "guide.step.end.title": "Pronto!",
-  "guide.step.end.body":
-    "Gere sua carta, cole no README e compartilhe. Se curtir, dê uma estrela no repositório.",
 } as const;
 
 export type MessageKey = keyof typeof pt;
@@ -649,12 +631,6 @@ const en: Record<MessageKey, string> = {
   "ygo.windowOpen": "Traps on the field?",
 
   "docs.nav": "Guide",
-  "docs.title": "How to use",
-  "docs.lead":
-    "Gitmon Cards turns public GitHub data into TCG cards. This guide explains what each part does and how to use it — and a guided tour walks through everything live.",
-  "docs.startTour": "Start guided tour",
-  "docs.posters.code":
-    "/torvalds.png            → profile card\n/facebook/react.png      → repository card\n/battle/<id>.png         → battle poster\n/ygo/<id>.png            → Speed Duel poster\n/duel/<id>.png           → duel poster",
 
   "guide.skip": "Skip",
   "guide.back": "Back",
@@ -663,12 +639,6 @@ const en: Record<MessageKey, string> = {
   "guide.close": "Close guide",
   "guide.step": "{current} of {total}",
 
-  "help.trigger": "What is this section?",
-  "help.stepByStep": "Step by step",
-
-  "guide.step.concept.title": "What is Gitmon Cards",
-  "guide.step.concept.body":
-    "GitHub profiles and repositories become TCG cards. Every number comes from a fixed, documented formula — nothing is made up.",
   "guide.step.generate.title": "Generate a card",
   "guide.step.generate.body":
     "Type a user, an owner/repository, or paste a full GitHub URL. The search suggests names as you type.",
@@ -702,12 +672,6 @@ const en: Record<MessageKey, string> = {
   "guide.step.posters.title": "Static posters",
   "guide.step.posters.body":
     "Battles and duels have their own image URLs, embeddable like the card — the result can travel outside the site.",
-  "guide.step.language.title": "Language",
-  "guide.step.language.body":
-    "The site is bilingual through a manual toggle, no auto-detection. The choice lives in a cookie.",
-  "guide.step.end.title": "You're set!",
-  "guide.step.end.body":
-    "Generate your card, paste it into your README and share it. If you like it, star the repository.",
 };
 
 const DICTIONARIES: Record<Locale, Record<MessageKey, string>> = { pt, en };

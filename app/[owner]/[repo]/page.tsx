@@ -5,7 +5,6 @@ import { CardPanel } from "@/components/card/CardPanel";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Shell } from "@/components/ui/Shell";
 import { getRepoCard } from "@/lib/cards";
-import { HELP, stepsForSection } from "@/lib/guide/help";
 import { cardMetadata } from "@/lib/metadata";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
@@ -50,13 +49,6 @@ export default async function RepoPage({ params, searchParams }: Params) {
           label={t("home.battle")}
           placeholder={t("home.opponent")}
           action={t("home.battleAction")}
-          help={{
-            title: t(HELP.battle.titleKey),
-            body: t(HELP.battle.bodyKey),
-            label: t("help.trigger"),
-            steps: stepsForSection("battle"),
-            stepByStepLabel: t("help.stepByStep"),
-          }}
         />
         <p className="owner-link">
           <Link href={`/${owner}`}>{owner}</Link>

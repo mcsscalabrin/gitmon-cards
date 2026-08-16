@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GUIDE_STEP_IDS, GUIDE_STEPS } from "@/lib/guide/steps";
+import { PAGE_STEP_IDS, stepsForPath } from "@/lib/guide/pages";
 import { LOCALES, t } from "@/lib/i18n/dictionaries";
 
 /**
@@ -18,17 +19,11 @@ describe("config do tour guiado", () => {
     expect(GUIDE_STEP_IDS).toEqual(GUIDE_STEPS.map((step) => step.id));
   });
 
-  it("tem pelo menos o conceito, o principal e o fim", () => {
-    expect(GUIDE_STEP_IDS[0]).toBe("concept");
-    expect(GUIDE_STEP_IDS[GUIDE_STEP_IDS.length - 1]).toBe("end");
-    // O caso de uso principal do produto não pode ficar de fora.
+  it("cobre os casos de uso do site", () => {
+    expect(GUIDE_STEP_IDS).toContain("generate");
+    expect(GUIDE_STEP_IDS).toContain("pack");
     expect(GUIDE_STEP_IDS).toContain("embed");
-  });
-
-  it("rotas de navegação começam com barra", () => {
-    for (const step of GUIDE_STEPS) {
-      if (step.to) expect(step.to.startsWith("/")).toBe(true);
-    }
+    expect(GUIDE_STEP_IDS).toContain("posters");
   });
 
   it("seletores de alvo parecem seletores", () => {
@@ -43,6 +38,42 @@ describe("config do tour guiado", () => {
         expect(t(locale, step.titleKey).trim().length).toBeGreaterThan(0);
         expect(t(locale, step.bodyKey).trim().length).toBeGreaterThan(0);
       }
+    }
+  });
+});
+
+/**
+ * O tour por página: o "Guia" do cabeçalho roda os passos cujos alvos existem
+ * na rota atual, e cada página tem um tour não vazio.
+ */
+describe("tour por página", () => {
+  it("resolve a home para a busca", () => {
+    expect(stepsForPath("/").map((s) => s.id)).toEqual(["generate"]);
+  });
+
+  it("resolve um perfil para o tour inteiro da carta", () => {
+    expect(stepsForPath("/torvalds").map((s) => s.id)).toEqual(PAGE_STEP_IDS.profile);
+  });
+
+  it("resolve um repositório sem o seletor de modos", () => {
+    expect(stepsForPath("/torvalds/linux").map((s) => s.id)).toEqual(PAGE_STEP_IDS.repo);
+  });
+
+  it("resolve resultados (batalha, duelo, Speed Duel) para o pôster", () => {
+    for (const path of ["/battle/abc", "/duel/abc", "/ygo/abc"]) {
+      expect(stepsForPath(path).map((s) => s.id)).toEqual(["posters"]);
+    }
+  });
+
+  it("todo id de página existe no tour", () => {
+    for (const ids of Object.values(PAGE_STEP_IDS)) {
+      for (const id of ids) expect(GUIDE_STEP_IDS).toContain(id);
+    }
+  });
+
+  it("nenhuma página fica sem passos", () => {
+    for (const path of ["/", "/torvalds", "/torvalds/linux", "/battle/abc", "/duel/abc", "/ygo/abc"]) {
+      expect(stepsForPath(path).length).toBeGreaterThan(0);
     }
   });
 });

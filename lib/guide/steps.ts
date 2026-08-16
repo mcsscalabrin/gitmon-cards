@@ -2,40 +2,27 @@ import type { MessageKey } from "@/lib/i18n/dictionaries";
 
 /**
  * Passos do tour guiado. Puro dado — sem React — para poder ser testado e
- * reusado pela página /docs, que espelha os mesmos títulos e corpos.
+ * reusado por quem monta o tour de cada página (`lib/guide/pages.ts`).
  *
- * Um passo tem dois eixos:
+ * Um passo ilumina um `target` (seletor do elemento). Passo sem `target` é
+ * conceitual: a tooltip fica centralizada e a página não é escurecida.
  *
- *   `to`     rota para a qual o tour navega antes de mostrar o passo. Só muda
- *            quando o alvo mora noutra página (busca na home, carta no perfil).
- *   `target` seletor do elemento iluminado. Passo sem `target` é conceitual: a
- *            tooltip fica centralizada e a página não é escurecida.
- *
- * A navegação dos passos-alvo encadeados na mesma rota é gratuita: o passo 4
- * (carta) navega para /torvalds, e os passos seguintes só rolam até o alvo.
+ * O tour nunca navega: cada página roda só os passos cujos alvos existem nela,
+ * então `target` é sempre local à página que monta o passo.
  */
 export interface GuideStep {
   id: string;
   titleKey: MessageKey;
   bodyKey: MessageKey;
-  /** Rota para navegar antes de exibir o passo. */
-  to?: string;
   /** Seletor do elemento iluminado pelo spotlight. */
   target?: string;
 }
 
 export const GUIDE_STEPS: readonly GuideStep[] = [
   {
-    id: "concept",
-    titleKey: "guide.step.concept.title",
-    bodyKey: "guide.step.concept.body",
-    target: ".docs-hero",
-  },
-  {
     id: "generate",
     titleKey: "guide.step.generate.title",
     bodyKey: "guide.step.generate.body",
-    to: "/",
     target: ".search-form",
   },
   {
@@ -47,7 +34,6 @@ export const GUIDE_STEPS: readonly GuideStep[] = [
     id: "card",
     titleKey: "guide.step.card.title",
     bodyKey: "guide.step.card.body",
-    to: "/torvalds?guide=1",
     target: ".tilt-card",
   },
   {
@@ -96,19 +82,7 @@ export const GUIDE_STEPS: readonly GuideStep[] = [
     id: "posters",
     titleKey: "guide.step.posters.title",
     bodyKey: "guide.step.posters.body",
-    to: "/docs",
-  },
-  {
-    id: "language",
-    titleKey: "guide.step.language.title",
-    bodyKey: "guide.step.language.body",
-    target: ".locale-toggle",
-  },
-  {
-    id: "end",
-    titleKey: "guide.step.end.title",
-    bodyKey: "guide.step.end.body",
-    to: "/docs",
+    target: ".battle-actions",
   },
 ];
 

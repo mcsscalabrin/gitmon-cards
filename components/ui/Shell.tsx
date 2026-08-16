@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GuideNavButton } from "@/components/guide/GuideNavButton";
 import { AUTHORS, PROJECT_REPO_URL } from "@/lib/config";
 import { translator, type Locale } from "@/lib/i18n/dictionaries";
 import { getProjectStars } from "@/lib/project";
@@ -53,9 +54,7 @@ export async function Shell({
           >
             {t("home.viewOnGitHub")}
           </a>
-          <Link className="ghost-link" href="/docs">
-            {t("docs.nav")}
-          </Link>
+          <GuideNavButton label={t("docs.nav")} />
           <LocaleToggle locale={locale} />
         </div>
       </header>

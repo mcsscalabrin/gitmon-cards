@@ -1,6 +1,4 @@
 import { ELEMENTS, type Derivation, type Element } from "@/lib/cards/types";
-import { HelpButton } from "@/components/ui/HelpButton";
-import { HELP, stepsForSection } from "@/lib/guide/help";
 import { translator, type Locale, type MessageKey } from "@/lib/i18n/dictionaries";
 import { TypeIcon } from "./TypeIcon";
 
@@ -59,19 +57,7 @@ export function StatBreakdown({
 
   return (
     <section className="why">
-      {heading ? (
-        <div className="why-heading">
-          <h2>{t("why.title")}</h2>
-          <HelpButton
-            title={t(HELP.why.titleKey)}
-            body={t(HELP.why.bodyKey)}
-            label={t("help.trigger")}
-            align="right"
-            steps={stepsForSection("why")}
-            stepByStepLabel={t("help.stepByStep")}
-          />
-        </div>
-      ) : null}
+      {heading ? <h2>{t("why.title")}</h2> : null}
       <ul>
         {derivations.map((item) => {
           const element = elementOf(item.value);
