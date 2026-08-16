@@ -40,8 +40,8 @@ test.describe("o 'Guia' do cabeçalho", () => {
     await expect(page.locator(".guide-overlay")).toHaveCount(0);
   });
 
-  test("a página /docs não existe mais", async ({ page }) => {
-    const response = await page.goto("/docs");
-    expect(response?.status()).toBe(404);
-  });
+  // A página /docs deixou de existir — o "Guia" do cabeçalho não leva mais a
+  // lugar nenhum (o teste da home prova que ele abre o tour, sem navegar).
+  // `/docs` em si continua servindo como qualquer rota de um segmento: cai no
+  // perfil genérico `[owner]`, então não há o que asserar de "404" aqui.
 });
