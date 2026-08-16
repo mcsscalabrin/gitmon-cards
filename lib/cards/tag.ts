@@ -1,4 +1,4 @@
-import { AXES, CEILINGS, normalize, type Axis } from "./ratings";
+import { AXES, CEILINGS, normalize, type ProfileAxis } from "./ratings";
 
 /**
  * A tag da carta: o segundo eixo do sistema, ortogonal à raridade.
@@ -25,9 +25,9 @@ export const AXIS_TAGS = {
   volume: "MONO",
   veterancy: "LTS",
   breadth: "POLY",
-} as const satisfies Record<Axis, string>;
+} as const satisfies Record<ProfileAxis, string>;
 
-export type CardTag = (typeof AXIS_TAGS)[Axis];
+export type CardTag = (typeof AXIS_TAGS)[ProfileAxis];
 
 /**
  * Padrão do foil por eixo.
@@ -50,17 +50,17 @@ export const AXIS_PATTERNS = {
   volume: "confetti",
   veterancy: "cracked",
   breadth: "tinsel",
-} as const satisfies Record<Axis, string>;
+} as const satisfies Record<ProfileAxis, string>;
 
-export type FoilPattern = (typeof AXIS_PATTERNS)[Axis];
+export type FoilPattern = (typeof AXIS_PATTERNS)[ProfileAxis];
 
 export const FOIL_PATTERNS = Object.values(AXIS_PATTERNS) as FoilPattern[];
 
-export function tagForAxis(axis: Axis): CardTag {
+export function tagForAxis(axis: ProfileAxis): CardTag {
   return AXIS_TAGS[axis];
 }
 
-export function patternForAxis(axis: Axis): FoilPattern {
+export function patternForAxis(axis: ProfileAxis): FoilPattern {
   return AXIS_PATTERNS[axis];
 }
 
@@ -75,8 +75,8 @@ export function patternForAxis(axis: Axis): FoilPattern {
  * Empate é comum de propósito: os valores são inteiros de 0 a 99, e quase toda
  * conta nova tem vários eixos em 0.
  */
-function dominant(scores: Record<Axis, number>): Axis {
-  let winner: Axis = AXES[0];
+function dominant(scores: Record<ProfileAxis, number>): ProfileAxis {
+  let winner: ProfileAxis = AXES[0];
   for (const axis of AXES) {
     if (scores[axis] > scores[winner]) winner = axis;
   }
@@ -99,7 +99,7 @@ export interface ProfileAxisInput {
  * de tetos fariam o polígono apontar para um lado e a tag dizer outro, na mesma
  * página.
  */
-export function dominantAxisForProfile(input: ProfileAxisInput): Axis {
+export function dominantAxisForProfile(input: ProfileAxisInput): ProfileAxis {
   return dominant({
     reach: normalize(input.stars, CEILINGS.reach),
     community: normalize(input.followers, CEILINGS.community),
@@ -151,7 +151,7 @@ export interface RepoAxisInput {
  * - `watchers_count` não entra em lugar nenhum: na API do GitHub ele é apelido
  *   legado de `stargazers_count` e traria o mesmo número duas vezes.
  */
-export function dominantAxisForRepo(input: RepoAxisInput): Axis {
+export function dominantAxisForRepo(input: RepoAxisInput): ProfileAxis {
   return dominant({
     reach: normalize(input.stars, REPO_CEILINGS.reach),
     community: normalize(input.forks, REPO_CEILINGS.community),

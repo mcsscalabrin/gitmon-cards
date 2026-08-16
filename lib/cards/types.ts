@@ -112,12 +112,15 @@ export interface Card {
    * Eixo em que a carta é mais forte — o segundo eixo do sistema, ortogonal à
    * raridade. Decide a **tag** impressa ao lado do nome e o **padrão** do foil.
    *
+   * É sempre um eixo do perfil: o eixo dominante do repositório é um subconjunto
+   * dos do perfil (`activity` só existe na assinatura do radar). Ver `./tag.ts`.
+   *
    * O que fica guardado é o eixo e não a tag já resolvida, de propósito: o eixo
    * é o dado, a palavra e a geometria são apresentação. Trocar `ORIGIN` por
    * outra palavra em `./tag.ts` passa a valer para as cartas já em cache, em vez
    * de precisar de um bump de `CARD_VERSION` só para renomear um rótulo.
    */
-  axis: Axis;
+  axis: ProfileAxis;
   /**
    * Classe ex/Mega ex, do pico de escala externa. Como `derivations` e
    * `ratings`, é afordância do site e não entra na imagem exportada — o PNG
@@ -170,7 +173,7 @@ export interface Derivation {
   reasonParams?: Record<string, string | number>;
 }
 
-import type { Axis, AxisRating } from "./ratings";
+import type { AxisRating, ProfileAxis } from "./ratings";
 
 export interface CardStat {
   /** Chave do dicionário i18n, não o rótulo já traduzido. */

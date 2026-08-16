@@ -15,7 +15,7 @@ import { elementKey, rarityKey } from "../i18n/dictionaries";
 import { cardClassFor } from "./cardClass";
 import { rarityForScore } from "./rarity";
 import { dominantAxisForRepo, tagForAxis } from "./tag";
-import type { Axis } from "./ratings";
+import type { ProfileAxis } from "./ratings";
 import { repoRatingsFor } from "./ratings";
 import type { Attack, Card, Derivation, Element } from "./types";
 
@@ -152,7 +152,7 @@ function repoDerivations(input: {
   resistance: Element | null;
   retreat: number;
   rarity: Card["rarity"];
-  axis: Axis;
+  axis: ProfileAxis;
   score: number;
   freshness: number;
 }): Derivation[] {
