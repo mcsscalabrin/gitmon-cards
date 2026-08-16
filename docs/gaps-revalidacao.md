@@ -25,10 +25,10 @@ build limpos.
 | 3.3 | Cauda da distribuição desconhecida | ⬜ decisão sua |
 | 3.4 | Pacote toca em toda visita | ⬜ decisão sua |
 | 4.1 | `PackOpening` sem focus trap | ✅ resolvido |
-| 4.2 | Foil ao vivo nunca visto por ninguém | ⬜ depende de você |
+| 4.2 | Foil ao vivo nunca visto por ninguém | 🟡 corrigido — falta seu olhar final |
 | 4.3 | `.env.example` incompleto | ✅ resolvido |
 | 5.1 | Erro no `pages.md` que eu gerei | ✅ resolvido |
-| 5.2 | Estágio 3 do canvas fraco | ⬜ aberto |
+| 5.2 | Estágio 3 do canvas fraco | 🟡 segunda rodada aplicada — falta seu olhar |
 | 6.1 | Alvo de clique em movimento perpétuo | ✅ resolvido (achado novo) |
 
 ---
@@ -232,7 +232,7 @@ inacessíveis.
 
 `aria-modal="true"` promete ao leitor de tela algo que o DOM não cumpre.
 
-### 4.2 O foil ao vivo nunca foi validado visualmente
+### 4.2 O foil ao vivo nunca foi validado visualmente — CORRIGIDO
 
 É a terceira tentativa nesse efeito, e as duas anteriores foram reprovadas.
 Confirmei que a camada está no DOM no tier certo e ausente no errado, mas não
@@ -240,6 +240,33 @@ consegui capturar o efeito funcionando — a automação do navegador entrou em
 estado de zoom e o efeito depende de `pointermove` real.
 
 **Ninguém olhou o resultado ainda.**
+
+**Correção (rodada 2, na branch `feat/ajustes-foil-ao-vivo-e-pacote`):** a
+validação por pixels revelou que o ao vivo e o PNG assado divergiam no
+**desenho**, não na presença da camada. O ao vivo usava um arco-íris fixo de
+seis cores; o PNG assado lia as bandas de `foil.json`. Na `hyper_rare` de
+`/torvalds`, a região do ponteiro mostrava magenta/roxo (hue 300°, 31%) numa
+carta que o feed imprime dourada (hue 30°, 98%) — o site desmentia a carta
+exibida, exatamente o defeito que `foil.json` foi criado para impedir.
+
+A correção fez o ao vivo ler as mesmas bandas do impresso:
+
+- `lib/cards/rarity.ts` ganhou `foilBands()`, a ponta ao vivo de `foil.bands`;
+- `components/card/TiltCard.tsx` monta o gradiente `.tilt-spectral` com as
+  bandas do tier (via CSS `--spectrum`) e o relevo agora usa a mesma curva
+  convexa da build (`t^2.4` em `feComponentTransfer`, `tableValues`), em vez de
+  um contraste linear que lavava a saturação;
+- o `data-metal` saiu da pilha — a temperatura dourado/prata já vem das bandas.
+
+Resultado medido (screenshots + sharp, ponteiro sobre o canto da carta):
+
+- antes: ponteiro dava hue 300°/270°; agora dá **30° (95%)** — igual ao
+  exportado (30°, 98%);
+- a saturação da região do ponteiro cai de 0.214→0.096 antes; agora
+  0.214→0.195, sem o véu branco que apagava o brilho.
+
+Coberto por `tests/unit/rarity.test.ts` ("devolve ao TiltCard exatamente as
+bandas que a build assa"). Falta só o seu olhar em `/torvalds`.
 
 ### 4.3 `.env.example` não documenta `PROJECT_STARS_TTL_SECONDS`
 
@@ -258,12 +285,21 @@ dependências, apresentada como se fosse verificada.
 
 Se esse arquivo alimentar decisões de design futuras, alimenta com dado errado.
 
-### 5.2 O estágio 3 do canvas continua fraco
+### 5.2 O estágio 3 do canvas continua fraco — SEGUNDA RODADA APLICADA
 
 Os dois defeitos duros foram corrigidos (carta em retrato, botão de pular fora do
 caminho). Mas o banho de cor do elemento ficou tímido e a embalagem caindo não se
 lê. Não insisti porque o canvas julga mal qualquer coisa que dependa da arte
 real — o placeholder cinza continua lá.
+
+**Segunda rodada (branch `feat/ajustes-foil-ao-vivo-e-pacote`):** o banho de
+cor (auréola) subiu de 34% para 46% no centro e de 12%@34% para 17%@38%, com
+apagamento em 72% — para o elemento parecer banhado pelo foil, não tingido. A
+embalagem caindo agora cai de verdade: o corpo acelera com gravidade
+(`cubic-bezier(0.55, 0, 1, 0.45)`) e desce 125% em vez de 58%, a tira rasgada
+sai de cena (85%, -185%) em vez de virar para o lado, e o pacote só some no fim
+da queda em vez de desaparecer no meio. Fica a ressalva de sempre: o placeholder
+cinza limita o que dá para julgar no canvas.
 
 ---
 

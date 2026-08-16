@@ -806,12 +806,18 @@ select {
 }
 
 .pack[data-stage="opening"] .pack-body {
-  animation: pack-fall 560ms cubic-bezier(0.5, 0, 0.75, 0) 180ms both;
+  /* Acelera na queda (gravidade) em vez de desacelerar. */
+  animation: pack-fall 620ms cubic-bezier(0.55, 0, 1, 0.45) 180ms both;
 }
 
 @keyframes pack-tear {
   to {
-    transform: translate(46%, -128%) rotate(19deg);
+    /*
+     * Arremesso maior que o original (46%, -128%): a tira precisa sair de cena
+     * de verdade, e não só virar para o lado. O voo para cima e para a direita
+     * é o que diz "rasguei por aqui".
+     */
+    transform: translate(85%, -185%) rotate(36deg);
     opacity: 0;
   }
 }
@@ -827,8 +833,18 @@ select {
 }
 
 @keyframes pack-fall {
+  /*
+   * A embalagem cai com gravidade, não desliza: a curva acelera no início
+   * (ease-in) em vez de desacelerar, e o corpo desce bem mais do que os 58%
+   * originais, que mal saíam do lugar. A rotação e o encolhimento leve lêem
+   * como corpo solto tombando, e a opacidade só some no fim — ficar visível
+   * durante a queda é o que faz ela ser uma queda.
+   */
+  90% {
+    opacity: 1;
+  }
   to {
-    transform: translateY(58%) rotate(-4deg);
+    transform: translateY(125%) rotate(-9deg) scale(0.95);
     opacity: 0;
   }
 }
@@ -1627,15 +1643,23 @@ select {
 .tilt-spectral {
   mix-blend-mode: color;
   opacity: calc(var(--foil) * var(--active) * 0.85);
-  background: repeating-linear-gradient(
-    112deg,
-    hsl(348 92% 58%) 0%,
-    hsl(45 96% 58%) 5%,
-    hsl(140 82% 54%) 10%,
-    hsl(192 94% 56%) 15%,
-    hsl(268 90% 62%) 20%,
-    hsl(320 92% 60%) 25%,
-    hsl(348 92% 58%) 30%
+  /*
+   * As cores vêm das bandas do tier, via `--spectrum` (o TiltCard monta o
+   * gradiente de `foil.json`). O fallback é o arco-íris fixo que existia antes,
+   * para o caso de o JS não chegar a escrever a variável.
+   */
+  background: var(
+    --spectrum,
+    repeating-linear-gradient(
+      112deg,
+      hsl(348 92% 58%) 0%,
+      hsl(45 96% 58%) 5%,
+      hsl(140 82% 54%) 10%,
+      hsl(192 94% 56%) 15%,
+      hsl(268 90% 62%) 20%,
+      hsl(320 92% 60%) 25%,
+      hsl(348 92% 58%) 30%
+    )
   );
   background-size: 220% 220%;
   background-position: var(--holo-shift, 50%) var(--holo-drift, 50%);
@@ -1769,20 +1793,6 @@ select {
 }
 
 /*
- * Metal do tier tinge o espectro. `ultra_rare` é prata e
- * `special_illustration_rare`/`hyper_rare` são ouro na moldura impressa
- * (`cardTreatment`); sem isto o reflexo ao vivo sai igual nos três e desmente a
- * moldura que está logo embaixo.
- */
-.tilt-holo[data-metal="gold"] .tilt-spectral {
-  filter: hue-rotate(-18deg) saturate(1.15);
-}
-
-.tilt-holo[data-metal="silver"] .tilt-spectral {
-  filter: saturate(0.55) brightness(1.12);
-}
-
-/*
  * No full-art o espectro e a lâmina recuam — mesma correção que `FULL_ART_SPECTRUM`
  * fez no PNG assado, e pela mesma razão exata.
  *
@@ -1913,11 +1923,17 @@ select {
   height: 620px;
   transform: translateX(-50%);
   pointer-events: none;
+  /*
+   * A primeira versão desta auréola era tímida demais para o papel que ela tem:
+   * depois do pacote, é ela que diz de que elemento é a carta antes de alguém
+   * ler qualquer palavra. O centro sobe de 34% para 46% e o meio estica até 38%,
+   * para a mancha ler como ambiente do tipo e não como um brilho encostado.
+   */
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--element, #f2c94c) 34%, transparent) 0%,
-    color-mix(in srgb, var(--element, #f2c94c) 12%, transparent) 34%,
-    transparent 68%
+    color-mix(in srgb, var(--element, #f2c94c) 46%, transparent) 0%,
+    color-mix(in srgb, var(--element, #f2c94c) 17%, transparent) 38%,
+    transparent 72%
   );
 }
 

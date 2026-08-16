@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import foil from "@/lib/cards/foil.json";
 import {
   cardTreatment,
+  foilBands,
   foilIntensity,
   hasFoil,
   hasTexture,
@@ -230,6 +231,20 @@ describe("intensidade do foil ao vivo", () => {
     for (const [tier, bands] of Object.entries(foil.bands)) {
       expect(bands, tier).toHaveLength(4);
       for (const color of bands) expect(color, tier).toMatch(/^#[0-9A-F]{6}$/i);
+    }
+  });
+
+  /*
+   * `foilBands` é a ponta ao vivo do mesmo arquivo: o TiltCard monta o gradiente
+   * `.tilt-spectral` com as bandas que `foilSvg()` assa no PNG. Devolver outra
+   * cor aqui é a mesma divergência que o teste acima pega — uma carta dourada no
+   * feed e colorida no site —, só que dessa vez em função que vaza para o React.
+   */
+  it("devolve ao TiltCard exatamente as bandas que a build assa", () => {
+    for (const rarity of RARITIES) {
+      const bands = foilBands(rarity);
+      if (hasFoil(rarity)) expect(bands, rarity).toEqual(foil.bands[rarity]);
+      else expect(bands, rarity).toEqual([]);
     }
   });
 });
