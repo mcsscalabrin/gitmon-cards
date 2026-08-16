@@ -2,7 +2,7 @@ import { ELEMENT_COLORS } from "@/lib/cards/elements";
 import { tagForAxis } from "@/lib/cards/tag";
 import type { Card } from "@/lib/cards/types";
 import { absoluteUrl } from "@/lib/config";
-import { elementKey, rarityKey, translator, type Locale } from "@/lib/i18n/dictionaries";
+import { elementKey, rarityKey, translator, classKey, type Locale } from "@/lib/i18n/dictionaries";
 import { CopyField } from "@/components/ui/CopyField";
 import { ShareActions } from "@/components/ui/ShareActions";
 import { PackOpening } from "./PackOpening";
@@ -63,7 +63,7 @@ export function CardPanel({
       */}
       <div className="card-aside card-aside-left">
         {card.ratings && card.ratings.length > 0 ? (
-          <RadarChart ratings={card.ratings} locale={locale} />
+          <RadarChart ratings={card.ratings} locale={locale} kind={card.kind} />
         ) : null}
         {left.length > 0 ? <StatBreakdown derivations={left} locale={locale} /> : null}
       </div>
@@ -84,10 +84,18 @@ export function CardPanel({
             {card.name}
             {/*
               A tag acompanha o nome aqui como acompanha na carta — mesmo slot,
-              mesma hierarquia. Repetir a gramática do PNG é o que faz a página
-              parecer a carta em vez de uma ficha sobre ela.
+             mesma hierarquia. Repetir a gramática do PNG é o que faz a página
+             parecer a carta em vez de uma ficha sobre ela.
             */}
             <span className="headline-tag">{tagForAxis(card.axis)}</span>
+            {/*
+              Classe ex/Mega ex, como no TCG: o "ex" vem colado ao nome. Só o
+              site mostra — o PNG exportado fica limpo (RFC 9.6), como
+              `derivations` e `ratings`.
+            */}
+            {card.cardClass && card.cardClass !== "standard" && (
+              <span className="card-class">{t(classKey(card.cardClass))}</span>
+            )}
           </h1>
           <p>
             {t(rarityKey(card.rarity))} ·{" "}

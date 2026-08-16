@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -54,7 +54,12 @@ describe("cobertura dos 18 tipos", () => {
         `public/assets/energy/${element}.png`,
         `public/assets/types/${element}.svg`,
       ]) {
-        expect(() => readFileSync(join(root, caminho)), caminho).not.toThrow();
+        /*
+         * `existsSync`, não `readFileSync` que não lança: o ponto é a
+         * existência, e ler o arquivo inteiro só para provar que existe é
+         * custo sem pergunta.
+         */
+        expect(existsSync(join(root, caminho)), caminho).toBe(true);
       }
     }
   });

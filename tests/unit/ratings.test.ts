@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { AXES, CEILINGS, polygonPoints, ratingsFor } from "@/lib/cards/ratings";
+import {
+  AXES,
+  CEILINGS,
+  polygonPoints,
+  ratingsFor,
+  REPO_AXES,
+  REPO_CEILINGS,
+  repoRatingsFor,
+} from "@/lib/cards/ratings";
 
 const zero = { stars: 0, followers: 0, repos: 0, years: 0, languages: 0 };
+const zeroRepo = { stars: 0, forks: 0, issues: 0, years: 0, daysSincePush: 0 };
 
 describe("normalização dos eixos", () => {
   it("devolve um valor por eixo, na ordem declarada", () => {
@@ -58,6 +67,46 @@ describe("normalização dos eixos", () => {
     const ratings = ratingsFor({ ...zero, stars: Number.NaN, followers: -5 });
     expect(ratings[0].value).toBe(0);
     expect(ratings[1].value).toBe(0);
+  });
+});
+
+describe("assinatura do repositório", () => {
+  const activity = (r: ReturnType<typeof repoRatingsFor>) =>
+    r.find((item) => item.axis === "activity");
+
+  it("assina em cinco eixos próprios, com activity no lugar de breadth", () => {
+    const ratings = repoRatingsFor(zeroRepo);
+    expect(ratings.map((r) => r.axis)).toEqual([...REPO_AXES]);
+    expect(ratings.map((r) => r.axis)).not.toContain("breadth");
+  });
+
+  it("inverte a recência: push hoje satura, 2 anos zera", () => {
+    const hoje = repoRatingsFor({ ...zeroRepo, daysSincePush: 0 });
+    const parado = repoRatingsFor({ ...zeroRepo, daysSincePush: REPO_CEILINGS.activity });
+    expect(activity(hoje)?.value).toBe(99);
+    expect(activity(parado)?.value).toBe(0);
+  });
+
+  it("satura em 99 no teto dos quatro eixos diretos", () => {
+    const noTeto = repoRatingsFor({
+      stars: REPO_CEILINGS.reach,
+      forks: REPO_CEILINGS.community,
+      issues: REPO_CEILINGS.volume,
+      years: REPO_CEILINGS.veterancy,
+      daysSincePush: 0,
+    });
+    expect(noTeto.map((r) => r.value)).toEqual([99, 99, 99, 99, 99]);
+  });
+
+  it("preserva os dias desde o último push no raw, sem mentir que é nota", () => {
+    const ratings = repoRatingsFor({ ...zeroRepo, daysSincePush: 123 });
+    expect(activity(ratings)?.raw).toBe(123);
+  });
+
+  it("dá espaço visível à faixa comum de estrelas — mesma escala log do perfil", () => {
+    const modesto = repoRatingsFor({ ...zeroRepo, stars: 500 });
+    expect(modesto[0].value).toBeGreaterThan(20);
+    expect(modesto[0].value).toBeLessThan(70);
   });
 });
 
