@@ -19,6 +19,7 @@ export function CardPanel({
   card,
   locale,
   flippable = false,
+  suppressPack = false,
   children,
 }: {
   card: Card;
@@ -29,6 +30,8 @@ export function CardPanel({
    * gesto de virar é quem entrega a frente.
    */
   flippable?: boolean;
+  /** Suprime a abertura de pacote — usado pelo tour guiado (`?guide=1`). */
+  suppressPack?: boolean;
   children?: React.ReactNode;
 }) {
   const t = translator(locale);
@@ -53,7 +56,7 @@ export function CardPanel({
         busca, para que um link direto para /torvalds também abra pacote — a
         revelação é da carta, não do ato de pesquisar.
       */}
-      <PackOpening name={card.name} locale={locale} />
+      <PackOpening name={card.name} locale={locale} suppressed={suppressPack} />
 
       {/*
         Arranjo simétrico: a carta é o eixo da página, com os valores derivados

@@ -10,7 +10,7 @@ import { cardMetadata } from "@/lib/metadata";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 
-type Params = { params: Promise<{ owner: string }> };
+type Params = { params: Promise<{ owner: string }>; searchParams: Promise<{ guide?: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { owner } = await params;
@@ -22,8 +22,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   });
 }
 
-export default async function ProfilePage({ params }: Params) {
+export default async function ProfilePage({ params, searchParams }: Params) {
   const { owner } = await params;
+  const { guide } = await searchParams;
   const locale = await getLocale();
   const t = translator(locale);
 
@@ -44,7 +45,7 @@ export default async function ProfilePage({ params }: Params) {
 
   return (
     <Shell locale={locale}>
-      <CardPanel card={card} locale={locale} flippable>
+      <CardPanel card={card} locale={locale} flippable suppressPack={guide === "1"}>
         <BattleForm
           challenger={owner}
           label={t("home.battle")}

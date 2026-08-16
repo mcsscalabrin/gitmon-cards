@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AUTHORS, PROJECT_REPO_URL } from "@/lib/config";
 import { translator, type Locale } from "@/lib/i18n/dictionaries";
 import { getProjectStars } from "@/lib/project";
+import { GuideLauncher } from "@/components/guide/GuideLauncher";
 import { DitherBackground } from "./DitherBackground";
 import { LocaleToggle } from "./LocaleToggle";
 import { SupportBand } from "./SupportBand";
@@ -53,6 +54,9 @@ export async function Shell({
           >
             {t("home.viewOnGitHub")}
           </a>
+          <Link className="ghost-link" href="/docs">
+            {t("docs.nav")}
+          </Link>
           <LocaleToggle locale={locale} />
         </div>
       </header>
@@ -84,6 +88,13 @@ export async function Shell({
           ))}
         </span>
       </footer>
+
+      {/*
+        O tour precisa sobreviver à navegação client-side para poder levar a
+        pessoa até a página de cada alvo — por isso mora no Shell, que ocupa a
+        mesma posição da árvore em todas as rotas.
+      */}
+      <GuideLauncher locale={locale} />
     </div>
   );
 }

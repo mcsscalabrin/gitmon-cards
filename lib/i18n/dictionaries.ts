@@ -306,6 +306,64 @@ const pt = {
   "ygo.passed": "{player} passa o turno",
   "ygo.startTurn": "Começa o turno de {player}",
   "ygo.windowOpen": "Armadilhas na mesa?",
+
+  "docs.nav": "Guia",
+  "docs.title": "Guia de uso",
+  "docs.lead":
+    "O Gitmon Cards transforma dados públicos do GitHub em cartas de TCG. Este guia explica o que cada parte faz e como usar — e um tour guiado passa por tudo ao vivo.",
+  "docs.startTour": "Iniciar tour guiado",
+  "docs.posters.code":
+    "/torvalds.png            → carta de perfil\n/facebook/react.png      → carta de repositório\n/battle/<id>.png         → pôster de batalha\n/ygo/<id>.png            → pôster de Speed Duel\n/duel/<id>.png           → pôster de duelo",
+
+  "guide.skip": "Pular",
+  "guide.back": "Voltar",
+  "guide.next": "Próximo",
+  "guide.done": "Concluir",
+  "guide.close": "Fechar guia",
+  "guide.step": "{current} de {total}",
+
+  "guide.step.concept.title": "O que é o Gitmon Cards",
+  "guide.step.concept.body":
+    "Perfis e repositórios do GitHub viram cartas de TCG. Cada número vem de uma fórmula fixa e documentada — nada é inventado.",
+  "guide.step.generate.title": "Gerar uma carta",
+  "guide.step.generate.body":
+    "Digite um usuário, um owner/repositório, ou cole a URL do GitHub inteira. A busca sugere nomes enquanto você digita.",
+  "guide.step.pack.title": "Abertura de pacote",
+  "guide.step.pack.body":
+    "Ao abrir um perfil, a carta chega lacrada num pacote que você rasga (ou pula). O verso revela a frente no gesto de virar. No tour a abertura fica pulada para não cobrir a tela.",
+  "guide.step.card.title": "A frente da carta",
+  "guide.step.card.body":
+    "Tipo pelo seu idioma dominante, HP, ataques com seus repositórios mais estrelados, fraqueza, resistência e recuo — tudo de dados reais.",
+  "guide.step.headline.title": "Raridade, tag e classe",
+  "guide.step.headline.body":
+    "A raridade vai de Common a Hyper Rare em oito níveis e muda o tratamento da arte. A tag marca o eixo mais forte. ex e Mega ex indicam pico de escala externa.",
+  "guide.step.radar.title": "Assinatura do perfil",
+  "guide.step.radar.body":
+    "Cinco eixos — alcance, comunidade, volume, veterania e atividade — em forma comparativa, com os valores exatos na tabela.",
+  "guide.step.why.title": "De onde saem os números",
+  "guide.step.why.body":
+    "Cada estatística lista a fórmula que a produziu, em linguagem natural. Transparência é o produto.",
+  "guide.step.embed.title": "Embutir no README",
+  "guide.step.embed.body":
+    "O uso principal: copie o snippet de markdown e cole no seu README. A imagem se atualiza sozinha, sem login.",
+  "guide.step.share.title": "Baixar e compartilhar",
+  "guide.step.share.body":
+    "Baixe o PNG ou compartilhe no feed, onde a imagem é o produto inteiro.",
+  "guide.step.battle.title": "Batalha",
+  "guide.step.battle.body":
+    "Escolha um adversário e simule a batalha. Cada envio gera um resultado novo, com log e link estático para compartilhar.",
+  "guide.step.ygo.title": "Speed Duel (Yu-Gi-Oh)",
+  "guide.step.ygo.body":
+    "A versão Yu-Gi-Oh traz 20 LP, campos, posições de ataque e defesa e fases. O resultado também vira um link estático.",
+  "guide.step.posters.title": "Pôsteres estáticos",
+  "guide.step.posters.body":
+    "Batalhas e duelos têm URL de imagem própria, embutível como a carta — o resultado pode viajar para fora do site.",
+  "guide.step.language.title": "Idiomas",
+  "guide.step.language.body":
+    "O site é bilíngue por toggle manual, sem detecção automática. A escolha fica num cookie.",
+  "guide.step.end.title": "Pronto!",
+  "guide.step.end.body":
+    "Gere sua carta, cole no README e compartilhe. Se curtir, dê uma estrela no repositório.",
 } as const;
 
 export type MessageKey = keyof typeof pt;
@@ -568,6 +626,64 @@ const en: Record<MessageKey, string> = {
   "ygo.passed": "{player} passes the turn",
   "ygo.startTurn": "{player}'s turn begins",
   "ygo.windowOpen": "Traps on the field?",
+
+  "docs.nav": "Guide",
+  "docs.title": "How to use",
+  "docs.lead":
+    "Gitmon Cards turns public GitHub data into TCG cards. This guide explains what each part does and how to use it — and a guided tour walks through everything live.",
+  "docs.startTour": "Start guided tour",
+  "docs.posters.code":
+    "/torvalds.png            → profile card\n/facebook/react.png      → repository card\n/battle/<id>.png         → battle poster\n/ygo/<id>.png            → Speed Duel poster\n/duel/<id>.png           → duel poster",
+
+  "guide.skip": "Skip",
+  "guide.back": "Back",
+  "guide.next": "Next",
+  "guide.done": "Done",
+  "guide.close": "Close guide",
+  "guide.step": "{current} of {total}",
+
+  "guide.step.concept.title": "What is Gitmon Cards",
+  "guide.step.concept.body":
+    "GitHub profiles and repositories become TCG cards. Every number comes from a fixed, documented formula — nothing is made up.",
+  "guide.step.generate.title": "Generate a card",
+  "guide.step.generate.body":
+    "Type a user, an owner/repository, or paste a full GitHub URL. The search suggests names as you type.",
+  "guide.step.pack.title": "Pack opening",
+  "guide.step.pack.body":
+    "When you open a profile, the card arrives sealed in a pack you tear (or skip). The back reveals the front on the flip. The tour skips it so it doesn't cover the screen.",
+  "guide.step.card.title": "The card face",
+  "guide.step.card.body":
+    "Type from your dominant language, HP, attacks from your most-starred repositories, weakness, resistance and retreat — all real data.",
+  "guide.step.headline.title": "Rarity, tag and class",
+  "guide.step.headline.body":
+    "Rarity goes from Common to Hyper Rare across eight tiers and changes the art treatment. The tag marks the strongest axis. ex and Mega ex flag a peak in external scale.",
+  "guide.step.radar.title": "Profile signature",
+  "guide.step.radar.body":
+    "Five axes — reach, community, volume, veterancy and activity — as a comparative shape, with exact values in the table.",
+  "guide.step.why.title": "Where the numbers come from",
+  "guide.step.why.body":
+    "Every stat lists the formula that produced it, in plain language. Transparency is the product.",
+  "guide.step.embed.title": "Embed in your README",
+  "guide.step.embed.body":
+    "The main use: copy the markdown snippet and paste it into your README. The image updates on its own, no login.",
+  "guide.step.share.title": "Download and share",
+  "guide.step.share.body":
+    "Download the PNG or share it to your feed, where the image is the whole product.",
+  "guide.step.battle.title": "Battle",
+  "guide.step.battle.body":
+    "Pick an opponent and simulate the battle. Every submit rolls a new result, with a log and a static shareable link.",
+  "guide.step.ygo.title": "Speed Duel (Yu-Gi-Oh)",
+  "guide.step.ygo.body":
+    "The Yu-Gi-Oh version brings 20 LP, fields, attack/defense positions and phases. The result also becomes a static link.",
+  "guide.step.posters.title": "Static posters",
+  "guide.step.posters.body":
+    "Battles and duels have their own image URLs, embeddable like the card — the result can travel outside the site.",
+  "guide.step.language.title": "Language",
+  "guide.step.language.body":
+    "The site is bilingual through a manual toggle, no auto-detection. The choice lives in a cookie.",
+  "guide.step.end.title": "You're set!",
+  "guide.step.end.body":
+    "Generate your card, paste it into your README and share it. If you like it, star the repository.",
 };
 
 const DICTIONARIES: Record<Locale, Record<MessageKey, string>> = { pt, en };
