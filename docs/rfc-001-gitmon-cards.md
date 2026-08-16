@@ -264,9 +264,11 @@ Esta seção registra expectativas de produto levantadas numa segunda rodada de 
 
 **Geração de carta de perfil**: `gitmon.dev/<username>.png`, mesmo padrão do gitfut.
 
+**Geração de carta de organização**: a rota de perfil (`/<org>.png`, ex: `facebook.png`) também gera cartas para organizações, com os mesmos campos e fórmulas de scoring de um usuário individual (seção 6.1). O GitHub expõe organizações com `type: Organization` na resposta de `/users/{login}`, e os dados que o scoring usa são os mesmos de um usuário. Exceção: o sinal de "membros" não entra no scoring — o GitHub removeu a contagem pública de membros em 2022.
+
 ### 9.5 Fora de escopo v1 (produto)
 
-- **Organizações do GitHub** (não pessoas físicas) **não geram carta na v1** — só usuários individuais. Vale decidir na implementação se a rota deveria pelo menos detectar esse caso e devolver um erro claro (`type: Organization` na resposta da API do GitHub já diferencia isso de `type: User`), em vez de tentar gerar uma carta com dados incompletos/incorretos.
+**Removido deste escopo:** cartas para organizações do GitHub — promovidas para escopo v1 na seção 9.4, quando a implementação mostrou que `type: Organization` responde aos mesmos campos e fórmulas de scoring de um usuário (seção 6.1), sem precisar de campos novos.
 
 ### 9.6 Monetização
 
@@ -292,7 +294,6 @@ Marcado explicitamente como *future work* para orientar decisões de arquitetura
 
 - Efeito holo/foil animado para cartas de raridade alta
 - Página de galeria pública / leaderboard
-- Cartas para organizações do GitHub (ver seção 9.5)
 
 **Removido desta lista:** comparação/batalha 1v1 — promovida para escopo v1 na seção 7, depois que o autor decidiu trazê-la pra frente. O botão de compartilhar resultado também é v1 agora (seção 7.4), não mais future work.
 

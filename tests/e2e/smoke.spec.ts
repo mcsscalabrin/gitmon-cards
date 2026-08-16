@@ -27,6 +27,14 @@ test.describe("rotas de imagem", { tag: "@smoke" }, () => {
     expect((await response.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
   });
 
+  test("serve a carta de organização em /<org>.png (RFC 9.5)", async ({ request }) => {
+    const response = await request.get("/facebook.png");
+
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toBe("image/png");
+    expect((await response.body()).subarray(0, 8)).toEqual(PNG_MAGIC);
+  });
+
   /*
    * Este teste afirmava `s-maxage=86400` no header recebido, e falhava contra uma
    * produção onde a política estava valendo.

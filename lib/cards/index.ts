@@ -79,11 +79,6 @@ export async function getProfileCard(login: string): Promise<Card> {
     CARD_DATA_TTL_SECONDS,
     async () => {
       const user = await fetchUser(login);
-      // Organização não tem repositório próprio no sentido do scoring — falha
-      // antes de gastar a segunda requisição (RFC 9.5).
-      if (user.type === "Organization") {
-        return buildProfileCard(user, []);
-      }
       const repos = await fetchUserRepos(login);
       return buildProfileCard(user, repos);
     },
