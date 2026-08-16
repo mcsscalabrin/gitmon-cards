@@ -807,6 +807,17 @@ function Zones({
   );
 }
 
+/**
+ * O PNG da carta de perfil do dev — o mesmo que aparece na aba do perfil
+ * (`/:login.png`, reescrito para `/api/card-image/:login`). Monstros usam o
+ * login direto; skills carregam o login do dono, porque a magia/armadilha não
+ * tem perfil próprio.
+ */
+function profileCardUrl(card: YgoCard): string {
+  const login = card.id.startsWith("skill:") ? card.id.slice("skill:".length) : card.id;
+  return `/${login}.png`;
+}
+
 function MiniCard({
   card,
   position = "attack",
@@ -841,30 +852,16 @@ function MiniCard({
       />
     );
   }
-  if (card.kind !== "monster") {
-    return (
-      <div
-        className="ygo-card ygo-card-skill"
-        data-kind={card.kind}
-        data-dragging={dragging || undefined}
-        {...common}
-      >
-        <span className="ygo-card-name">{card.name}</span>
-      </div>
-    );
-  }
   return (
     <div
-      className="ygo-card ygo-card-monster"
+      className="ygo-card"
+      data-kind={card.kind}
       data-pos={position}
       data-attacked={attacked || undefined}
       data-dragging={dragging || undefined}
       {...common}
     >
-      <span className="ygo-card-level">{"★".repeat(card.level ?? 1)}</span>
-      <img src={card.artUrl} alt={card.name} className="ygo-card-art" />
-      <span className="ygo-card-atk">{card.atk ?? 0}</span>
-      <span className="ygo-card-def">{card.def ?? 0}</span>
+      <img src={profileCardUrl(card)} alt={card.name} className="ygo-card-art" loading="lazy" />
     </div>
   );
 }
@@ -951,13 +948,7 @@ function SelectedPanel({ card, t }: { card: YgoCard | null; t: Translator }) {
   return (
     <aside className="ygo-selected" aria-live="polite">
       <div className="ygo-selected-art">
-        {card.kind === "monster" ? (
-          <img src={card.artUrl} alt="" className="ygo-selected-img" />
-        ) : (
-          <span className="ygo-selected-skill" data-kind={card.kind}>
-            {card.name}
-          </span>
-        )}
+        <img src={profileCardUrl(card)} alt="" className="ygo-selected-img" />
       </div>
       <div className="ygo-selected-body">
         <h2 className="ygo-selected-name">{card.name}</h2>
