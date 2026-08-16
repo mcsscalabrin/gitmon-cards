@@ -22,7 +22,21 @@ import { translator, type Locale } from "@/lib/i18n/dictionaries";
 
 type Stage = "sealed" | "opening";
 
-export function PackOpening({ name, locale }: { name: string; locale: Locale }) {
+export function PackOpening({
+  name,
+  locale,
+  suppressed = false,
+}: {
+  name: string;
+  locale: Locale;
+  /**
+   * Suprime a abertura inteira. O tour guiado navega para perfis com
+   * `?guide=1`: o pacote cobriria a tela por cima do spotlight. Quem decide é
+   * a página (server), não o cliente — sem janela de pacote-piscando na
+   * hidratação.
+   */
+  suppressed?: boolean;
+}) {
   const t = translator(locale);
   const [stage, setStage] = useState<Stage>("sealed");
   const [dismissed, setDismissed] = useState(false);
@@ -85,6 +99,7 @@ export function PackOpening({ name, locale }: { name: string; locale: Locale }) 
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
+  if (suppressed) return null;
   if (dismissed) return null;
 
   return (

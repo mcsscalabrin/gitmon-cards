@@ -4187,3 +4187,106 @@ select {
 
 .ygo-log li[data-side="a"] { --turn-side: var(--side-a); }
 .ygo-log li[data-side="b"] { --turn-side: var(--side-b); }
+
+/* ------------------------------------------------------ overlay do tour */
+
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  pointer-events: none;
+}
+
+.guide-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 7, 10, 0.62);
+}
+
+.guide-spotlight {
+  position: absolute;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(6, 7, 10, 0.62);
+  border: 2px solid var(--accent);
+  transition: left 200ms ease, top 200ms ease, width 200ms ease,
+    height 200ms ease;
+}
+
+.guide-tooltip {
+  position: relative;
+  max-width: 400px;
+  padding: 20px 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-raised);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+
+/* A tooltip que "explica um alvo" é posicionada pelo JS (GuideLauncher.placeTip)
+   para não tampar o elemento que ela explica. */
+.guide-tooltip[data-anchored] {
+  position: absolute;
+}
+
+.guide-progress {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.guide-tooltip h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.guide-body {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.guide-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.guide-actions .ghost-link:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.guide-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  padding: 2px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.guide-close:hover {
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-spotlight {
+    transition: none;
+  }
+}
+
+

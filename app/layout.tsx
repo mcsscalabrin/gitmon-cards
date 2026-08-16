@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { baseUrl } from "@/lib/config";
+import { GuideLauncher } from "@/components/guide/GuideLauncher";
+import { getLocale } from "@/lib/i18n/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,11 +27,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
   return (
     <html lang="pt-BR">
       <head>
@@ -50,7 +53,16 @@ export default function RootLayout({
           />
         ))}
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/*
+          O tour precisa sobreviver à navegação client-side para poder levar a
+          pessoa até a página de cada alvo. Estado de componente cliente só se
+          preserva no layout raiz entre rotas — dentro da página ele é
+          desmontado a cada navegação e o guia fecharia.
+        */}
+        <GuideLauncher locale={locale} />
+      </body>
     </html>
   );
 }
