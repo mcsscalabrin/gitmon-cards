@@ -780,16 +780,16 @@ select {
 .pack-glow {
   position: absolute;
   top: 26px;
-  left: 8%;
-  right: 8%;
-  height: 120px;
+  left: 0;
+  right: 0;
+  height: 150px;
   opacity: 0;
   pointer-events: none;
   background: radial-gradient(
     ellipse at 50% 0%,
-    rgb(255 255 255 / 0.85),
-    rgb(255 236 170 / 0.35) 42%,
-    transparent 72%
+    rgb(255 255 255 / 0.95),
+    rgb(255 236 170 / 0.5) 46%,
+    transparent 78%
   );
 }
 
@@ -802,34 +802,67 @@ select {
 }
 
 .pack[data-stage="opening"] .pack-glow {
-  animation: pack-leak 620ms ease-out both;
+  /*
+   * A luz dispara de uma vez (pico em 20%) e se mantém acesa durante a queda —
+   * é ela que dá contorno ao pacote escuro caindo sobre o overlay escuro. Sem
+   * esta sustentação a queda inteira acontece em silhueta.
+   */
+  animation: pack-leak 700ms ease-out both;
 }
 
 .pack[data-stage="opening"] .pack-body {
-  animation: pack-fall 560ms cubic-bezier(0.5, 0, 0.75, 0) 180ms both;
+  /* Acelera na queda (gravidade) em vez de desacelerar. */
+  animation: pack-fall 700ms cubic-bezier(0.55, 0, 1, 0.45) 180ms both;
 }
 
 @keyframes pack-tear {
   to {
-    transform: translate(46%, -128%) rotate(19deg);
+    /*
+     * Arremesso maior que o original (46%, -128%): a tira precisa sair de cena
+     * de verdade, e não só virar para o lado. O voo para cima e para a direita
+     * é o que diz "rasguei por aqui".
+     */
+    transform: translate(85%, -185%) rotate(36deg);
     opacity: 0;
   }
 }
 
 @keyframes pack-leak {
-  35% {
+  20% {
     opacity: 1;
+    transform: scaleY(2.6) scaleX(1.12);
+  }
+  70% {
+    opacity: 0.55;
+    transform: scaleY(2.9) scaleX(1.15);
   }
   to {
     opacity: 0;
-    transform: scaleY(2.1);
+    transform: scaleY(3) scaleX(1.18);
   }
 }
 
 @keyframes pack-fall {
+  /*
+   * A embalagem cai com gravidade, não desliza: a curva acelera no início
+   * (ease-in) em vez de desacelerar, e o corpo desce bem mais do que os 58%
+   * originais, que mal saíam do lugar. A rotação e o encolhimento leve lêem
+   * como corpo solto tombando, e a opacidade só some no fim — ficar visível
+   * durante a queda é o que faz ela ser uma queda.
+   *
+   * O brilho cresce no fim de propósito: a luz que vazou pelo rasgo ilumina a
+   * embalagem por dentro enquanto ela cai. Corpo escuro caindo sobre o overlay
+   * escuro é silhueta — um corpo que clareia em queda é o que se lê.
+   */
+  0%,
+  70% {
+    opacity: 1;
+    filter: brightness(1.05);
+  }
   to {
-    transform: translateY(58%) rotate(-4deg);
+    transform: translateY(200%) rotate(-14deg) scale(0.92);
     opacity: 0;
+    filter: brightness(1.4);
   }
 }
 
@@ -1652,15 +1685,23 @@ select {
 .tilt-spectral {
   mix-blend-mode: color;
   opacity: calc(var(--foil) * var(--active) * 0.85);
-  background: repeating-linear-gradient(
-    112deg,
-    hsl(348 92% 58%) 0%,
-    hsl(45 96% 58%) 5%,
-    hsl(140 82% 54%) 10%,
-    hsl(192 94% 56%) 15%,
-    hsl(268 90% 62%) 20%,
-    hsl(320 92% 60%) 25%,
-    hsl(348 92% 58%) 30%
+  /*
+   * As cores vêm das bandas do tier, via `--spectrum` (o TiltCard monta o
+   * gradiente de `foil.json`). O fallback é o arco-íris fixo que existia antes,
+   * para o caso de o JS não chegar a escrever a variável.
+   */
+  background: var(
+    --spectrum,
+    repeating-linear-gradient(
+      112deg,
+      hsl(348 92% 58%) 0%,
+      hsl(45 96% 58%) 5%,
+      hsl(140 82% 54%) 10%,
+      hsl(192 94% 56%) 15%,
+      hsl(268 90% 62%) 20%,
+      hsl(320 92% 60%) 25%,
+      hsl(348 92% 58%) 30%
+    )
   );
   background-size: 220% 220%;
   background-position: var(--holo-shift, 50%) var(--holo-drift, 50%);
@@ -1794,20 +1835,6 @@ select {
 }
 
 /*
- * Metal do tier tinge o espectro. `ultra_rare` é prata e
- * `special_illustration_rare`/`hyper_rare` são ouro na moldura impressa
- * (`cardTreatment`); sem isto o reflexo ao vivo sai igual nos três e desmente a
- * moldura que está logo embaixo.
- */
-.tilt-holo[data-metal="gold"] .tilt-spectral {
-  filter: hue-rotate(-18deg) saturate(1.15);
-}
-
-.tilt-holo[data-metal="silver"] .tilt-spectral {
-  filter: saturate(0.55) brightness(1.12);
-}
-
-/*
  * No full-art o espectro e a lâmina recuam — mesma correção que `FULL_ART_SPECTRUM`
  * fez no PNG assado, e pela mesma razão exata.
  *
@@ -1938,11 +1965,17 @@ select {
   height: 620px;
   transform: translateX(-50%);
   pointer-events: none;
+  /*
+   * A primeira versão desta auréola era tímida demais para o papel que ela tem:
+   * depois do pacote, é ela que diz de que elemento é a carta antes de alguém
+   * ler qualquer palavra. O centro sobe de 34% para 46% e o meio estica até 38%,
+   * para a mancha ler como ambiente do tipo e não como um brilho encostado.
+   */
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--element, #f2c94c) 34%, transparent) 0%,
-    color-mix(in srgb, var(--element, #f2c94c) 12%, transparent) 34%,
-    transparent 68%
+    color-mix(in srgb, var(--element, #f2c94c) 46%, transparent) 0%,
+    color-mix(in srgb, var(--element, #f2c94c) 17%, transparent) 38%,
+    transparent 72%
   );
 }
 

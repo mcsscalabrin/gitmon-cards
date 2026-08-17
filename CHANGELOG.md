@@ -31,6 +31,13 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - fixes styles in globals
 
 
+### Org
+
+#### Features
+
+- gera carta para organizacoes do GitHub, com as mesmas formulas de scoring de perfil (RFC 9.4)
+
+
 ### Duelo-yugioh
 
 #### Features

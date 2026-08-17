@@ -35,9 +35,15 @@ uma camada só resolver cor **e** luz que produziu a primeira versão enevoada:
 | Camada | Papel | Blend |
 |---|---|---|
 | `.tilt-foil` | relevo especular (o filtro acima), mascarado em volta do ponteiro | `screen` |
-| `.tilt-spectral` | faixas de arco-íris que varrem com a inclinação | `color` |
+| `.tilt-spectral` | faixas espectrais do tier que varrem com a inclinação | `color` |
 | `.tilt-sheen` | lâmina diagonal, o reflexo duro da fonte de luz | `overlay` |
 | `.tilt-grain` | granulado fixo, tira a lisura de gradiente CSS | `overlay` |
+
+O espectro ao vivo monta o gradiente com as **bandas de `foil.json`** (via
+`foilBands()`), a mesma fonte que `foilSvg()` assa no PNG — e não um arco-íris
+fixo. Antes as duas pontas divergiam: a carta saía dourada no feed e colorida no
+site. A temperatura vem das bandas, sem `data-metal` por cima (ver
+`docs/gaps-revalidacao.md`, 4.2).
 
 Duas decisões que custaram tentativa e erro:
 
