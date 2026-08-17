@@ -174,6 +174,7 @@ export function hasTexture(rarity: Rarity): boolean {
  * É a mesma garantia que o `switch` dava antes de a escada virar arquivo.
  */
 const FOIL_INTENSITY: Record<Rarity, number> = foil.intensity;
+const FOIL_BANDS: Partial<Record<Rarity, string[]>> = foil.bands;
 
 /**
  * Força do foil, de 0 a 1.
@@ -190,6 +191,19 @@ const FOIL_INTENSITY: Record<Rarity, number> = foil.intensity;
  */
 export function foilIntensity(rarity: Rarity): number {
   return FOIL_INTENSITY[rarity];
+}
+
+/**
+ * Bandas espectrais do tier — as quatro cores que a faixa percorre na diagonal.
+ *
+ * O `TiltCard` converte estas cores no gradiente ao vivo (`.tilt-spectral`), e
+ * `foilSvg()` as converte no gradiente do PNG assado. Antes o ao vivo usava um
+ * arco-íris fixo de seis cores e o impresso lia as bandas: a mesma carta saía
+ * dourada no feed e colorida no site. Mesma regra de `foilIntensity` — um
+ * desenho só, lido pelas duas pontas.
+ */
+export function foilBands(rarity: Rarity): string[] {
+  return FOIL_BANDS[rarity] ?? [];
 }
 
 export type MetalTone = "silver" | "gold";

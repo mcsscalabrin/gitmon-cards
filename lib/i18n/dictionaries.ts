@@ -85,7 +85,6 @@ const pt = {
   "stat.since": "Desde",
 
   "error.not_found": "Usuário ou repositório não encontrado.",
-  "error.organization": "Organizações não geram carta nesta versão.",
   "error.rate_limit": "Limite da API do GitHub atingido. Tente novamente em alguns minutos.",
   "error.no_token": "Servidor sem token do GitHub configurado.",
   "error.upstream": "A API do GitHub não respondeu.",
@@ -422,7 +421,6 @@ const en: Record<MessageKey, string> = {
   "stat.since": "Since",
 
   "error.not_found": "User or repository not found.",
-  "error.organization": "Organizations do not generate a card in this version.",
   "error.rate_limit": "GitHub API rate limit reached. Try again in a few minutes.",
   "error.no_token": "Server has no GitHub token configured.",
   "error.upstream": "The GitHub API did not respond.",
