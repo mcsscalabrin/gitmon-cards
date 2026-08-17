@@ -986,7 +986,9 @@ select {
  * destaque para chamar atenção na home.
  */
 .oauth-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 12px;
   padding: 8px 16px;
   border: 1px solid var(--accent);
@@ -1001,11 +1003,6 @@ select {
 .oauth-link:hover {
   background: var(--accent);
   color: var(--bg);
-}
-
-.oauth-icon {
-  vertical-align: -2px;
-  margin-right: 6px;
 }
 
 .search-form input,
