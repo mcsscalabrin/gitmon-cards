@@ -71,8 +71,8 @@ export function GuideLauncher({ locale }: { locale: Locale }) {
   }, []);
 
   // Ancora a tooltip fora do alvo que ela explica: acima se couber, senão
-  // abaixo, senão sobre o alvo (último recurso). Sem alvo (passo conceitual)
-  // devolve `null` e a tooltip volta a centralizar na tela.
+  // abaixo, senão encostada na borda com mais folga. Sem alvo (passo
+  // conceitual) devolve `null` e a tooltip volta a centralizar na tela.
   const placeTip = useCallback((r: DOMRect | null): { left: number; top: number } | null => {
     const tip = tipRef.current;
     if (!r || !tip) return null;
@@ -87,7 +87,20 @@ export function GuideLauncher({ locale }: { locale: Locale }) {
     } else if (r.bottom + th + margin <= vh - 8) {
       top = r.bottom + margin;
     } else {
-      top = Math.max(8, Math.min(vh - th - 8, r.top + r.height / 2 - th / 2));
+      /*
+       * Alvo alto demais para caber a tooltip de qualquer um dos lados — no
+       * telefone é o caso da carta e do bloco do radar, que sozinhos passam de
+       * meia tela.
+       *
+       * Antes, o último recurso centrava a tooltip **sobre** o alvo: medido a
+       * 390px, ela cobria o elemento explicado por inteiro em 3 dos 9 passos,
+       * o que anula o tour — a pessoa lê a explicação de uma coisa que não
+       * está vendo. Encostar na borda com mais folga também sobrepõe, mas só
+       * uma ponta: a outra continua visível dentro do recorte do spotlight.
+       */
+      const folgaAcima = r.top;
+      const folgaAbaixo = vh - r.bottom;
+      top = folgaAbaixo >= folgaAcima ? vh - th - 8 : 8;
     }
     const left = Math.max(8, Math.min(vw - tw - 8, r.left + r.width / 2 - tw / 2));
     return { left, top };
@@ -132,7 +145,28 @@ export function GuideLauncher({ locale }: { locale: Locale }) {
       const el = document.querySelector(step.target);
       if (el instanceof HTMLElement) {
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+        /*
+         * Alvo alto vai para o topo da tela, não para o meio.
+         *
+         * `block: "center"` divide a sobra em duas metades iguais, e quando o
+         * alvo é grande nenhuma das duas comporta a tooltip: as duas saídas
+         * boas do `placeTip` falham de uma vez e sobra a sobreposição — era o
+         * que cobria a carta e o bloco do radar no telefone. Encostando o alvo
+         * no topo, a sobra vira um bloco só, embaixo, e aí ela cabe.
+         *
+         * O corte não é uma fração fixa da tela: é a própria conta que o
+         * `placeTip` fará em seguida. Centrado, cada lado recebe `(vh - h) / 2`;
+         * se isso não comporta a tooltip mais a margem, centrar já perdeu. Com
+         * uma fração fixa o critério erra dos dois lados — sobra alvo médio
+         * roçando a tooltip, e alvo alto indo para o topo sem precisar.
+         */
+        const alvoH = el.getBoundingClientRect().height;
+        const tipH = tipRef.current?.offsetHeight ?? 0;
+        const cabeCentrado = (window.innerHeight - alvoH) / 2 >= tipH + 24;
+        el.scrollIntoView({
+          behavior: reduced ? "auto" : "smooth",
+          block: cabeCentrado ? "center" : "start",
+        });
         requestAnimationFrame(() => settle(el.getBoundingClientRect()));
       } else if (Date.now() - startAt < TARGET_TIMEOUT) {
         requestAnimationFrame(poll);

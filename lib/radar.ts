@@ -58,6 +58,38 @@ const RING_FRACTIONS = [1 / 3, 2 / 3, 1];
 const RADIUS_SHARE = 0.72;
 const LABEL_GAP_SHARE = 0.1;
 
+/**
+ * Folga lateral do `viewBox`, em fração do lado.
+ *
+ * Os rótulos são posicionados **fora** do raio (`LABEL_GAP_SHARE`) e crescem
+ * para fora a partir dali, então o texto sempre termina além da caixa quadrada
+ * que o desenho ocupa: medido, "Comunidade" chega a 299,5 num `viewBox` de 240,
+ * quase 60 unidades para fora. Enquanto o SVG era `overflow: visible` isso não
+ * aparecia na mesa — sobrava coluna ao lado —, mas no telefone a coluna acaba
+ * antes do texto e o rótulo era cortado pela borda da tela.
+ *
+ * A correção é geométrica, e é por isso que mora aqui e não numa media query:
+ * com os rótulos **dentro** do `viewBox`, o SVG inteiro escala junto e não
+ * existe largura de container em que eles possam vazar. O 0,33 dá 80 unidades
+ * de cada lado a 240, o que deixa ~20 de sobra sobre o rótulo mais longo dos
+ * dois idiomas — folga para tradução sem encolher o radar à toa.
+ *
+ * Só na horizontal: na vertical os rótulos do topo e da base ficam a 9,6 e
+ * 209,3, confortavelmente dentro da caixa.
+ */
+const LABEL_PAD_SHARE = 0.33;
+
+/**
+ * O `viewBox` que contém o desenho **e** os rótulos.
+ *
+ * Compartilhado pelo radar da carta e pelo da batalha: os dois usam
+ * `radarGeometry` com a mesma colocação de rótulo, logo têm o mesmo transbordo.
+ */
+export function radarViewBox(size: number): string {
+  const pad = size * LABEL_PAD_SHARE;
+  return `${-pad} 0 ${size + pad * 2} ${size}`;
+}
+
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }

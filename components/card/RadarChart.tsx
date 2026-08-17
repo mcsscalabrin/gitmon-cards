@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AxisRating } from "@/lib/cards/ratings";
-import { radarGeometry, radarSector } from "@/lib/radar";
+import { radarGeometry, radarSector, radarViewBox } from "@/lib/radar";
 import { translator, type Locale, type MessageKey } from "@/lib/i18n/dictionaries";
 
 /**
@@ -85,7 +85,7 @@ export function RadarChart({
 
       <div className="radar-svg-wrap">
         <svg
-          viewBox={`0 0 ${size} ${size}`}
+          viewBox={radarViewBox(size)}
           className="radar-svg"
           role="img"
           aria-label={t("radar.title")}
