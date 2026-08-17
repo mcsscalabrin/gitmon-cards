@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { cardTreatment, foilIntensity, hasFoil, hasTexture } from "@/lib/cards/rarity";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { cardTreatment, foilBands, foilIntensity, hasFoil, hasTexture } from "@/lib/cards/rarity";
 import type { ProfileAxis } from "@/lib/cards/ratings";
 import { patternForAxis } from "@/lib/cards/tag";
 import type { Rarity } from "@/lib/cards/types";
@@ -45,6 +45,45 @@ const EASE = 0.16;
 
 /** Abaixo disto o movimento é invisível e o laço para, liberando a CPU. */
 const EPSILON = 0.0015;
+
+/**
+ * Curva de resposta do relevo ao vivo, igual à que a build assa no PNG
+ * (`RELIEF_CURVE` em `scripts/lib/art.mjs`). Convexa de propósito: esmaga o
+ * meio da faixa e preserva o topo, então a luz sai como cintilância nas cristas
+ * em vez de véu branco sobre a carta inteira. A mesma curva e a mesma amplitude
+ * mantêm as duas pontas falando a mesma língua.
+ */
+const RELIEF_CURVE = [0, 0.2, 0.4, 0.6, 0.8, 1];
+
+/** `tableValues` do `feFuncA`: a curva convexa, escalada pela intensidade do tier. */
+function reliefTable(intensity: number): string {
+  return RELIEF_CURVE.map(
+    (t) => Math.min(1, t ** 2.4 * (1.4 + 1.8 * intensity)).toFixed(4),
+  ).join(" ");
+}
+
+/** O arco-íris que sobrou do tempo em que o ao vivo não lia as bandas. */
+const DEFAULT_SPECTRUM = [
+  "hsl(348 92% 58%)",
+  "hsl(45 96% 58%)",
+  "hsl(140 82% 54%)",
+  "hsl(192 94% 56%)",
+  "hsl(268 90% 62%)",
+  "hsl(320 92% 60%)",
+];
+
+/**
+ * Gradiente espectral do `.tilt-spectral`, construído das bandas do tier
+ * (`foil.json`) — as mesmas que `foilSvg()` assa no PNG exportado. Antes esta
+ * camada usava o arco-íris fixo acima e o site desmentia a carta que exibia:
+ * uma `hyper_rare` dourada no feed e colorida na página. Quatro cores por ciclo
+ * de 30%, o mesmo período do arco-íris que substituíram.
+ */
+function spectralGradient(bands: string[]): string {
+  const colors = bands.length === 4 ? bands : DEFAULT_SPECTRUM;
+  const stops = colors.map((color, i) => `${color} ${(i * 7.5).toFixed(1)}%`).join(", ");
+  return `repeating-linear-gradient(112deg, ${stops}, ${colors[0]} 30%)`;
+}
 
 interface Pointer {
   /** Posição do ponteiro dentro da carta, 0..1. */
@@ -122,7 +161,16 @@ export function TiltCard({
 
   const foil = rarity !== undefined && hasFoil(rarity);
   const intensity = rarity === undefined ? 0 : foilIntensity(rarity);
-  const metal = rarity === undefined ? null : cardTreatment(rarity).metal;
+
+  /*
+   * O espectro ao vivo lê as bandas do tier, não um arco-íris fixo. É a mesma
+   * ponte que `foilIntensity` faz para as opacidades: sem isto o site mostra
+   * uma cor que a carta embaixo não tem.
+   */
+  const spectrum = useMemo(
+    () => spectralGradient(rarity === undefined ? [] : foilBands(rarity)),
+    [rarity],
+  );
 
   /*
    * As duas camadas que o PNG impresso ganhou, espelhadas ao vivo. O eixo escolhe
@@ -278,7 +326,7 @@ export function TiltCard({
         onPointerMove={onMove}
         onPointerLeave={reset}
         onPointerCancel={reset}
-        style={{ ["--foil" as string]: intensity }}
+        style={{ ["--foil" as string]: intensity, ["--spectrum" as string]: spectrum }}
       >
         <div className="tilt-inner" data-flipped={flipped || undefined}>
           <div className="tilt-face tilt-face-front">
@@ -293,7 +341,7 @@ export function TiltCard({
               <HoloFoil
                 filterId={filterId}
                 lightRef={lightRef}
-                metal={metal}
+                intensity={intensity}
                 pattern={pattern}
                 texture={texture}
                 fullArt={fullArt}
@@ -351,14 +399,15 @@ export function TiltCard({
 function HoloFoil({
   filterId,
   lightRef,
-  metal,
+  intensity,
   pattern,
   texture,
   fullArt,
 }: {
   filterId: string;
   lightRef: React.RefObject<SVGFEPointLightElement | null>;
-  metal: "silver" | "gold" | null;
+  /** Força do foil (0..1): a curva convexa do relevo depende dela. */
+  intensity: number;
   pattern: string;
   texture: Rarity | null;
   fullArt: boolean;
@@ -367,7 +416,6 @@ function HoloFoil({
     <span
       className="tilt-holo"
       aria-hidden="true"
-      data-metal={metal ?? undefined}
       data-pattern={pattern}
       data-texture={texture ?? undefined}
       data-fullart={fullArt || undefined}
@@ -422,7 +470,17 @@ function HoloFoil({
               >
                 <fePointLight ref={lightRef} x="50" y="70" z="34" />
               </feSpecularLighting>
-              <feComposite in="luz" in2="relevo" operator="in" />
+              <feComposite in="luz" in2="relevo" operator="in" result="cristas" />
+              {/*
+                A curva convexa (t^2.4 escalada pela intensidade) é o que separa
+                cintilância de véu: sem ela, a luz especular levantava o fundo
+                junto com as cristas e o relevo virava lavagem branca perto do
+                ponteiro — o mesmo defeito que `RELIEF_CURVE` já resolveu no PNG
+                assado. Mantém as duas pontas com a mesma resposta.
+              */}
+              <feComponentTransfer in="cristas">
+                <feFuncA type="table" tableValues={reliefTable(intensity)} />
+              </feComponentTransfer>
             </filter>
           </defs>
           <rect width="100" height="140" filter={`url(#${filterId})`} />

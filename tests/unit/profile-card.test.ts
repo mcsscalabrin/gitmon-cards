@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { buildProfileCard } from "@/lib/cards/profile";
-import { isGitmonError } from "@/lib/github/errors";
 import type { GitHubRepo, GitHubUser } from "@/lib/github/types";
 
 const NOW = new Date("2026-08-10T00:00:00Z");
@@ -191,13 +190,56 @@ describe("recuo e raridade", () => {
 });
 
 describe("organizações", () => {
-  it("falha com código próprio em vez de gerar carta degradada", () => {
-    try {
-      buildProfileCard(user({ type: "Organization" }), [], NOW);
-      expect.unreachable("deveria ter lançado");
-    } catch (error) {
-      expect(isGitmonError(error) && error.code).toBe("organization");
-    }
+  it("gera carta com os mesmos sinais de um perfil (RFC 9.5)", () => {
+    const org = buildProfileCard(
+      user({
+        login: "facebook",
+        name: "Meta",
+        type: "Organization",
+        bio: null,
+        followers: 1_200,
+        public_repos: 90,
+        created_at: "2004-02-04T00:00:00Z",
+      }),
+      [
+        repo({ name: "react", language: "JavaScript", stargazers_count: 220_000 }),
+        repo({ name: "jest", language: "TypeScript", stargazers_count: 43_000 }),
+      ],
+      NOW,
+    );
+
+    expect(org.kind).toBe("profile");
+    expect(org.id).toBe("facebook");
+    expect(org.name).toBe("Meta");
+    expect(org.stats).toEqual(
+      expect.arrayContaining([
+        { labelKey: "stat.stars", value: 263_000 },
+        { labelKey: "stat.followers", value: 1_200 },
+        { labelKey: "stat.repos", value: 90 },
+        { labelKey: "stat.since", value: "2004" },
+      ]),
+    );
+  });
+
+  it("rodapé sai sem bio — organizações não têm uma — só com o ano", () => {
+    const org = buildProfileCard(
+      user({ type: "Organization", bio: null }),
+      [],
+      NOW,
+    );
+    expect(org.footer).toBe("2016");
+  });
+
+  it("ataques vêm dos repositórios da org, como no perfil", () => {
+    const org = buildProfileCard(
+      user({ type: "Organization" }),
+      [
+        repo({ name: "react", stargazers_count: 220_000 }),
+        repo({ name: "jest", stargazers_count: 43_000 }),
+      ],
+      NOW,
+    );
+    expect(org.attacks.map((a) => a.name)).toEqual(["react", "jest"]);
   });
 });
 

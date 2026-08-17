@@ -5,7 +5,6 @@
  */
 export type GitmonErrorCode =
   | "not_found"
-  | "organization"
   | "rate_limit"
   | "no_token"
   | "upstream"
@@ -36,10 +35,6 @@ export function httpStatusFor(code: GitmonErrorCode): number {
     case "duel_expired":
     case "ygo_expired":
       return 404;
-    case "organization":
-      // Não é erro do cliente nem do servidor: o recurso existe, o produto é que
-      // ainda não gera carta para ele (RFC 9.5).
-      return 422;
     case "rate_limit":
       return 429;
     case "no_token":
