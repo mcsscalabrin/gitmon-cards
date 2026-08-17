@@ -116,7 +116,7 @@ const pt = {
   "home.sponsor": "Apoiar o projeto",
   "home.madeBy": "feito por",
   "home.viewOnGitHub": "Ver no GitHub",
-  "home.rateSelf": "Avalie o seu próprio GitHub",
+  "home.rateSelf": "Gere sua carta",
 
   "card.type": "Tipo",
   "card.attacks": "Ataques",
@@ -453,7 +453,7 @@ const en: Record<MessageKey, string> = {
   "home.sponsor": "Sponsor the project",
   "home.madeBy": "made by",
   "home.viewOnGitHub": "View on GitHub",
-  "home.rateSelf": "Rate your own GitHub",
+  "home.rateSelf": "Generate your card",
 
   "card.type": "Type",
   "card.attacks": "Attacks",

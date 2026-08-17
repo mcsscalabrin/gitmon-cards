@@ -1003,6 +1003,11 @@ select {
   color: var(--bg);
 }
 
+.oauth-icon {
+  vertical-align: -2px;
+  margin-right: 6px;
+}
+
 .search-form input,
 .battle-form input {
   flex: 1 1 260px;
