@@ -24,6 +24,8 @@ describe("config do tour guiado", () => {
     expect(GUIDE_STEP_IDS).toContain("pack");
     expect(GUIDE_STEP_IDS).toContain("embed");
     expect(GUIDE_STEP_IDS).toContain("posters");
+    expect(GUIDE_STEP_IDS).toContain("battle-board");
+    expect(GUIDE_STEP_IDS).toContain("battle-lp");
   });
 
   it("seletores de alvo parecem seletores", () => {
@@ -65,6 +67,12 @@ describe("tour por página", () => {
     }
   });
 
+  it("resolve duelos ao vivo para o tour do board", () => {
+    for (const path of ["/duel/a/vs/b", "/ygo/a/vs/b"]) {
+      expect(stepsForPath(path).map((s) => s.id)).toEqual(PAGE_STEP_IDS.duel);
+    }
+  });
+
   it("todo id de página existe no tour", () => {
     for (const ids of Object.values(PAGE_STEP_IDS)) {
       for (const id of ids) expect(GUIDE_STEP_IDS).toContain(id);
@@ -72,7 +80,16 @@ describe("tour por página", () => {
   });
 
   it("nenhuma página fica sem passos", () => {
-    for (const path of ["/", "/torvalds", "/torvalds/linux", "/battle/abc", "/duel/abc", "/ygo/abc"]) {
+    for (const path of [
+      "/",
+      "/torvalds",
+      "/torvalds/linux",
+      "/battle/abc",
+      "/duel/abc",
+      "/ygo/abc",
+      "/duel/a/vs/b",
+      "/ygo/a/vs/b",
+    ]) {
       expect(stepsForPath(path).length).toBeGreaterThan(0);
     }
   });

@@ -11,6 +11,8 @@ export const PAGE_STEP_IDS: Record<string, readonly string[]> = {
   profile: ["pack", "card", "headline", "radar", "why", "embed", "share", "battle", "ygo"],
   /** Repositório: como o perfil, sem o seletor de modos. */
   repo: ["pack", "card", "headline", "radar", "why", "embed", "share", "battle"],
+  /** Duelo ao vivo: o board, os pontos de vida e as ações. */
+  duel: ["battle-board", "battle-lp", "posters"],
   /** Resultado (batalha, duelo, Speed Duel): só o pôster estático. */
   poster: ["posters"],
 };
@@ -22,7 +24,9 @@ export function stepsForPath(pathname: string): readonly GuideStep[] {
     segments.length === 0
       ? PAGE_STEP_IDS.home
       : segments[0] === "battle" || segments[0] === "duel" || segments[0] === "ygo"
-        ? PAGE_STEP_IDS.poster
+        ? segments.includes("vs")
+          ? PAGE_STEP_IDS.duel
+          : PAGE_STEP_IDS.poster
         : segments.length === 1
           ? PAGE_STEP_IDS.profile
           : PAGE_STEP_IDS.repo;

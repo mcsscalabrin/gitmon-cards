@@ -88,6 +88,9 @@ Water page are no longer the same grey page with two words swapped.
 | **Share** | The phone's native sheet, with the file when the browser accepts it and the link when it doesn't; on desktop, copies the link |
 | **Markdown snippet** | Someone else's README |
 
+Full embed instructions (URL patterns, snippets, caching, troubleshooting) are in
+[docs/embed.md](docs/embed.md).
+
 Pasting the page URL anywhere that reads Open Graph produces a **landscape** preview
 (`/api/card-og/<id>`), with the whole card next to the numbers. The card is 5:7 and link previews
 are 1.91:1 — pointing `og:image` straight at `/<id>.png` made the crop eat the header and the
