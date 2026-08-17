@@ -4,6 +4,7 @@ import { SearchForm } from "@/components/ui/SearchForm";
 import { Shell } from "@/components/ui/Shell";
 import { translator } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
+import { oauthEnabled } from "@/lib/github/oauth";
 
 /**
  * Cartas de exemplo aparecem de cara, antes de qualquer texto explicativo — quem
@@ -19,12 +20,19 @@ export default async function HomePage() {
   const locale = await getLocale();
   const t = translator(locale);
 
+  const showOAuth = oauthEnabled();
+
   return (
     <Shell locale={locale} landing>
       <section className="hero">
         <h1>{t("home.tagline")}</h1>
         <p>{t("home.description")}</p>
         <SearchForm placeholder={t("home.search")} action={t("home.searchAction")} />
+        {showOAuth ? (
+          <Link href="/api/auth/login" prefetch={false} className="oauth-link">
+            {t("home.rateSelf")}
+          </Link>
+        ) : null}
       </section>
 
       <section className="samples" aria-label={t("home.samples")}>

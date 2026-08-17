@@ -980,6 +980,29 @@ select {
   flex-wrap: wrap;
 }
 
+/*
+ * Link de OAuth "Avalie o seu próprio GitHub". Só aparece quando as env vars
+ * de OAuth estão configuradas. Segue o visual dos ghost-link mas com cor de
+ * destaque para chamar atenção na home.
+ */
+.oauth-link {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.oauth-link:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
 .search-form input,
 .battle-form input {
   flex: 1 1 260px;
