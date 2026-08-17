@@ -40,6 +40,17 @@ test.describe("o 'Guia' do cabeçalho", () => {
     await expect(page.locator(".guide-overlay")).toHaveCount(0);
   });
 
+  test("no duelo ao vivo inicia o tour do board", async ({ page }) => {
+    await page.goto("/duel/torvalds/vs/gaearon");
+
+    await page.getByRole("button", { name: /^Guia$|^Guide$/ }).click();
+
+    const tooltip = page.locator(".guide-tooltip");
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip).toContainText(/1 de 3|1 of 3/);
+    await expect(tooltip).toContainText(/O tabuleiro|The board/);
+  });
+
   // A página /docs deixou de existir — o "Guia" do cabeçalho não leva mais a
   // lugar nenhum (o teste da home prova que ele abre o tour, sem navegar).
   // `/docs` em si continua servindo como qualquer rota de um segmento: cai no

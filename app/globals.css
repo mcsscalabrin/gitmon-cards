@@ -2150,6 +2150,44 @@ select {
   vertical-align: middle;
 }
 
+/*
+ * Badge de contador (stars, forks). Pílula compacta que cabe ao lado do
+ * headline ou na row de share — reusa a linguagem visual de `.card-class`
+ * mas com fundo sutil em vez de borda.
+ */
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stat-badge-label {
+  color: var(--text-faint);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+
+.stat-badge-value {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 0;
+}
+
 .card-headline p {
   margin: 6px 0 0;
   color: var(--element, var(--text-muted));

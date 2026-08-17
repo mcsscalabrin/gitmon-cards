@@ -359,6 +359,12 @@ const pt = {
   "guide.step.posters.title": "Pôsteres estáticos",
   "guide.step.posters.body":
     "Batalhas e duelos têm URL de imagem própria, embutível como a carta — o resultado pode viajar para fora do site.",
+  "guide.step.battle-board.title": "O tabuleiro",
+  "guide.step.battle-board.body":
+    "O duelo ao vivo mostra os dois lados lado a lado, com narração em tempo real e botões de ação para cada turno.",
+  "guide.step.battle-lp.title": "Pontos de vida",
+  "guide.step.battle-lp.body":
+    "A barra de LP mostra a vida restante de cada lado. Quando chega a zero, o duelo acabou.",
 } as const;
 
 export type MessageKey = keyof typeof pt;
@@ -670,6 +676,12 @@ const en: Record<MessageKey, string> = {
   "guide.step.posters.title": "Static posters",
   "guide.step.posters.body":
     "Battles and duels have their own image URLs, embeddable like the card — the result can travel outside the site.",
+  "guide.step.battle-board.title": "The board",
+  "guide.step.battle-board.body":
+    "The live duel shows both sides side by side, with real-time narration and action buttons for each turn.",
+  "guide.step.battle-lp.title": "Life points",
+  "guide.step.battle-lp.body":
+    "The LP bar shows each side's remaining life. When it hits zero, the duel is over.",
 };
 
 const DICTIONARIES: Record<Locale, Record<MessageKey, string>> = { pt, en };

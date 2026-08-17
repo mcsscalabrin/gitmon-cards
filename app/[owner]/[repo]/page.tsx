@@ -4,6 +4,7 @@ import { BattleForm } from "@/components/battle/BattleForm";
 import { CardPanel } from "@/components/card/CardPanel";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Shell } from "@/components/ui/Shell";
+import { StatBadge } from "@/components/ui/StatBadge";
 import { getRepoCard } from "@/lib/cards";
 import { cardMetadata } from "@/lib/metadata";
 import { translator } from "@/lib/i18n/dictionaries";
@@ -41,9 +42,20 @@ export default async function RepoPage({ params, searchParams }: Params) {
     );
   }
 
+  const starsStat = card.stats.find((s) => s.labelKey === "stat.stars");
+  const forksStat = card.stats.find((s) => s.labelKey === "stat.forks");
+
   return (
     <Shell locale={locale}>
       <CardPanel card={card} locale={locale} suppressPack={guide === "1"}>
+        <div className="stat-badges">
+          {typeof starsStat?.value === "number" ? (
+            <StatBadge label={t("stat.stars")} value={starsStat.value} />
+          ) : null}
+          {typeof forksStat?.value === "number" ? (
+            <StatBadge label={t("stat.forks")} value={forksStat.value} />
+          ) : null}
+        </div>
         <BattleForm
           challenger={`${owner}/${repo}`}
           label={t("home.battle")}

@@ -79,6 +79,18 @@ export const GUIDE_STEPS: readonly GuideStep[] = [
     target: ".battle-form-modes",
   },
   {
+    id: "battle-board",
+    titleKey: "guide.step.battle-board.title",
+    bodyKey: "guide.step.battle-board.body",
+    target: ".duel-stage",
+  },
+  {
+    id: "battle-lp",
+    titleKey: "guide.step.battle-lp.title",
+    bodyKey: "guide.step.battle-lp.body",
+    target: ".duel-lp",
+  },
+  {
     id: "posters",
     titleKey: "guide.step.posters.title",
     bodyKey: "guide.step.posters.body",
