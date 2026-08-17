@@ -308,6 +308,123 @@ select {
   color: var(--text);
 }
 
+/*
+ * O cabeçalho no telefone.
+ *
+ * A soma dos quatro itens em tamanho de mesa passa da coluna de 350px, e o
+ * primeiro a ceder era o "Ver no GitHub": ele quebrava em duas linhas, dobrava a
+ * altura da barra e encostava na marca. Aqui as folgas e os corpos encolhem o
+ * suficiente para a fileira caber inteira — e o `nowrap` garante que, se algum
+ * dia não couber, o sintoma seja visível no lugar certo em vez de a barra
+ * silenciosamente virar duas linhas.
+ *
+ * O corte é 560px e não 480px porque quem estoura é a soma, não a classe de
+ * aparelho: em 560 a linha já está no limite com "View on GitHub", que é o
+ * rótulo mais longo dos dois idiomas.
+ */
+@media (max-width: 560px) {
+  .shell-header {
+    gap: 10px;
+  }
+
+  .brand {
+    gap: 8px;
+    font-size: 17px;
+  }
+
+  .brand-mark {
+    width: 22px;
+    height: 22px;
+  }
+
+  .shell-actions {
+    gap: 12px;
+  }
+
+  .shell-actions .ghost-link {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .locale-toggle button {
+    padding: 5px 9px;
+  }
+}
+
+/*
+ * Segundo degrau, para a faixa de 360px onde o inglês ainda estourava: "View on
+ * GitHub" é um caractere mais longo que "Ver no GitHub" e é ele quem define o
+ * pior caso. O que cede aqui é folga e respiro do seletor de idioma, nunca o
+ * corpo do texto abaixo do legível.
+ */
+@media (max-width: 400px) {
+  .shell-actions {
+    gap: 10px;
+  }
+
+  .shell-actions .ghost-link {
+    font-size: 12.5px;
+  }
+
+  .locale-toggle button {
+    padding: 5px 7px;
+  }
+}
+
+/*
+ * Abaixo de 340px (SE de primeira geração e afins) sobram 280px de coluna, e
+ * quatro itens numa fileira só deixam de caber por aperto de folga. O que sai é
+ * o "Ver no GitHub" — e sai sem custo: a faixa de apoio, que existe em todas as
+ * páginas, tem o `.support-star` apontando para a **mesma** `PROJECT_REPO_URL`,
+ * com mais peso visual. O destino continua a um rolar de distância; o que se
+ * perde é a duplicata, não o caminho.
+ */
+@media (max-width: 340px) {
+  .shell-header .shell-actions > .ghost-link[href] {
+    display: none;
+  }
+}
+
+/*
+ * Área de toque dos links de texto.
+ *
+ * Um link numa linha de 14px tem 19px de altura de caixa — abaixo dos 24×24 que
+ * a WCAG 2.5.8 pede como mínimo, e bem abaixo do que um polegar acerta. Os
+ * alvos aqui listados são todos texto solto (crédito no rodapé, dono do
+ * repositório, lutadores da batalha, ações do cabeçalho), onde não há caixa
+ * desenhada para crescer.
+ *
+ * A expansão é um `::after` absoluto, e não `padding`: padding em elemento
+ * inline pinta fundo e empurra vizinhos, enquanto o pseudo-elemento aumenta só
+ * a região que recebe o toque — o desenho da página fica igual ao que está.
+ *
+ * Os 5px laterais são menores que os 7 verticais de propósito: o menor vão
+ * entre dois destes alvos é o `gap: 12px` do cabeçalho, e 5+5 cabe dentro dele
+ * sem que um alvo roube o toque do vizinho.
+ *
+ * Só em `pointer: coarse`: com mouse, 19px já é um alvo confortável, e no
+ * teclado quem manda é o foco.
+ */
+@media (pointer: coarse) {
+  .shell-actions .ghost-link,
+  .shell-footer a,
+  .owner-link a,
+  .battle-links .ghost-link,
+  .skip {
+    position: relative;
+  }
+
+  .shell-actions .ghost-link::after,
+  .shell-footer a::after,
+  .owner-link a::after,
+  .battle-links .ghost-link::after,
+  .skip::after {
+    content: "";
+    position: absolute;
+    inset: -7px -5px;
+  }
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -398,13 +515,29 @@ select {
   transition: fill .2s ease, opacity .25s ease;
 }
 
+/*
+ * O teto acompanha o `viewBox`.
+ *
+ * O `viewBox` passou de 240 para 400 unidades de largura ao absorver os rótulos
+ * (ver `radarViewBox`), e como o SVG escala inteiro, manter o teto em 260px
+ * encolheria o radar em um terço na mesa sem motivo. 433 = 260 × (400/240)
+ * devolve exatamente o tamanho de desenho de antes; onde a coluna for mais
+ * estreita que isso — o telefone —, quem manda é a coluna, e aí o radar encolhe
+ * junto com os rótulos em vez de deixá-los para fora da tela.
+ */
 .radar-svg-wrap {
   position: relative;
   width: 100%;
-  max-width: 260px;
+  max-width: 433px;
   align-self: center;
 }
 
+/*
+ * `overflow: visible` continua aqui como rede, não como mecanismo: o que
+ * mantém os rótulos na tela é o `viewBox` largo. Se uma tradução futura passar
+ * da folga, ela vaza para fora do SVG em vez de sumir cortada — sintoma
+ * visível, que é o que se quer.
+ */
 .radar-svg {
   width: 100%;
   height: auto;
@@ -1053,6 +1186,25 @@ select {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(242, 201, 76, 0.15);
+}
+
+/*
+ * 16px no toque, e nada menos.
+ *
+ * O Safari do iOS dá zoom na página inteira quando o campo que recebe foco tem
+ * corpo abaixo de 16px — e não desfaz o zoom ao sair dele. Nos 15px daqui, tocar
+ * na busca deixava a pessoa com a página ampliada e rolando de lado, com um
+ * gesto de pinça de saldo. É o único jeito de evitar: o `maximum-scale=1` que
+ * às vezes se vê no lugar disto desliga o zoom manual da página, que é recurso
+ * de acessibilidade.
+ *
+ * O gatilho é `pointer: coarse`, não uma largura: quem dá o zoom é o aparelho de
+ * toque, e um iPad em retrato tem 768px de largura com o mesmo comportamento.
+ */
+@media (pointer: coarse) {
+  .search-input {
+    font-size: 16px;
+  }
 }
 
 .search-dropdown {
@@ -2401,6 +2553,32 @@ select {
   color: var(--text-faint);
 }
 
+/*
+ * Os dois lutadores em coluna, com o "VS" entre eles.
+ *
+ * Em fileira, as barras são `flex: 1 1 240px` e o "VS" é conteúdo curto sem
+ * base flexível: quando a largura acaba, quem quebra para a linha de baixo são
+ * as barras, e o "VS" — que deveria ficar *entre* os dois — sobra pendurado no
+ * canto direito da primeira linha, ao lado do primeiro lutador. Medido a 390px:
+ * o rótulo terminava a 12px da borda da tela, sem nada à direita.
+ *
+ * Em coluna o problema não existe, porque a ordem do HTML já é A → VS → B: o
+ * "VS" volta a separar os dois, que é a única posição em que ele significa
+ * alguma coisa.
+ */
+@media (max-width: 560px) {
+  .replay-fighters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .replay-vs {
+    align-self: center;
+    font-size: 18px;
+  }
+}
+
 .fighter-bar {
   flex: 1 1 240px;
   min-width: 0;
@@ -3101,6 +3279,51 @@ select {
   font-size: 11px;
   font-weight: 800;
   color: var(--danger);
+}
+
+/*
+ * A linha do monstro no telefone.
+ *
+ * Numa fileira só, `.duel-monster-head` é o único item que pode encolher — o
+ * retrato é `flex: none` e os números são conteúdo curto —, então toda a
+ * pressão de largura caía nele: medido a 390px, o `<strong>` do nome ficava com
+ * **largura 0**. A carta perdia justamente a coisa que a identifica, e o
+ * "destruído" no fim da fileira vazava 21px para fora da tela.
+ *
+ * Aqui a fileira vira três faixas, e cada uma ganha a linha inteira quando
+ * precisa:
+ *
+ *   nome ......................... posição
+ *   [retrato]  ATK/DEF  ............... LP
+ *   destruído
+ *
+ * O nome sobe para o topo com `order: -1` porque no HTML ele já vem primeiro —
+ * o `order` só o protege caso a ordem visual mude — e `flex-basis: 100%` é o
+ * que garante que ele nunca mais dispute largura com número nenhum.
+ */
+@media (max-width: 640px) {
+  .duel-monster {
+    flex-wrap: wrap;
+    gap: 10px 12px;
+  }
+
+  .duel-monster-head {
+    order: -1;
+    flex: 0 0 100%;
+  }
+
+  /* Com a fileira quebrada, a régua da direita é o LP; as outras auto-margens
+     empurrariam cada faixa para um lugar diferente. */
+  .duel-stats {
+    margin-left: 0;
+  }
+
+  /* Faixa própria, encostada à esquerda: o `margin-left: auto` de cima jogava
+     este texto contra a borda direita, que é de onde ele saía da tela. */
+  .duel-destroyed {
+    flex: 0 0 100%;
+    margin-left: 0;
+  }
 }
 
 .duel-stage {
@@ -4169,6 +4392,129 @@ select {
   .ygo-opphand { top: 6px; }
 }
 
+/*
+ * ------------------------------------------------------------- telefone
+ *
+ * Na mesa, a arena tem largura de sobra e os cinco flutuantes — os dois HUDs, a
+ * mão do oponente, as pilhas e o contador de turno — cabem nos cantos sem
+ * encostar em nada. No telefone a arena tem 350px e o HUD sozinho tem 232: a
+ * régua acabou, e o que era "canto" virou "em cima do campo". Medido a 390px,
+ * eram quatro sobreposições ao mesmo tempo:
+ *
+ *   - o contador de turno em cima do LP do jogador (o "4000" lia "00");
+ *   - o HUD do oponente tampando a mão dele por inteiro;
+ *   - cada HUD cobrindo a fileira de magias/armadilhas do seu lado.
+ *
+ * A correção não é encolher mais os flutuantes — é parar de empilhá-los sobre o
+ * campo. A arena ganha uma **faixa reservada** em cima e outra embaixo, os dois
+ * campos recuam para dentro delas, e cada faixa acomoda dois flutuantes lado a
+ * lado: HUD à esquerda, mão-do-oponente/turno à direita. O campo de jogo fica
+ * livre de qualquer sobreposição, que é o que importa num tabuleiro onde se
+ * arrasta carta.
+ *
+ * A altura da arena cresce para pagar as duas faixas — sem isso, reservá-las
+ * seria só espremer o campo.
+ */
+@media (max-width: 560px) {
+  .ygo-arena { height: clamp(470px, 152vw, 620px); }
+
+  /* Os campos recuam para depois das faixas. Em px e não em %: a faixa tem a
+     altura do HUD, que é fixa, e uma porcentagem a faria variar com a arena. */
+  .ygo-half-opp { top: 78px; }
+  .ygo-half-me { bottom: 78px; }
+
+  /* Os dois HUDs encostam à esquerda; a direita da faixa fica para o par. */
+  .ygo-hud-opp { top: 10px; right: auto; left: 10px; }
+  .ygo-hud-me { bottom: 10px; left: 10px; }
+
+  /*
+   * Mão do oponente e contador de turno saem do centro e vão para a direita da
+   * sua faixa. O `transform: none` é obrigatório: os dois centralizavam com
+   * `translateX(-50%)`, que somado a `right` os jogaria meia largura para fora.
+   */
+  /*
+   * A mão do oponente vira leque em vez de fileira.
+   *
+   * A largura dela cresce com o número de cartas — seis cartas espalhadas dão
+   * 176px, e HUD (196) + 176 não cabe nos 320 da faixa. Sobrepostas, as mesmas
+   * seis ocupam 78. É também o desenho certo: uma mão se segura em leque, não
+   * espalhada sobre a mesa. Como são versos decorativos (`aria-hidden`,
+   * `pointer-events: none`), esconder parte de cada uma não custa informação —
+   * a contagem continua legível pelas bordas.
+   */
+  .ygo-opphand {
+    top: 20px;
+    left: auto;
+    right: 12px;
+    transform: none;
+    gap: 0;
+  }
+
+  .ygo-opphand .ygo-card + .ygo-card {
+    margin-left: calc(var(--ygo-card-w) * -0.62);
+  }
+
+  .ygo-turn {
+    bottom: 10px;
+    left: auto;
+    right: 12px;
+    transform: none;
+  }
+
+  /*
+   * As pilhas descem para dentro da área de jogo, rentes à borda. Menores de
+   * propósito: no tamanho de mesa elas mordiam a zona da ponta, e aqui a
+   * margem entre a borda da arena e a primeira zona é de poucos pixels.
+   */
+  .ygo-piles { gap: 6px; }
+  .ygo-pile { --ygo-pile-w: 26px; }
+  .ygo-piles[data-side="b"] { top: 88px; left: 5px; }
+  .ygo-piles[data-side="a"] { bottom: 88px; right: 5px; }
+}
+
+/*
+ * Abaixo de 400px a faixa não comporta HUD + par no tamanho acima: 232 + 70
+ * passa dos 280px de arena. Quem cede é o HUD, que tem folga interna — o nome
+ * trunca com reticências e a barra de LP encurta, mas o número de LP, que é o
+ * dado que se lê no meio de um duelo, continua inteiro.
+ */
+@media (max-width: 400px) {
+  /*
+   * As pilhas passam a empilhar de verdade — uma sobre a outra, e não lado a
+   * lado. Deitadas elas medem 58px, e a margem entre a borda da arena e a
+   * primeira zona do campo é menor que isso: era daí que vinha a mordida no
+   * canto do tabuleiro. Em coluna medem 24, e cabem na sobra.
+   */
+  .ygo-piles { flex-direction: column; gap: 5px; }
+  .ygo-pile { --ygo-pile-w: 24px; }
+  .ygo-piles[data-side="b"] { top: 84px; left: 3px; }
+  .ygo-piles[data-side="a"] { bottom: 84px; right: 3px; }
+
+  /* A carta encolhe junto: com o campo no tamanho anterior, os 280px de arena
+     do aparelho mais estreito não sobravam coluna nenhuma para as pilhas. */
+  .ygo-field { --ygo-card-w: 38px; }
+}
+
+/*
+ * Último degrau, só para 360px e abaixo.
+ *
+ * Aqui a faixa deixa de comportar HUD + par: medido, o HUD encosta no contador
+ * de turno por 4px em 360 e por 44px em 320. Quem cede é o HUD — o nome trunca
+ * com reticências e a barra de LP encurta —, mas o **número** de LP fica
+ * inteiro, porque é o dado que se lê no meio de um duelo.
+ *
+ * O corte é 370 e não 400 de propósito: em 390 a faixa já cabe inteira desde
+ * que a mão do oponente virou leque, e truncar "sindresorhus" ali seria
+ * cobrar um preço que aquela largura não pede.
+ */
+@media (max-width: 370px) {
+  .ygo-hud-name { max-width: 78px; }
+  .ygo-lp-bar { width: 68px; }
+  .ygo-hud-box { gap: 8px; padding: 8px 10px; }
+  .ygo-avatar { width: 32px; height: 32px; }
+  .ygo-lp-value { font-size: 18px; min-width: 42px; }
+}
+
 /* -------------------------------------------------- replay do speed duel */
 
 .ygo-replay {
@@ -4281,7 +4627,13 @@ select {
 
 .guide-tooltip {
   position: relative;
-  max-width: 400px;
+  /*
+   * Os 8px de folga que o `placeTip` garante quando a tooltip está ancorada
+   * valem também quando ela não está. No passo conceitual, que centraliza pelo
+   * flex do overlay, um teto de 400px numa tela de 390 fazia a caixa encostar
+   * nas duas bordas — sem respiro e com o cantinho arredondado cortado.
+   */
+  max-width: min(400px, calc(100vw - 16px));
   padding: 20px 22px;
   border-radius: var(--radius);
   border: 1px solid var(--border-strong);
