@@ -7,6 +7,13 @@ Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 ## [0.3.0](2026-08-15)
 
+### Org
+
+#### Features
+
+- gera carta para organizacoes do GitHub, com as mesmas formulas de scoring de perfil (RFC 9.4)
+
+
 ### Duelo-yugioh
 
 #### Features
