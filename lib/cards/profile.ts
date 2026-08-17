@@ -1,4 +1,3 @@
-import { GitmonError } from "../github/errors";
 import type { GitHubRepo, GitHubUser } from "../github/types";
 import { ELEMENT_CHAIN, elementForLanguage } from "./elements";
 import {
@@ -22,22 +21,18 @@ import type { Attack, Card, Element } from "./types";
 /**
  * Carta de perfil. Fórmulas travadas na RFC 6.1 — os pesos não são invenção
  * daqui e não devem ser ajustados sem atualizar a RFC junto.
+ *
+ * Vale para organizações também (RFC 9.5): o GitHub expõe a org via
+ * `/users/{login}` com os mesmos campos que o scoring consome — followers,
+ * public_repos e created_at. O que falta (bio, seguindo) é de pessoa, e a carta
+ * já nasce sem bio; a contagem pública de membros foi removida pelo GitHub em
+ * 2022, então "membros" nunca foi um sinal disponível.
  */
 export function buildProfileCard(
   user: GitHubUser,
   repos: GitHubRepo[],
   now: Date = new Date(),
 ): Card {
-  // Organizações estão fora da v1 (RFC 9.5). Detectar e falhar explicitamente é
-  // melhor do que gerar uma carta com dados que não significam a mesma coisa.
-  if (user.type === "Organization") {
-    throw new GitmonError(
-      "organization",
-      `${user.login} é uma organização. A v1 gera carta apenas para usuários.`,
-      user.login,
-    );
-  }
-
   // "Repos próprios" (RFC 6.1): fork não é obra do dev e inflaria o scoring.
   const owned = repos.filter((repo) => !repo.fork);
   const totalStars = owned.reduce((sum, repo) => sum + repo.stargazers_count, 0);
