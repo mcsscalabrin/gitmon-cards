@@ -48,6 +48,22 @@
 
   "status": { "y": 570, "height": 40, "iconSize": 22, "labelSize": 10, "valueSize": 15 },
 
+  "_contributionsComment": "Grade de contribuições ao fundo da face, uma banda por ano. Os números saem de uma conta só: passo = cell + gap = 9.6, e 53 colunas dão 508.8 numa carta de 500 — a sangria de ~4px por lado cai SOB a borda de 14, que é o que faz a trama encostar na moldura em vez de flutuar com margem. Vertical: banda = 7*9.6 - 1.6 = 65.6, com bandGap 14 o passo é 79.6, e 8 bandas somam 622.8 ancoradas em y=680, deixando o topo em 57 — logo abaixo da faixa do nome. Daí maxBands 8. A âncora é o RODAPÉ e a pilha cresce para cima, pela mesma lição do selo em renderCard.tsx: o estado desenhado é o mínimo (uma banda, que é o que toda conta nova e toda carta de repositório têm), e ano extra é adição. Ancorar no topo abriria um vão no pé da carta exatamente nos casos mais comuns. RESSALVA MEDIDA: maxBands 8 é quantas bandas CABEM na face, não quantas APARECEM. A janela da arte ocupa y 98..408 e a grade a contorna, então numa carta de face clara os slots que caem inteiros dentro dela não desenham nada — sobram ~3 bandas abaixo da janela e uma faixa no cabeçalho. Isso é o desenho aprovado (a grade é fundo da FACE, e onde a janela está não há face), e não um bug de contagem. Quem for mexer aqui: diminuir maxBands não ganha nada, porque o custo dos anos escondidos é zero — a busca é uma requisição GraphQL só, com todos os anos aliased.",
+  "contributions": {
+    "cell": 8,
+    "gap": 1.6,
+    "radius": 2,
+    "bandGap": 14,
+    "bottom": 20,
+    "maxBands": 8,
+    "_opacityComment": "Três regimes, todos medidos contra cartas reais e não escolhidos no olho. A grade fica SOB as camadas holográficas, então o que está por cima dela decide quanta tinta ela precisa — é a mesma lógica da bifurcação de tinta do corpo em renderCard.tsx, com um caso a mais. Face clara sem metal (até double_rare): 0.24 lê como textura de papel e não disputa com o texto de 12px do rodapé. A 0.10 a trama sumia por completo sobre os tipos saturados — a tinta escura do tipo a 10% sobre o amarelo do próprio tipo não tem contraste nenhum — e a 0.16 ainda lia como poeira em vez de trama.",
+    "opacity": 0.24,
+    "_opacityUnderMetalComment": "Face clara COM folheado metálico (hyper_rare, e os full-art quando não valer a regra de cima). O PNG do metal é quase opaco e a 0.16 a grade desaparecia inteira — carta de torvalds saía com oito anos de dado e zero pixel visível. 0.38 é o que sobrevive ao folheado sem virar estampa — a 0.45 a trama começava a disputar com a linha factual do rodapé.",
+    "opacityUnderMetal": 0.38,
+    "_opacityOnArtComment": "Full-art, sobre o scrim escuro. Vai para BAIXO e não para cima: o scrim fecha quase preto e a tinta clara do tipo salta nele — a 0.30 a trama competia com a descrição do ataque, que é texto de 12px sobre o mesmo scrim.",
+    "opacityOnArt": 0.18
+  },
+
   "_footerComment": "Duas linhas de texto à esquerda e um selo de largura fixa à direita. O selo é dimensionado para a carta SEM serial, onde o símbolo de raridade o ocupa sozinho e grande; quando há serial, o símbolo encolhe para acompanhante e o número vira o herói do mesmo bloco. É por isso que `stampWidth` não depende de haver serial — nada se desloca entre os dois estados, e o estado sem número nunca deixa buraco.",
   "footer": {
     "top": 620,

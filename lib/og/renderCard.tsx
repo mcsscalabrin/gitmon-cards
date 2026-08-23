@@ -27,6 +27,7 @@ import {
   retreatUri,
   textureUri,
 } from "./assets";
+import { contributionGridUri } from "./contributionGrid";
 
 /**
  * Composição da imagem final: Satori por cima da arte estática (RFC 4.2/4.3).
@@ -96,6 +97,30 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
   const onArt = treatment.fullArt;
   const bodyInk = onArt ? INK_ON_ART : colors.ink;
 
+  /*
+   * Trama de fundo: o contribution graph do usuário, uma banda por ano.
+   *
+   * As duas variantes de tratamento pedem recortes opostos, pela mesma razão que
+   * a tinta do corpo inverte logo acima — o que está embaixo da grade muda.
+   *
+   *   face clara  a grade cobre a face inteira e **contorna a janela da arte**,
+   *               que é onde o avatar mora.
+   *   full-art    a janela é a carta inteira, então contorná-la apagaria a grade.
+   *               Aqui ela é cortada no topo do scrim inferior, que a própria
+   *               moldura já assa escuro para proteger a legibilidade — a trama
+   *               fica sobre o scrim, nunca sobre o rosto.
+   *
+   * Cor do tipo e não o verde do GitHub: a paleta da carta segue os 18 tipos
+   * (RFC 9.3, identidade autônoma). Clara sobre o scrim, escura sobre a face.
+   */
+  const grid = contributionGridUri(
+    card.contributions ?? [],
+    onArt ? colors.light : colors.ink,
+    onArt
+      ? { clipTop: layout.fullArt.bottomScrimTop }
+      : { exclude: layout.window },
+  );
+
   const primaryStat = card.stats[0];
 
   const rarityLabel = t("card.footer", {
@@ -146,6 +171,28 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
           height={layout.height}
           style={{ position: "absolute", left: 0, top: 0 }}
         />
+
+        {/*
+          A grade vem **depois** da moldura, não antes.
+
+          Abaixo dela seria invisível: o PNG da moldura é opaco sobre a face e só
+          tem recorte na janela da arte. "Ao fundo" aqui significa sobre a face da
+          carta e sob tudo o mais — todas as camadas holográficas e todo o texto
+          passam por cima, então a trama nunca disputa uma leitura.
+        */}
+        {grid ? (
+          <img
+            src={grid}
+            width={layout.width}
+            height={layout.height}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              opacity: gridOpacity(onArt, treatment.metal !== null),
+            }}
+          />
+        ) : null}
 
         {/*
           Borda antes do foil: ela é relevo da própria moldura, e o brilho
@@ -498,6 +545,22 @@ export async function renderCard(card: Card, locale: Locale): Promise<ImageRespo
     ),
     { width: layout.width, height: layout.height, fonts },
   );
+}
+
+/**
+ * Quanta tinta a trama de fundo precisa, dado o que foi colado por cima dela.
+ *
+ * A grade fica sob todas as camadas holográficas, então a opacidade não é uma
+ * preferência estética — é compensação pelo que a cobre. Os três valores estão
+ * medidos e justificados em `layout.json`.
+ *
+ * A ordem dos casos importa: `onArt` vem primeiro porque o full-art tem scrim
+ * **e** metal nos tiers de cima, e é o scrim que manda — o metal de full-art é
+ * outro arquivo e é muito mais leve que o de face clara.
+ */
+function gridOpacity(onArt: boolean, hasMetal: boolean): number {
+  if (onArt) return layout.contributions.opacityOnArt;
+  return hasMetal ? layout.contributions.opacityUnderMetal : layout.contributions.opacity;
 }
 
 /** Largura que sobra para o texto do rodapé depois do selo. */

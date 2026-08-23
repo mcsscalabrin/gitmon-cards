@@ -1,4 +1,9 @@
-import type { GitHubRepo, GitHubUser } from "../github/types";
+import type {
+  GitHubContributionCalendar,
+  GitHubRepo,
+  GitHubUser,
+} from "../github/types";
+import { bandsFromCalendar } from "./contributions";
 import { ELEMENT_CHAIN, elementForLanguage } from "./elements";
 import {
   CARD_NAME_CHARS,
@@ -32,6 +37,15 @@ export function buildProfileCard(
   user: GitHubUser,
   repos: GitHubRepo[],
   now: Date = new Date(),
+  /**
+   * Calendários anuais de contribuições, para a trama de fundo. Vem vazio quando
+   * o GraphQL recusa — a carta sai sem fundo e nada mais muda.
+   *
+   * Depois de `now` e não antes: as duas dezenas de chamadas dos testes passam
+   * `now` na terceira posição, e furar essa ordem seria reescrever todas elas
+   * para acomodar um parâmetro opcional.
+   */
+  contributionYears: { year: number; calendar: GitHubContributionCalendar }[] = [],
 ): Card {
   // "Repos próprios" (RFC 6.1): fork não é obra do dev e inflaria o scoring.
   const owned = repos.filter((repo) => !repo.fork);
@@ -183,6 +197,7 @@ export function buildProfileCard(
         reasonKey: `why.tag.${axis}`,
       },
     ],
+    contributions: bandsFromCalendar(contributionYears),
     sourceUrl: user.html_url,
   };
 }

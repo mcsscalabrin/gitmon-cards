@@ -1,4 +1,9 @@
-import type { GitHubContributor, GitHubRepo } from "../github/types";
+import type {
+  GitHubCommitActivityWeek,
+  GitHubContributor,
+  GitHubRepo,
+} from "../github/types";
+import { bandsFromCommitActivity } from "./contributions";
 import { ELEMENT_CHAIN, LANGUAGE_ELEMENTS, elementForLanguage } from "./elements";
 import {
   FOOTER_CHARS,
@@ -39,6 +44,14 @@ export function buildRepoCard(
   repo: GitHubRepo,
   contributors: GitHubContributor[],
   now: Date = new Date(),
+  /**
+   * Commits por dia nas últimas 52 semanas, para a trama de fundo. Vem vazio
+   * quando a estatística do GitHub ainda está fria — a carta sai sem fundo.
+   *
+   * Depois de `now` pela mesma razão que em `buildProfileCard`: os testes
+   * existentes passam `now` na terceira posição.
+   */
+  commitActivity: GitHubCommitActivityWeek[] = [],
 ): Card {
   const element = elementForLanguage(repo.language);
 
@@ -123,6 +136,7 @@ export function buildRepoCard(
     }),
     ratings,
     cardClass: cardClassFor(ratings),
+    contributions: bandsFromCommitActivity(commitActivity),
     sourceUrl: repo.html_url,
   };
 }
