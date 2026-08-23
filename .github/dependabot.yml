@@ -29,6 +29,35 @@ updates:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
 
+      # As duas regras abaixo existem porque o grupo `ferramental-lint` fez o
+      # que devia e não tinha o que oferecer depois: o #42 abriu com eslint 10 e
+      # TS 7 juntos, o `quality` reprovou, e reabrir o mesmo PR vermelho toda
+      # semana não muda o que trava. Quem trava está fora daqui — é o
+      # `eslint-config-next`, e nenhum bump neste repositório destrava.
+      #
+      # Medido em 23/08/2026, contra `eslint-config-next@16.3.1`:
+      #
+      #   eslint@10.8.1  → TypeError: Error while loading rule
+      #                    'react/display-name': contextOrFilename.getFilename
+      #                    is not a function. O `eslint-plugin-react@7.37.5` que
+      #                    o config-next embute declara peer `eslint@...^9.7` e
+      #                    chama uma API que o ESLint 10 removeu.
+      #   typescript@7.0.2 → "typescript-eslint does not support TS 7.0", por
+      #                    decisão do typescript-eslint, não por acidente:
+      #                    https://github.com/typescript-eslint/typescript-eslint/issues/10940
+      #
+      # Separar não ajuda — cada uma quebra sozinha. Por isso o corte é por
+      # major, e só por major: minor e patch de eslint e typescript continuam
+      # chegando pelo grupo, que é onde eles são úteis.
+      #
+      # Para remover: quando o `eslint-config-next` publicar uma major que aceite
+      # ESLint 10 e typescript-eslint >= 7.1, apague estas duas entradas e deixe
+      # o grupo abrir o PR. O gate `quality` responde em um minuto se destravou.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
     groups:
       framework:
         patterns: ["next", "react", "react-dom", "@types/react", "@types/react-dom"]
@@ -42,6 +71,11 @@ updates:
       #
       # Vem antes de `dev` de propósito: a primeira regra que casa é a que vale,
       # e `dev` engoliria estas se viesse primeiro.
+      #
+      # `update-types` ainda lista `major`, e não é contradição com o `ignore`
+      # lá em cima: o corte de lá vale para `eslint` e `typescript`, e o grupo
+      # segue valendo para a major de quem trava as duas — o
+      # `eslint-config-next`. É por ele que a porta reabre.
       ferramental-lint:
         patterns:
           - "eslint"
