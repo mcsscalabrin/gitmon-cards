@@ -21,6 +21,16 @@
 #
 # O preview de um PR de fork continua possível quando alguém quiser: o
 # mantenedor puxa a branch para o repositório e abre o PR de lá.
+#
+# ## PR do Dependabot
+#
+# A branch é daqui, então o gate de fork deixa passar — e o deploy morre mesmo
+# assim. Workflow disparado pelo Dependabot lê outro cofre (`Secrets and
+# variables > Actions > Dependabot`), e `secrets.VERCEL_TOKEN` chega vazio: o
+# log do runner diz "Secret source: Dependabot" e o passo de conferência acusa
+# os três secrets ausentes. Duplicar os secrets naquele cofre daria preview a
+# um PR cujo diff é `package-lock.json` — não vale o alcance extra de token.
+# Por isso o gate abaixo pede as duas coisas: branch daqui **e** ator humano.
 name: preview
 
 on:
@@ -49,7 +59,9 @@ jobs:
 
   deploy:
     needs: quality
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     outputs:
       url: ${{ steps.deploy.outputs.url }}
@@ -175,13 +187,21 @@ jobs:
   # Diz em voz alta o que foi pulado, para quem abriu o PR de fora. Um job
   # ausente da lista de checks é indistinguível de um job que ninguém escreveu:
   # sem isto, o contribuidor fica esperando um preview que não vem.
-  aviso-de-fork:
-    if: github.event.pull_request.head.repo.full_name != github.repository
+  aviso-sem-preview:
+    if: >-
+      github.event.pull_request.head.repo.full_name != github.repository
+      || github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Por que não há preview neste PR
+        env:
+          DE_FORA: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
         run: |
-          echo "::notice title=Preview skipped for fork PR::Deploy and e2e need repository secrets, which GitHub does not share with forks. The quality gate (lint, typecheck, unit tests) ran and is the check that matters for review. A maintainer can produce a preview by pushing this branch to the repository."
+          if [ "$DE_FORA" = "true" ]; then
+            echo "::notice title=Preview skipped for fork PR::Deploy and e2e need repository secrets, which GitHub does not share with forks. The quality gate (lint, typecheck, unit tests) ran and is the check that matters for review. A maintainer can produce a preview by pushing this branch to the repository."
+          else
+            echo "::notice title=Preview skipped for Dependabot PR::Deploy and e2e need the Vercel secrets, and Dependabot runs read a separate secret store that does not have them. The quality gate (lint, typecheck, unit tests) ran and is what decides whether the bump goes in."
+          fi
 
   # "O que quebra em layout só quebra olhando" (README). O e2e verde não fecha
   # essa lacuna — este comentário é o que coloca a página renderizada a um clique
