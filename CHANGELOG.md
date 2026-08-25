@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 Format: [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 
+## [Unreleased]
+
+### Carta
+
+#### Features
+
+- **contribution graph ao fundo da carta.** A face passa a carregar a grade de
+  contribuições do usuário como trama de fundo — uma banda de 53×7 por ano,
+  ancorada no rodapé e crescendo para cima, sob a moldura e sob todo o texto. A
+  grade contorna a janela da arte; nos tiers full-art ela fica só sobre o scrim
+  inferior. Cor do tipo da carta, nunca o verde do GitHub.
+- carta de repositório ganha a mesma trama, de `stats/commit_activity` — uma
+  banda, porque o endpoint é uma janela móvel de 52 semanas.
+- cliente GraphQL (`lib/github/graphql.ts`), com o mesmo pool de tokens e o mesmo
+  failover do REST. Existe porque contribuições por dia não estão na REST.
+- `CARD_VERSION` sobe para `v6`.
+
+
 ## [0.3.0](2026-08-17)
 
 ### Guia-interativo

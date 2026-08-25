@@ -7,7 +7,12 @@ import {
   tokenPool,
 } from "./tokens";
 import type { PoolToken } from "./tokens";
-import type { GitHubContributor, GitHubRepo, GitHubUser } from "./types";
+import type {
+  GitHubCommitActivityWeek,
+  GitHubContributor,
+  GitHubRepo,
+  GitHubUser,
+} from "./types";
 
 const API = "https://api.github.com";
 
@@ -17,7 +22,7 @@ const API = "https://api.github.com";
  * token por hash (ver `tokens.ts`); se esse token estiver limitado, tenta um
  * failover único para o token mais saudável antes de desistir.
  */
-function discoverPool(): PoolToken[] {
+export function discoverPool(): PoolToken[] {
   const pool = tokenPool();
   if (!pool.length) {
     throw new GitmonError(
@@ -28,7 +33,12 @@ function discoverPool(): PoolToken[] {
   return pool;
 }
 
-function authHeaders(token: string): HeadersInit {
+/**
+ * Exportado para `./graphql.ts`, que fala com outro endpoint mas com o mesmo
+ * pool, os mesmos cabeçalhos e a mesma política de failover. Duas cópias disto
+ * seriam duas identidades do mesmo cliente.
+ */
+export function authHeaders(token: string): HeadersInit {
   return {
     Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",
@@ -139,6 +149,39 @@ export async function fetchRepoContributors(
       owner,
     );
     return Array.isArray(contributors) ? contributors : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Commits por dia nas últimas 52 semanas — a fonte da grade de fundo da carta de
+ * repositório (`lib/cards/contributions.ts`).
+ *
+ * É o análogo mais próximo que existe do contribution calendar de uma pessoa, e é
+ * **sempre uma janela de 52 semanas**: não há caminho barato para mais de um ano
+ * de commits por dia num repositório. Quem quiser mais bandas teria que paginar a
+ * história de commits inteira, que custa ordens de grandeza mais do que uma carta
+ * pode gastar. Por isso a carta de repositório tem uma banda e a de perfil tem
+ * até oito — a assimetria é do dado, não do layout.
+ *
+ * Falha silenciosamente para lista vazia, e por dois motivos distintos:
+ *
+ * - Estatística fria faz o GitHub responder **202 sem corpo** enquanto calcula.
+ *   `request()` chama `.json()` num corpo vazio e estoura; o `catch` aqui é quem
+ *   traduz isso para "ainda não há dado".
+ * - Repositório vazio devolve `[]` ou `{}`.
+ */
+export async function fetchRepoCommitActivity(
+  owner: string,
+  repo: string,
+): Promise<GitHubCommitActivityWeek[]> {
+  try {
+    const weeks = await request<GitHubCommitActivityWeek[]>(
+      `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/stats/commit_activity`,
+      owner,
+    );
+    return Array.isArray(weeks) ? weeks : [];
   } catch {
     return [];
   }

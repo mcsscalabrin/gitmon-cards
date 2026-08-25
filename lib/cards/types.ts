@@ -147,6 +147,19 @@ export interface Card {
    * silhueta e não medição.
    */
   ratings?: AxisRating[];
+  /**
+   * Contribuições por dia, uma banda por ano, para a trama de fundo da carta.
+   *
+   * **Ao contrário de `derivations` e `ratings`, este campo É lido pelo
+   * renderizador de imagem.** Os dois vizinhos opcionais são afordância só do
+   * site, e quem ler por analogia vai concluir o oposto do que vale aqui: sem
+   * este campo a carta sai sem fundo, no PNG e no site.
+   *
+   * Opcional porque a origem falha em silêncio (GraphQL recusado, estatística de
+   * repositório ainda fria) e carta sem trama continua sendo carta válida. Ver
+   * `./contributions.ts`.
+   */
+  contributions?: ContributionBand[];
   /** Link para a origem no GitHub. */
   sourceUrl: string;
 }
@@ -173,6 +186,7 @@ export interface Derivation {
   reasonParams?: Record<string, string | number>;
 }
 
+import type { ContributionBand } from "./contributions";
 import type { AxisRating, ProfileAxis } from "./ratings";
 
 export interface CardStat {

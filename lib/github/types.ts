@@ -40,3 +40,29 @@ export interface GitHubContributor {
   avatar_url: string;
   type: string;
 }
+
+/**
+ * Uma semana de `/repos/{owner}/{repo}/stats/commit_activity`.
+ *
+ * `days` tem sempre 7 posições, de domingo a sábado — a mesma ordem de linha do
+ * contribution calendar, o que é justamente o que permite as duas fontes
+ * alimentarem a mesma banda em `lib/cards/contributions.ts`.
+ */
+export interface GitHubCommitActivityWeek {
+  /** Contagem por dia da semana, domingo a sábado. */
+  days: number[];
+  total: number;
+  /** Início da semana, timestamp unix em segundos. */
+  week: number;
+}
+
+/**
+ * Um ano do contribution calendar, como o GraphQL devolve.
+ *
+ * As semanas de borda vêm **parciais**: o calendário começa no domingo da semana
+ * que contém 1º de janeiro, então a primeira e a última semana costumam ter menos
+ * de 7 dias. Quem consome precisa contar dias, nunca assumir `weeks * 7`.
+ */
+export interface GitHubContributionCalendar {
+  weeks: { contributionDays: { date: string; contributionCount: number }[] }[];
+}

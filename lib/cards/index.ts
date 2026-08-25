@@ -2,12 +2,15 @@ import { cached } from "../cache/redis";
 import { CARD_DATA_TTL_SECONDS } from "../config";
 import {
   fetchRepo,
+  fetchRepoCommitActivity,
   fetchRepoContributors,
   fetchUser,
   fetchUserRepos,
 } from "../github/client";
 import { GitmonError } from "../github/errors";
+import { fetchContributionYears } from "../github/graphql";
 import { checkCardRateLimit } from "../rateLimit";
+import layout from "./layout.json";
 import { buildProfileCard } from "./profile";
 import { buildRepoCard } from "./repo";
 import { withSerial } from "./serial";
@@ -49,8 +52,21 @@ export { buildRepoCard } from "./repo";
  * quebra nada — o renderizador ignora os dois —, mas a classe é o "overall" da
  * carta no site e uma hora de site mostrando a classe errada não se distingue
  * de bug.
+ *
+ * v6: campo `contributions`, a trama de fundo da carta. Da família da v4 e não
+ * da v2 — carta v5 em cache não quebra, só sai com o fundo liso. Sobe mesmo
+ * assim porque, ao contrário de `derivations` e `ratings`, este campo é lido
+ * pelo renderizador de imagem: uma hora servindo cartas sem fundo seria
+ * indistinguível do bug de a camada nunca ter chegado ao PNG.
  */
-const CARD_VERSION = "v5";
+const CARD_VERSION = "v6";
+
+/**
+ * Quantos anos de contribuição buscar. Não é preferência: é exatamente o número
+ * de bandas que cabe na face da carta (`layout.json`, bloco `contributions`).
+ * Buscar mais seria pagar por dado que o renderizador descarta.
+ */
+const CONTRIBUTION_YEARS = layout.contributions.maxBands;
 
 const LOGIN = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
 const REPO_NAME = /^[a-zA-Z0-9._-]{1,100}$/;
@@ -79,8 +95,13 @@ export async function getProfileCard(login: string): Promise<Card> {
     CARD_DATA_TTL_SECONDS,
     async () => {
       const user = await fetchUser(login);
-      const repos = await fetchUserRepos(login);
-      return buildProfileCard(user, repos);
+      // As duas em paralelo: a trama de fundo é GraphQL e não disputa a cota REST
+      // dos repositórios, então serializá-las só somaria latência.
+      const [repos, contributionYears] = await Promise.all([
+        fetchUserRepos(login),
+        fetchContributionYears(login, CONTRIBUTION_YEARS),
+      ]);
+      return buildProfileCard(user, repos, new Date(), contributionYears);
     },
   );
 
@@ -99,8 +120,11 @@ export async function getRepoCard(owner: string, name: string): Promise<Card> {
     CARD_DATA_TTL_SECONDS,
     async () => {
       const repo = await fetchRepo(owner, name);
-      const contributors = await fetchRepoContributors(owner, name);
-      return buildRepoCard(repo, contributors);
+      const [contributors, commitActivity] = await Promise.all([
+        fetchRepoContributors(owner, name),
+        fetchRepoCommitActivity(owner, name),
+      ]);
+      return buildRepoCard(repo, contributors, new Date(), commitActivity);
     },
   );
 
