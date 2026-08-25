@@ -17,6 +17,7 @@ Origem: `GET /users/{username}` + `GET /users/{username}/repos?per_page=100`
 | Raridade | `score = estrelasTotais×2 + seguidores×3 + reposPúblicos + idadeContaEmAnos×5` → faixas |
 | Arte | `avatar_url` |
 | Rodapé | bio truncada + ano de criação da conta |
+| Fundo | Contribuições por dia dos últimos 8 anos-calendário, uma banda por ano |
 
 Tiers de raridade (8, no padrão do TCG Pokémon):
 `common / uncommon / rare / double_rare / illustration_rare / ultra_rare /
@@ -28,6 +29,25 @@ pela API, porque o score cresce muito mais rápido que a intuição (estrelas co
 cabeçalho de `lib/cards/rarity.ts` e está travada por
 `tests/unit/rarity.test.ts`. Cada carta também recebe um **número de série**
 sequencial (`lib/cards/serial.ts`).
+
+### Trama de fundo (contribution graph)
+
+Origem: **GraphQL**, `user.contributionsCollection.contributionCalendar` — é o
+único lugar onde o dado existe, a REST não expõe contribuições por dia. Uma
+requisição por carta, com os 8 anos como campos aliased (`lib/github/graphql.ts`).
+Orçamento separado do REST, então não disputa cota com o resto.
+
+A quantização em 5 níveis é **relativa à própria distribuição** e não a limiares
+fixos: dia sem contribuição é nível 0, e os dias não-zero do período são fatiados
+pelos próprios quartis (`levelsFromCounts` em `lib/cards/contributions.ts`).
+Mesmo motivo do log10 no HP de repositório — com limiar absoluto, quem commita
+muito sai com bandas sólidas e quem commita pouco sai com bandas vazias, e nos
+dois extremos a trama para de dizer qualquer coisa. O preço aceito é que a
+intensidade **não é comparável entre duas cartas**; quem compara é o radar e a
+batalha, com números.
+
+Anos vazios das pontas são aparados; os do meio, nunca — um ano parado no meio da
+história é dado, e apagá-lo mentiria sobre a linha do tempo.
 
 **O mapa linguagem→elemento completo está no protótipo**
 (`reference/github-card-prototype.html`) e deve ser transcrito de lá — não
@@ -50,6 +70,13 @@ Proposta inicial:
 Pontos a resolver: contribuidores custam uma chamada a mais por carta (impacto no rate limit e no
 cache); "fraqueza a manutenção" não é um dos elementos, então ou vira um elemento existente ou
 quebra o modelo de tipos.
+
+**Trama de fundo.** `GET /repos/{owner}/{repo}/stats/commit_activity`, commits por
+dia nas últimas 52 semanas, com a mesma quantização por quartil da carta de
+perfil. Sempre **uma banda só**: o endpoint é uma janela móvel de um ano e não há
+caminho barato para mais história — a assimetria com a carta de perfil (até 8
+bandas) é do dado, não do layout. Estatística fria faz o GitHub responder 202 sem
+corpo; nesse caso a carta sai sem fundo.
 
 **Resolvido (Q5).** `open_issues_count` virou **custo de recuo**, não fraqueza:
 1 pip a cada 50 issues, teto de 4. Carrega a mesma leitura — repo com fila grande
