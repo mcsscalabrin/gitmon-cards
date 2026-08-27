@@ -55,5 +55,7 @@ export default defineConfig([
     "reference/**",
     // Diretório de trabalho do Superdesign, ignorado pelo git.
     ".superdesign/**",
+    // Exercícios de aula: projeto Vite avulso, com regras e tooling próprios.
+    "exercicios/**",
   ]),
 ]);
