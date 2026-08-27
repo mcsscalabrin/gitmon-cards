@@ -1,11 +1,6 @@
-// EXERCÍCIO 1 - Contador completo (ESTADO)
-// Modelo: Contador.jsx
-
 import { useState } from "react";
 
 function ContadorCompleto() {
-    // O estado é a "caixa" que o React observa.
-    // useState(0) devolve o par: contador (getter) e setContador (setter).
     const [contador, setContador] = useState(0);
 
     function incrementar() {
@@ -21,7 +16,7 @@ function ContadorCompleto() {
     }
 
     return (
-        <div className="card">
+        <div>
             <p>Contador: {contador}</p>
             <button onClick={incrementar}>Incrementar</button>
             <button onClick={decrementar}>Decrementar</button>

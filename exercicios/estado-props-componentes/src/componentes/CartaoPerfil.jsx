@@ -1,7 +1,3 @@
-// EXERCÍCIO 5 - PROPS + ESTADO juntos
-// O que não muda (nome, curso) vem por props.
-// O que muda ao interagir (curtidas) vive no estado.
-
 import { useState } from "react";
 
 function CartaoPerfil({ nome, curso }) {
@@ -12,7 +8,7 @@ function CartaoPerfil({ nome, curso }) {
     }
 
     return (
-        <div className="card">
+        <div>
             <h3>{nome}</h3>
             <p>Curso: {curso}</p>
             <p>Curtidas: {curtidas}</p>

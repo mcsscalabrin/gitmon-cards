@@ -1,6 +1,3 @@
-// EXERCÍCIO 3 - Um componente, vários estados
-// Cada useState cria uma caixa independente, com seu próprio par getter/setter.
-
 import { useState } from "react";
 
 function PainelDeCliques() {
@@ -16,7 +13,7 @@ function PainelDeCliques() {
     }
 
     return (
-        <div className="card">
+        <div>
             <p>Cliques azuis: {cliquesAzuis}</p>
             <p>Cliques vermelhos: {cliquesVermelhos}</p>
             <button onClick={somarAzul}>Azul +</button>
