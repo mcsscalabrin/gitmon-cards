@@ -51,7 +51,9 @@ function rng(seed: number): () => number {
 }
 
 export function randomSeed(): number {
-  return Math.floor(Math.random() * 0xffffffff) >>> 0;
+  const buf = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(buf);
+  return buf[0];
 }
 
 export function simulate(
