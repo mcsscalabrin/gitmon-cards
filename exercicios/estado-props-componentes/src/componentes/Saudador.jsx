@@ -1,25 +1,22 @@
-// EXERCÍCIO 2 - O Saudador (ESTADO DE TEXTO)
-// O estado não guarda só números: aqui a caixa guarda um texto.
-
 import { useState } from "react";
 
 function Saudador() {
-    const [nome, setNome] = useState("Visitante");
+    const [nome, setNome] = useState('Visitante');
 
     function dizerAnanias() {
-        setNome("Ananias");
+        setNome('Ananias');
     }
 
     function dizerBernardo() {
-        setNome("Bernardo");
+        setNome('Bernardo');
     }
 
     function dizerCarlito() {
-        setNome("Carlito");
+        setNome('Carlito');
     }
 
     return (
-        <div className="card">
+        <div>
             <p>Olá, {nome}!</p>
             <button onClick={dizerAnanias}>Ananias</button>
             <button onClick={dizerBernardo}>Bernardo</button>

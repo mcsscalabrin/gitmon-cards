@@ -7,48 +7,24 @@ import CartaoPerfil from "./componentes/CartaoPerfil";
 
 function App() {
     return (
-        <div className="pagina">
-            <h1>Estado, Props e Componentes</h1>
+        <div>
+            <ContadorCompleto />
+            <ContadorCompleto />
 
-            <section>
-                <h2>Exercício 1 — Contador completo</h2>
-                {/* Duas cópias: cada <ContadorCompleto /> chama useState por
-                    dentro, então cada uma tem a SUA própria caixa de estado.
-                    Clicar em uma não mexe na outra. */}
-                <ContadorCompleto />
-                <ContadorCompleto />
-            </section>
+            <Saudador />
 
-            <section>
-                <h2>Exercício 2 — O Saudador</h2>
-                <Saudador />
-            </section>
+            <PainelDeCliques />
 
-            <section>
-                <h2>Exercício 3 — Um componente, vários estados</h2>
-                <PainelDeCliques />
-            </section>
+            <CardProduto nome="Teclado" preco="120,00" />
+            <CardProduto nome="Mouse" preco="80,00" />
+            <CardProduto nome="Monitor" preco="900,00" />
 
-            <section>
-                <h2>Exercício 4 — Cards sob medida</h2>
-                <CardProduto nome="Teclado mecânico" preco="349,90" />
-                <CardProduto nome="Mouse sem fio" preco="129,90" />
-                <CardProduto nome="Monitor 27 polegadas" preco="1499,00" />
+            <CardAviso titulo="Atenção" mensagem="A entrega pode atrasar em feriados.">
+                <h4>Quer acompanhar o pedido?</h4>
+                <button>Rastrear</button>
+            </CardAviso>
 
-                <CardAviso
-                    titulo="Atenção"
-                    mensagem="A entrega pode atrasar em feriados."
-                >
-                    <h4>Quer acompanhar o pedido?</h4>
-                    <button>Rastrear</button>
-                </CardAviso>
-            </section>
-
-            <section>
-                <h2>Exercício 5 — Cartão de perfil</h2>
-                <CartaoPerfil nome="João" curso="2SISA" />
-                <CartaoPerfil nome="Matheus" curso="2SISA" />
-            </section>
+            <CartaoPerfil nome="João" curso="2SISA" />
         </div>
     );
 }
