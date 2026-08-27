@@ -1,0 +1,50 @@
+body {
+    margin: 0;
+    padding: 24px;
+    font-family: system-ui, sans-serif;
+    background-color: #f4f4f5;
+    color: #18181b;
+}
+
+.pagina {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+section {
+    margin-bottom: 32px;
+}
+
+h2 {
+    font-size: 18px;
+    border-bottom: 1px solid #d4d4d8;
+    padding-bottom: 4px;
+}
+
+.card {
+    background-color: #ffffff;
+    border: 1px solid #d4d4d8;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+}
+
+.card h3,
+.card h4,
+.card p {
+    margin: 4px 0 8px;
+}
+
+button {
+    font: inherit;
+    padding: 6px 12px;
+    margin-right: 8px;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    background-color: #fafafa;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #e4e4e7;
+}
