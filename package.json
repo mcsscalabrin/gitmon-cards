@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "ioredis": "^6.0.0",
-    "next": "^16.3.2",
+    "next": "^16.3.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "sharp": "^0.35.3"
@@ -30,7 +30,7 @@
     "@playwright/test": "^1.56.0",
     "@types/node": "^22.15.0",
     "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
+    "@types/react-dom": "^19.2.5",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.1",
     "subset-font": "^2.5.0",
