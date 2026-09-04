@@ -33,7 +33,7 @@
     "@types/react-dom": "^19.2.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.1",
-    "subset-font": "^2.5.0",
+    "subset-font": "^2.6.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
   },
