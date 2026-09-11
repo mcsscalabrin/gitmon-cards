@@ -30,10 +30,10 @@
     "@playwright/test": "^1.56.0",
     "@types/node": "^22.15.0",
     "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
+    "@types/react-dom": "^19.2.7",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.3.1",
-    "subset-font": "^2.5.0",
+    "eslint-config-next": "^16.3.4",
+    "subset-font": "^2.7.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
   },
