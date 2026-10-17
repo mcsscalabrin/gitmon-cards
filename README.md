@@ -255,4 +255,4 @@ terminology from The Pokémon Company, adopted here as TCG vocabulary, by decisi
 
 ## License
 
-MIT © Matheus Scalabrin
+MIT © [Matheus Scalabrin](https://scalabrin.dev)
